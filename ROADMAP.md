@@ -1,68 +1,58 @@
 # Roadmap
 
-This feature roadmap intents to provide transparency to what is planned to be added to FlorisBoard in the foreseeable future. Note that there are no ETAs for any version milestones down below, experience has shown these won't hold anyway.
+Status legend: ✅ done and verified as stated · 🟡 partially done · ⬜ not started · ⛔ blocked.
+"Verified" means compiled and JVM-tested in the reference environment. **Nothing has been run on an Android device
+yet** (no device/emulator available; see `AUDIT.md` §5), so no phase is marked "device-validated".
 
-Each major milestone has associated alpha/beta releases, so if you are interested in previewing features quicker, keep an eye out! Each major 0.x release has also patch releases after the initial major release, which will be published on both the stable and preview tracks.
+Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 
-## 0.5 (currently in development)
+| Phase | Name | Status |
+|---|---|---|
+| 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
+| 1 | Project foundation | ⬜ |
+| 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
+| 3 | Advanced clipboard | ⬜ |
+| 4 | Developer and terminal modes | ⬜ |
+| 5 | Snippets and productivity | ⬜ |
+| 6 | Predictive and gesture typing | ⬜ |
+| 7 | AI workspace | ⬜ |
+| 8 | Themes and responsive UI | ⬜ |
+| 9 | Security and performance | ⬜ |
+| 10 | Release engineering | ⬜ |
 
-> [!NOTE]
-> The milestone 0.5 was split, thus the word suggestions now come with version 0.6. The old version 0.6 has been moved down and is now 0.7. The time it takes to implement word suggestions will not change, but we can now release the new theme editor earlier, which would otherwise lie dormant.
+## Phase 0 — Audit and baseline ✅
 
-- [x] Theme rework part II / Snygg v2
-  - [x] See https://github.com/florisboard/florisboard/pull/2855
-  - [x] Spaces in URI bug (See https://github.com/florisboard/florisboard/issues/2898)
-  - [x] Re-add time based theme switching (See https://github.com/florisboard/florisboard/pull/2977)
-- [x] Add support for any remaining new features introduced with Android 13 / 14
-- [x] Raise minimum required Android version from Android 7 (SDK level 24) to Android 8 (SDK level 26)
+* ✅ Upstream inspected; three candidate bases built/evaluated; `v0.6.0-alpha02` chosen (`AUDIT.md`).
+* ✅ Licence review (`LICENSES.md`); AI-policy implication recorded.
+* ✅ Baseline: `assembleDebug` succeeds, 176 unit tests pass.
+* ✅ Docs: `AUDIT.md`, `ARCHITECTURE.md`, `LICENSES.md`, `BUILD.md`, `ROADMAP.md`, `CLAUDE.md`, `README.md`.
+* Open: emoji/Han data licence provenance (`LICENSES.md` §6).
 
-## 0.6
+## Phase 1 — Foundation
 
-- [ ] Implement predictive text support / spell checking
-- [ ] Add new extension type: Language Pack
-    - Basically groups all locale-relevant data (predictive base model, emoji suggestion data, ...)
-      in a dynamically importable extension file
-- [ ] Proper physical keyboard support (See https://github.com/florisboard/florisboard/issues/1972)
-- [ ] Rework cache manager (See https://github.com/florisboard/florisboard/issues/2870)
+* application id `com.victorious.keyboard`; user-visible name/branding/icon; remove `:lib:native`
+* build variants (`debug`, `release`; drop `beta`/`benchmark` unless needed); version scheme
+* Gradle dependency verification
+* CI: PR validation (compile, unit tests, lint), debug APK artifact
+* issue/PR templates adapted from upstream; `CONTRIBUTING.md`, `CHANGELOG.md`
+* exit: compiles, debug APK produced, CI config in place
 
-## k3lp
+## Phase 2 — Stable engine
 
-> [!NOTE]
-> The development of k3lp is not tied to a florisboard version and takes place on [codeberg.org](https://codeberg.org/k3lp/k3lp) simultaneously.
+Engine is upstream's. Work here is verification: registration/selection, typing, password fields, rotation, app
+switching. Requires a device; until then it is a documented manual checklist (`TESTING.md`).
 
-- [ ] New keyboard layout engine + file syntax based on the upcoming Unicode Keyboard v3 standard
-- [ ] Add Tablet mode / Optimizations for landscape input based on new keyboard layout engine
+## Phase 3 — Advanced clipboard (highest priority)
 
-## 0.7+
+Pure-Kotlin core first (policy, search, backup codecs, crypto, import planner), then Room schema v5 with explicit
+migration, then UI. Requirements and acceptance criteria are those in the project brief; design in `CLIPBOARD.md` and
+`BACKUP_FORMAT.md` (written with the code).
 
-> [!NOTE]
-> From 0.6 onwards we plan to have more stable 0.X releases but with at most one large feature per release, thus having a much quicker iteration of new features on the stable track, which is a benefit for everyone involved.
+## Phases 4–10
 
-- [ ] Add floating keyboard mode
-- [ ] New text processing logic
-- [ ] Complete rework of the Emoji panel
-  - [ ] Emoji search
-  - [ ] Fully scrollable emoji list (soft category borders)
-  - [ ] Side scrollable emoji list (swipe for next category)
-  - [ ] More granular theming options
-  - [ ] Layout customization (e.g. placement of category buttons)
-  - [ ] Maybe: consider upgrading to emoji2 for better unified system-wide emoji styles
-- [ ] Reimplementation of glide typing with the new layout engine and predictive text core
-- [ ] Prepare FlorisBoard repository and app store presence for public beta release on Google Play (will go live with stable 0.7)
-- [ ] Rework branding images and texts of FlorisBoard for the app stores
-- [ ] Focus on stability and experience improvements of the app and keyboard
-- [ ] Add support for new features introduced with Android 15 / 16
+As in the project brief. Notable decisions already taken:
 
-## Backlog / Planned (unassigned)
-
-**Features that MAY be added (even in versions mentioned above) or dismissed**
-
-- Full on-board layout editor which allows users to create their own layouts without writing a JSON file
-- Voice-to-text with Mozilla's open-source voice service (or any other oss voice provider)
-- Text translation
-- Stickers/GIFs
-- Kaomoji panel implementation
-- Implementing additional layouts
-- Support for Tasker/Automate/MacroDroid plugins
-- Support for WearOS/Smartwatches
-- Handwriting
+* P4: modifier→`KeyEvent` mapping is a pure function with a test table; Termux/SSH behaviour is device-test-only.
+* P6: suggestions/autocorrect do not exist upstream; they are built here or not shipped. No placeholder toggles.
+* P7: no `INTERNET` permission until a provider adapter is enabled by the user.
+* P10: no production signing material in the repo; debug builds are never published as releases.

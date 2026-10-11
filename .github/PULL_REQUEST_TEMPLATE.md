@@ -1,12 +1,15 @@
 ## Description
 
-<!-- Meaningfull description here -->
+<!-- What does this change and why? -->
 
-## APK testing
+## Testing
 
-For each change in the pull request, a workflow is run, which produces a debug artifact APK. Go to Checks -> FlorisBoard CI -> `app-debug.apk` and download the APK. It installs under the `dev.patrickgold.florisboard.debug` namespace and will not mess with your main installation.
+<!-- Commands run and results, e.g. `./gradlew testDebugUnitTest`. State plainly if something was NOT run (e.g. no device test). -->
 
 ## Checklist
 
-- [ ] I have read and understood the [contribution guidelines](https://github.com/florisboard/florisboard/blob/main/CONTRIBUTING.md).
-- [ ] I have read and understood the [AI policy](https://github.com/florisboard/florisboard/blob/main/AI_POLICY.md).
+- [ ] Builds (`./gradlew assembleDebug`) and unit tests pass
+- [ ] No clipboard / typed / prompt content is logged or sent anywhere
+- [ ] No secrets, keystores or signing material are included
+- [ ] Docs updated alongside behaviour changes (`ROADMAP.md` status stays honest)
+- [ ] Third-party code or assets are added to `LICENSES.md` with their licence

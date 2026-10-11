@@ -5,11 +5,11 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phase 0 complete; Phase 1 in progress.** Status table: `ROADMAP.md`. Update it with every phase.
+**Phases 0–1 done (foundation); Phase 3 core in progress.** Status table: `ROADMAP.md`. Update it with every phase.
 
 ## Verified environment
-JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0 (+ NDK 26.1 / CMake 4.0.2 / rustup until
-`:lib:native` is removed). Details and the Maven-Central 429 workaround: `BUILD.md`.
+JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0 (NDK/CMake/Rust are no longer needed:
+`:lib:native` was removed). Details and the Maven-Central 429 workaround: `BUILD.md`.
 **No Android device or emulator is available** (no KVM): only compile + JVM tests can be run. Never claim install or
 runtime verification.
 
@@ -35,6 +35,9 @@ Long builds: run in the background with `--no-parallel --max-workers=2`, log to 
 5. Backups: only JCE primitives (AES-256-GCM, PBKDF2-HMAC-SHA256), random salt+nonce per file, versioned header, no
    keys or passwords in metadata. Imports are untrusted input: bounded sizes, no path traversal, atomic apply.
 6. No secrets, keystores or signing material in Git.
+7. Any new persistent store (clipboard vault, snippets, prompts, provider credentials, key files) lives in
+   `noBackupFilesDir` or is explicitly excluded in `res/xml/backup_rules.xml`; Android auto-backup must not carry it.
+8. Version codes stay ≥ 120 (in-app restore rejects < 64) and only increase.
 
 ## Conventions
 * Match surrounding code; Apache-2.0 header on new files (`Copyright (C) 2026 Victorious Keyboard Contributors`).

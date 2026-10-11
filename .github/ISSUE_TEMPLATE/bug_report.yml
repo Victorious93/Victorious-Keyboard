@@ -1,23 +1,17 @@
-name: 🐛 Bug Report
-description: Create a report to help FlorisBoard improve
+name: 🐛 Bug report
+description: Something does not work as expected
 labels:
   - "bug"
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for your help in making FlorisBoard better!
-        Guide to a good bug-report:
-        • Please search existing bug/crash reports reports to avoid creating duplicates.
-        • Give your bug report a good name (no generics like "Error" or "Crash"), so others can easily identify the topic of your issue.
-        • Describe the bug in a short but concise way.
-        • If you have a screenshot or screen recording of the bug, link them at the end of this issue.
-        • Also make sure to fill out the environment information. This info is valuable when trying to fix your described bug.
+        Please search existing issues first and give the report a specific title.
+        **Do not paste passwords, tokens or clipboard contents.** Redact anything private from logs and screenshots.
   - type: textarea
     id: description
     attributes:
-      label: Short description
-      description: Describe the bug in a short but concise way.
+      label: What happened?
     validations:
       required: true
   - type: textarea
@@ -25,54 +19,39 @@ body:
     attributes:
       label: Steps to reproduce
       value: |
-        1. Go to '…'
-        2. Click on '…'
-        3. Scroll down to '…'
-        4. See error
+        1.
+        2.
+        3.
     validations:
       required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
   - type: input
-    id: florisversion
+    id: version
     attributes:
-      label: FlorisBoard Version
-      placeholder: e.g. 0.X.X
-    validations:
-      required: true
-  - type: dropdown
-    id: installsource
-    attributes:
-      label: Install Source
-      options:
-        - Google PlayStore
-        - F-Droid (F-Droid Main)
-        - F-Droid (IzzyOnDroid)
-        - GitHub
+      label: Victorious Keyboard version (Settings → About)
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Device
-      placeholder: e.g. OnePlus 7T
+      label: Device and Android version
+      placeholder: e.g. Pixel 8, Android 15
     validations:
       required: true
   - type: input
-    id: androidversion
+    id: app
     attributes:
-      label: Android
-      placeholder: e.g. 10, Stock
-    validations:
-      required: true
+      label: App you were typing in (if relevant)
+      placeholder: e.g. Termux 0.118, Chrome, Signal
   - type: checkboxes
     id: checklist
     attributes:
-      label: "Checklist"
+      label: Checklist
       options:
-        - label: "I made sure that there are *no existing issues* - [open](https://github.com/florisboard/florisboard/issues) or [closed](https://github.com/florisboard/florisboard/issues?q=is%3Aissue+is%3Aclosed) - which I could contribute my information to."
+        - label: I searched existing issues.
           required: true
-        - label: "I have read and understood the [contribution guidelines](https://github.com/florisboard/florisboard/blob/main/CONTRIBUTING.md)."
-          required: true
-        - label: "I have read and understood the [AI policy](https://github.com/florisboard/florisboard/blob/main/AI_POLICY.md)."
-          required: true
-        - label: "I have taken the time to fill in all the required details. I understand that the bug report will be dismissed otherwise."
+        - label: I removed private data from everything I attached.
           required: true

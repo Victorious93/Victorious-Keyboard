@@ -60,12 +60,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-        create("beta") {
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

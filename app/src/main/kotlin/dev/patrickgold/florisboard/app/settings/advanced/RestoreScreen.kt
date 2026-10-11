@@ -81,7 +81,8 @@ import org.florisboard.lib.kotlin.io.subFile
 
 object Restore {
     const val MIN_VERSION_CODE = 64
-    const val PACKAGE_NAME = "dev.patrickgold.florisboard"
+    /** Backups written by this app, or by the upstream FlorisBoard it is derived from, may be restored. */
+    val ACCEPTED_PACKAGE_NAME_PREFIXES = listOf("com.victorious.keyboard", "dev.patrickgold.florisboard")
     const val BACKUP_ARCHIVE_FILE_NAME = "backup.zip"
 }
 
@@ -123,7 +124,7 @@ fun RestoreScreen() = FlorisScreen {
                     workspace.metadata.versionCode != BuildConfig.VERSION_CODE -> {
                         R.string.backup_and_restore__restore__metadata_warn_different_version
                     }
-                    !workspace.metadata.packageName.startsWith(Restore.PACKAGE_NAME) -> {
+                    Restore.ACCEPTED_PACKAGE_NAME_PREFIXES.none { workspace.metadata.packageName.startsWith(it) } -> {
                         R.string.backup_and_restore__restore__metadata_warn_different_vendor
                     }
                     else -> null

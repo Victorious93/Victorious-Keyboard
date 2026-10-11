@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2021-2025 The FlorisBoard Contributors
+ * Copyright (C) 2026 Victorious Keyboard Contributors (clipboard vault changes)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +19,38 @@ package dev.patrickgold.florisboard.ime.clipboard
 
 import android.content.ClipData
 import android.content.Context
+import dev.patrickgold.florisboard.BuildConfig
+import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
 import dev.patrickgold.florisboard.editorInstance
-import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDao
+import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
+import dev.patrickgold.florisboard.ime.clipboard.history.ClipCategory
+import dev.patrickgold.florisboard.ime.clipboard.history.ClipClassifier
+import dev.patrickgold.florisboard.ime.clipboard.history.ClipTags
+import dev.patrickgold.florisboard.ime.clipboard.history.HistoryPolicy
+import dev.patrickgold.florisboard.ime.clipboard.history.InsertPlan
+import dev.patrickgold.florisboard.ime.clipboard.history.MAX_HISTORY_ENTRIES
+import dev.patrickgold.florisboard.ime.clipboard.history.SensitiveDetector
+import dev.patrickgold.florisboard.ime.clipboard.history.planInsert
+import dev.patrickgold.florisboard.ime.clipboard.history.planInsertNonText
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDatabase
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
+import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardBackupService
+import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardEntryRepository
+import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardStore
+import dev.patrickgold.florisboard.ime.clipboard.vault.HistorySnapshot
+import dev.patrickgold.florisboard.ime.clipboard.vault.KeystoreDataKeyProvider
+import dev.patrickgold.florisboard.ime.clipboard.vault.PayloadCipher
+import dev.patrickgold.florisboard.ime.clipboard.vault.formatTagColumn
+import dev.patrickgold.florisboard.ime.clipboard.vault.toClipEntry
+import dev.patrickgold.florisboard.ime.clipboard.vault.toNewClipboardItem
+import dev.patrickgold.florisboard.ime.clipboard.vault.withEntryFields
 import java.io.Closeable
+import java.io.File
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,6 +78,15 @@ import org.florisboard.lib.kotlin.tryOrNull
  *
  * [ClipboardManager] handles storage and retrieval of clipboard items. All manipulation of the
  * clipboard goes through here.
+ *
+ * Victorious Keyboard changes (see CLIPBOARD.md):
+ *  * Persistent history is stored through [ClipboardStore]: clipboard text is encrypted at rest.
+ *  * The history never exceeds [MAX_HISTORY_ENTRIES]; the rules live in the pure-Kotlin [HistoryPolicy], which never
+ *    evicts pinned entries. The old "limit on/off" switch no longer disables the cap.
+ *  * Changing the size limit never deletes anything by itself; surplus entries are evicted when the next clip arrives.
+ *  * Text that looks like a credential is not stored unless the user opts in.
+ *  * Every mutation is serialised through one mutex and runs on the IO dispatcher; failures degrade to "not saved"
+ *    and never throw into the keyboard.
  */
 class ClipboardManager(
     context: Context,
@@ -60,6 +94,9 @@ class ClipboardManager(
     companion object {
         // 1 minute
         private const val INTERVAL = 60 * 1000L
+
+        private const val VAULT_KEY_FILE = "clipboard_vault.key"
+        private const val NOTICE_THROTTLE_MS = 10_000L
 
         /**
          * Taken from ClipboardDescription.java from the AOSP
@@ -95,13 +132,22 @@ class ClipboardManager(
 
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val cleanUpJob: Job
-    private var clipHistoryDb: ClipboardHistoryDatabase? = null
-    private val clipHistoryDao: ClipboardHistoryDao? get() = clipHistoryDb?.clipboardItemDao()
+
+    private val keyProvider by lazy {
+        KeystoreDataKeyProvider(File(appContext.noBackupFilesDir, VAULT_KEY_FILE))
+    }
+    private val storeReady = CompletableDeferred<ClipboardStore>()
+    private val historyMutex = Mutex()
+    private var lastNoticeAtMs = 0L
 
     val historyFlow: StateFlow<ClipboardHistory>
         field = MutableStateFlow(ClipboardHistory.EMPTY)
     val currentHistory: ClipboardHistory
         get() = historyFlow.value
+
+    /** Text rows that cannot be decrypted (key lost). They are hidden, never auto-deleted. 0 normally. */
+    val unreadableCountFlow: StateFlow<Int>
+        field = MutableStateFlow(0)
 
     private val primaryClipLastFromCallbackGuard = Mutex(locked = false)
     private var primaryClipLastFromCallback: ClipData? = null
@@ -125,22 +171,72 @@ class ClipboardManager(
 
     fun initializeForContext(context: Context) {
         ioScope.launch {
-            if (clipHistoryDb == null) {
-                clipHistoryDb = ClipboardHistoryDatabase.new(context.applicationContext)
-                withContext(Dispatchers.Main) {
-                    clipHistoryDao?.getAllAsFlow()?.collect { items ->
-                        updateHistory(items)
-                    }
+            if (storeReady.isCompleted) return@launch
+            try {
+                val db = ClipboardHistoryDatabase.new(context.applicationContext)
+                val store = ClipboardStore(db, PayloadCipher(keyProvider))
+                // A missing key must not stop the keyboard: rows stay hidden and counted instead.
+                try {
+                    store.migrateLegacyRows()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
                 }
+                storeReady.complete(store)
+                launch { store.unreadableCount.collect { unreadableCountFlow.value = it } }
+                store.observe().collect { items -> updateHistory(items) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Clipboard history is an optional feature; typing must not depend on it.
+                storeReady.completeExceptionally(e)
             }
         }
     }
 
     private fun updateHistory(items: List<ClipboardItem>) {
-        val itemsSorted = items.sortedByDescending { it.creationTimestampMs }
-        val clipHistory = ClipboardHistory(itemsSorted)
-        enforceHistoryLimit(clipHistory)
-        historyFlow.value = clipHistory
+        historyFlow.value = ClipboardHistory(items.sortedByDescending { it.creationTimestampMs })
+    }
+
+    /** The active retention policy. The cap is always enforced; the user's limit can only lower it. */
+    fun currentPolicy(): HistoryPolicy = HistoryPolicy(
+        maxEntries = prefs.clipboard.historySizeLimit.get().coerceIn(1, MAX_HISTORY_ENTRIES),
+        duplicates = prefs.clipboard.historyDuplicateBehavior.get(),
+    )
+
+    /**
+     * [currentPolicy] minus the rows hidden because they cannot be decrypted: those still occupy database space, so
+     * they count against the cap (otherwise a lost key would let the table grow past 500).
+     */
+    private fun effectivePolicy(): HistoryPolicy {
+        val base = currentPolicy()
+        val reserved = unreadableCountFlow.value
+        return if (reserved == 0) base else base.copy(maxEntries = (base.maxEntries - reserved).coerceAtLeast(1))
+    }
+
+    /**
+     * Runs [block] against the store under the history mutex on the IO dispatcher. Any failure is swallowed (and the
+     * user told, once in a while) so that an optional feature can never crash the keyboard process.
+     */
+    private fun mutate(block: suspend (ClipboardStore) -> Unit) {
+        ioScope.launch {
+            historyMutex.withLock {
+                try {
+                    block(storeReady.await())
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    notify(R.string.clipboard__vault_error)
+                }
+            }
+        }
+    }
+
+    private fun notify(resId: Int) {
+        val now = System.currentTimeMillis()
+        if (now - lastNoticeAtMs < NOTICE_THROTTLE_MS) return
+        lastNoticeAtMs = now
+        appContext.showShortToastSync(resId)
     }
 
     /**
@@ -229,37 +325,58 @@ class ClipboardManager(
     }
 
     /**
-     * Adds a new item to the clipboard history (if enabled).
+     * Offers a new item to the clipboard history (if enabled). What happens is decided by the pure [HistoryPolicy]:
+     * insert (evicting the oldest *unpinned* entries if full), move an identical entry to the top, ignore a
+     * duplicate, or reject. Pinned entries are never evicted; if the history is full of them, the clip is not saved
+     * and the user is told.
      */
     private fun insertOrMoveBeginning(newItem: ClipboardItem) {
-        if (prefs.clipboard.historyEnabled.get()) {
-            val historyElement = currentHistory.all.firstOrNull { item ->
-                item.type == ItemType.TEXT && item.text == newItem.text && item.isSensitive == newItem.isSensitive
-            }
-            if (historyElement != null) {
-                moveToTheBeginning(
-                    oldItem = historyElement,
-                    newItem = if (historyElement.isPinned) {
-                        newItem.copy(isPinned = true)
-                    } else {
-                        newItem
-                    }
-                )
-            } else {
-                insertClip(newItem)
-            }
-        }
-    }
-
-    private fun enforceHistoryLimit(clipHistory: ClipboardHistory) {
-        if (prefs.clipboard.historySizeLimitEnabled.get()) {
-            val nonPinnedItems = clipHistory.recent + clipHistory.other
-            val nToRemove = nonPinnedItems.size - prefs.clipboard.historySizeLimit.get()
-            if (nToRemove > 0) {
-                val itemsToRemove = nonPinnedItems.asReversed().filterIndexed { n, _ -> n < nToRemove }
-                ioScope.launch {
-                    clipHistoryDao?.delete(itemsToRemove)
+        if (!prefs.clipboard.historyEnabled.get()) return
+        mutate { store ->
+            val isText = newItem.type == ItemType.TEXT
+            val text = newItem.text
+            if (isText) {
+                if (text == null) return@mutate
+                if (!newItem.isSensitive && !prefs.clipboard.storeDetectedSecrets.get() &&
+                    SensitiveDetector.check(text) != null
+                ) {
+                    notify(R.string.clipboard__secret_not_saved)
+                    return@mutate
                 }
+            }
+            val history = currentHistory.all
+            val entries = history.map { it.toClipEntry() }
+            val policy = effectivePolicy()
+            val candidate = if (isText) {
+                newItem.copy(category = ClipClassifier.classify(text.orEmpty()).name)
+            } else {
+                newItem
+            }
+            val plan = if (isText) policy.planInsert(entries, candidate.toClipEntry())
+            else policy.planInsertNonText(entries)
+
+            when (plan) {
+                is InsertPlan.Add -> {
+                    val evicted = history.filter { it.uuid in plan.evictIds }
+                    store.replaceInTransaction(evicted, listOf(candidate))
+                    evicted.forEach { it.close(appContext) }
+                }
+                is InsertPlan.MoveToTop -> {
+                    val old = history.first { it.uuid == plan.existingId }
+                    // Keep everything the user attached to the entry; only the position (timestamp) changes.
+                    store.replaceInTransaction(
+                        listOf(old),
+                        listOf(
+                            candidate.copy(
+                                uuid = old.uuid, isPinned = old.isPinned, isFavorite = old.isFavorite,
+                                tags = old.tags, category = old.category, editedAtMs = old.editedAtMs,
+                            )
+                        ),
+                    )
+                }
+                is InsertPlan.IgnoreDuplicate, InsertPlan.RejectedBlank -> Unit
+                is InsertPlan.RejectedTooLarge -> notify(R.string.clipboard__item_too_large)
+                is InsertPlan.RejectedHistoryFullOfPinned -> notify(R.string.clipboard__full_of_pinned)
             }
         }
     }
@@ -277,32 +394,24 @@ class ClipboardManager(
             itemsToRemove.addAll(sensitiveData.filter { it.creationTimestampMs < expiryTime })
         }
         if (itemsToRemove.isNotEmpty()) {
-            ioScope.launch {
-                clipHistoryDao?.delete(itemsToRemove.toList())
-            }
+            mutate { store -> store.delete(itemsToRemove.toList()) }
         }
     }
 
-    private fun moveToTheBeginning(oldItem: ClipboardItem, newItem: ClipboardItem) {
-        ioScope.launch {
-            clipHistoryDao?.delete(oldItem.id)
-            clipHistoryDao?.insert(newItem)
-        }
-    }
-
+    /** Inserts [item] unconditionally at the top (used by tests/legacy callers); prefer [addNewPlaintext]. */
     fun insertClip(item: ClipboardItem) {
-        ioScope.launch {
-            val id = clipHistoryDao?.insert(item)
-            item.id = id ?: 0
+        mutate { store ->
+            val id = store.insert(item)
+            item.id = id
         }
     }
 
     fun clearExactHistory(items: List<ClipboardItem>) {
-        ioScope.launch {
+        mutate { store ->
             for (item in items) {
                 item.close(appContext)
             }
-            clipHistoryDao?.delete(items)
+            store.delete(items)
         }
     }
 
@@ -310,11 +419,11 @@ class ClipboardManager(
      * Clears all unpinned items from the clipboard history
      */
     fun clearHistory() {
-        ioScope.launch {
+        mutate { store ->
             for (item in currentHistory.all) {
                 item.close(appContext)
             }
-            clipHistoryDao?.deleteAllUnpinned()
+            store.deleteAllUnpinned()
         }
     }
 
@@ -322,37 +431,45 @@ class ClipboardManager(
      * Clears the full clipboard history
      */
     fun clearFullHistory() {
-        ioScope.launch {
+        mutate { store ->
             for (item in currentHistory.all) {
                 item.close(appContext)
             }
-            clipHistoryDao?.deleteAll()
+            store.deleteAll()
         }
     }
 
-
     /**
-     * Restore the clipboard history from a [List]
-     *
-     * @param items the [ClipboardItem] list with the new items
+     * Restores image/video (and legacy text) items from an old-style backup. This path **never evicts**: items are
+     * added only while there is room, so a legacy restore can't silently delete existing entries. Text backups
+     * should use the clipboard backup service (preview + consent) instead.
      */
     fun restoreHistory(items: List<ClipboardItem>) {
-        ioScope.launch {
-            val currentHistory = currentHistory.all
+        mutate { store ->
+            val maxEntries = effectivePolicy().maxEntries
+            val existing = store.loadAll()
+            var count = existing.size + unreadableCountFlow.value
+            val seen = existing.mapTo(HashSet()) { Triple(it.type, it.text, it.uri) }
+            var skippedFull = 0
             for (item in items) {
-                if (!currentHistory.map { it.copy(id = 0) }.contains(item.copy(id = 0))) {
-                    insertClip(item.copy(id = 0))
+                if (!seen.add(Triple(item.type, item.text, item.uri))) continue // already present
+                if (count >= maxEntries) {
+                    skippedFull++
+                    continue
                 }
+                store.insert(item.copy(id = 0, uuid = java.util.UUID.randomUUID().toString()))
+                count++
             }
+            if (skippedFull > 0) notify(R.string.clipboard__restore_partial_full)
         }
     }
 
     fun deleteClip(item: ClipboardItem, onlyIfUnpinned: Boolean) {
-        ioScope.launch {
+        mutate { store ->
             if (onlyIfUnpinned) {
-                clipHistoryDao?.deleteIfUnpinned(item.id)
+                store.deleteIfUnpinned(item.id)
             } else {
-                clipHistoryDao?.delete(item.id)
+                store.delete(item.id)
             }
             tryOrNull {
                 val uri = item.uri
@@ -363,15 +480,97 @@ class ClipboardManager(
         }
     }
 
-    fun pinClip(item: ClipboardItem) {
-        ioScope.launch {
-            clipHistoryDao?.update(item.copy(isPinned = true))
+    fun deleteClips(items: List<ClipboardItem>) {
+        mutate { store ->
+            for (item in items) {
+                item.close(appContext)
+            }
+            store.delete(items)
         }
     }
 
+    fun pinClip(item: ClipboardItem) {
+        mutate { store -> store.update(item.copy(isPinned = true)) }
+    }
+
     fun unpinClip(item: ClipboardItem) {
-        ioScope.launch {
-            clipHistoryDao?.update(item.copy(isPinned = false))
+        mutate { store -> store.update(item.copy(isPinned = false)) }
+    }
+
+    fun setPinned(items: List<ClipboardItem>, pinned: Boolean) {
+        mutate { store -> store.update(items.map { it.copy(isPinned = pinned) }) }
+    }
+
+    fun setFavorite(item: ClipboardItem, favorite: Boolean) {
+        mutate { store -> store.update(item.copy(isFavorite = favorite)) }
+    }
+
+    fun setTags(item: ClipboardItem, rawTags: Collection<String>) {
+        mutate { store -> store.update(item.copy(tags = formatTagColumn(ClipTags.normalizeAll(rawTags)))) }
+    }
+
+    fun addTag(items: List<ClipboardItem>, rawTag: String) {
+        val tag = ClipTags.normalize(rawTag) ?: return
+        mutate { store ->
+            store.update(items.map { item ->
+                val current = item.toClipEntry().tags
+                item.copy(tags = formatTagColumn(ClipTags.normalizeAll(current + tag)))
+            })
+        }
+    }
+
+    fun setCategory(item: ClipboardItem, category: ClipCategory) {
+        mutate { store -> store.update(item.copy(category = category.name)) }
+    }
+
+    /**
+     * Replaces the text of a text item. Applies the same size/blank rules as new clips and records the edit time.
+     * Returns false (and changes nothing) if the new text is not acceptable.
+     */
+    fun editText(item: ClipboardItem, newText: String): Boolean {
+        if (item.type != ItemType.TEXT || newText.isBlank() || newText.length > currentPolicy().maxItemChars) {
+            return false
+        }
+        mutate { store -> store.update(item.copy(text = newText, editedAtMs = System.currentTimeMillis())) }
+        return true
+    }
+
+    /** Storage seam for the backup service: domain snapshots in, atomic plans out. */
+    val entryRepository: ClipboardEntryRepository = object : ClipboardEntryRepository {
+        override suspend fun snapshot(): HistorySnapshot = withContext(Dispatchers.IO) {
+            val rows = storeReady.await().loadAll()
+            HistorySnapshot(
+                entries = rows.map { it.toClipEntry() },
+                mediaIds = rows.filter { it.type != ItemType.TEXT }.mapTo(HashSet()) { it.uuid },
+            )
+        }
+
+        override suspend fun apply(plan: ImportPlan) = withContext(Dispatchers.IO) {
+            historyMutex.withLock {
+                val store = storeReady.await()
+                val rows = store.loadAll().associateBy { it.uuid }
+                val toDelete = plan.deleteIds.mapNotNull { rows[it] }
+                val upserts = plan.upserts.map { e -> rows[e.id]?.withEntryFields(e) ?: e.toNewClipboardItem() }
+                store.replaceInTransaction(toDelete, upserts) // one transaction: all or nothing
+                toDelete.forEach { it.close(appContext) } // media files are removed only after the commit
+            }
+        }
+    }
+
+    fun backupService(): ClipboardBackupService = ClipboardBackupService(
+        repo = entryRepository,
+        appVersion = BuildConfig.VERSION_NAME,
+        policy = ::currentPolicy,
+    )
+
+    /**
+     * Destroys the vault key and deletes every stored clipboard row. Only for the "key lost" recovery flow; the UI
+     * must ask for explicit confirmation first.
+     */
+    fun resetVault() {
+        mutate { store ->
+            store.deleteAll()
+            keyProvider.destroy()
         }
     }
 

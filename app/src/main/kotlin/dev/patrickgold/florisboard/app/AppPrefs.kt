@@ -25,6 +25,7 @@ import dev.patrickgold.florisboard.app.settings.theme.SnyggLevel
 import dev.patrickgold.florisboard.app.setup.NotificationPermissionState
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
+import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.core.Subtype
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
@@ -134,13 +135,27 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "clipboard__history_auto_clean_sensitive_after",
             default = 20,
         )
+        /**
+         * Unused since the hard 500-entry cap (see HistoryPolicy) is always enforced. The key is kept so that
+         * restoring an older settings backup does not fail on an unknown preference.
+         */
         val historySizeLimitEnabled = boolean(
             key = "clipboard__history_size_limit_enabled",
             default = true,
         )
+        /** User-chosen history limit, 5..500 (the hard cap). Lowering it deletes nothing until the next clip. */
         val historySizeLimit = int(
             key = "clipboard__history_size_limit",
-            default = 20,
+            default = 500,
+        )
+        val historyDuplicateBehavior = enum(
+            key = "clipboard__history_duplicate_behavior",
+            default = DuplicateBehavior.MOVE_TO_TOP,
+        )
+        /** When false (default), text that looks like a password/API key/card number is not saved to history. */
+        val storeDetectedSecrets = boolean(
+            key = "clipboard__store_detected_secrets",
+            default = false,
         )
         val historyHideOnPaste = boolean(
             key = "clipboard__history_hide_on_paste",

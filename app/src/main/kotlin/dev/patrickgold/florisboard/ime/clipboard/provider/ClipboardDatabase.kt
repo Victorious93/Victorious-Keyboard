@@ -48,6 +48,7 @@ import androidx.room.Update
 import androidx.room.migration.AutoMigrationSpec
 import dev.patrickgold.florisboard.R
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -97,6 +98,23 @@ data class ClipboardItem @OptIn(ExperimentalSerializationApi::class) constructor
     @EncodeDefault
     @ColumnInfo(name= "is_remote_device", defaultValue = "0")
     val isRemoteDevice: Boolean = false,
+    /** Stable identity (UUID). Survives export/import and is bound as AEAD context when the text is encrypted. */
+    @EncodeDefault
+    @ColumnInfo(name = "uuid", defaultValue = "")
+    val uuid: String = UUID.randomUUID().toString(),
+    /** Normalised tags, comma separated (tags cannot contain commas, see ClipTags). */
+    @EncodeDefault
+    @ColumnInfo(name = "tags", defaultValue = "")
+    val tags: String = "",
+    /** Name of a [ClipCategory]; unknown names read as GENERAL. */
+    @EncodeDefault
+    @ColumnInfo(name = "category", defaultValue = "GENERAL")
+    val category: String = "GENERAL",
+    @EncodeDefault
+    @ColumnInfo(name = "is_favorite", defaultValue = "0")
+    val isFavorite: Boolean = false,
+    @ColumnInfo(name = "edited_at")
+    val editedAtMs: Long? = null,
 ) {
     companion object {
         /**
@@ -312,10 +330,12 @@ interface ClipboardHistoryDao {
 
 @Database(
     entities = [ClipboardItem::class],
-    version = 4,
+    version = 5,
     autoMigrations = [
         AutoMigration(from = 2, to = 4),
         AutoMigration(from = 3, to = 4, spec = ClipboardHistoryDatabase.MIGRATE_3_TO_4::class),
+        // v5 adds uuid / tags / category / is_favorite / edited_at, all with defaults.
+        AutoMigration(from = 4, to = 5),
     ],
 )
 @TypeConverters(Converters::class)
@@ -336,12 +356,9 @@ abstract class ClipboardHistoryDatabase : RoomDatabase() {
 
     companion object {
         fun new(context: Context): ClipboardHistoryDatabase {
-            return Room
-                .databaseBuilder(
-                    context, ClipboardHistoryDatabase::class.java, CLIPBOARD_HISTORY_TABLE,
-                )
-                .fallbackToDestructiveMigration()
-                .build()
+            return buildPreservingData(context, CLIPBOARD_HISTORY_TABLE) {
+                Room.databaseBuilder(context, ClipboardHistoryDatabase::class.java, CLIPBOARD_HISTORY_TABLE).build()
+            }
         }
     }
 }
@@ -384,12 +401,30 @@ abstract class ClipboardFilesDatabase : RoomDatabase() {
 
     companion object {
         fun new(context: Context): ClipboardFilesDatabase {
-            return Room
-                .databaseBuilder(
-                    context, ClipboardFilesDatabase::class.java, CLIPBOARD_FILES_TABLE,
-                )
-                .fallbackToDestructiveMigration()
-                .build()
+            return buildPreservingData(context, CLIPBOARD_FILES_TABLE) {
+                Room.databaseBuilder(context, ClipboardFilesDatabase::class.java, CLIPBOARD_FILES_TABLE).build()
+            }
         }
+    }
+}
+
+/**
+ * Opens a Room database **without** `fallbackToDestructiveMigration()`.
+ *
+ * If Room cannot migrate (no migration path from the on-disk version), the old database files are *renamed aside*
+ * (`<name>.unmigratable-<timestamp>`, plus `-wal`/`-shm`) instead of being deleted, and a fresh database is created.
+ * The keyboard keeps working, and the user's old file is still on disk for recovery. Nothing is logged about content.
+ */
+internal fun <T : RoomDatabase> buildPreservingData(context: Context, name: String, build: () -> T): T {
+    return try {
+        build().also { it.openHelper.writableDatabase } // force the open (and thus the migration) now
+    } catch (e: IllegalStateException) {
+        val base = context.getDatabasePath(name)
+        val stamp = System.currentTimeMillis()
+        for (suffix in listOf("", "-wal", "-shm", "-journal")) {
+            val f = java.io.File(base.path + suffix)
+            if (f.exists()) f.renameTo(java.io.File("${base.path}.unmigratable-$stamp$suffix"))
+        }
+        build().also { it.openHelper.writableDatabase }
     }
 }

@@ -21,6 +21,7 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
+import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.ui.DialogSliderPreference
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
@@ -127,19 +128,26 @@ fun ClipboardScreen() = FlorisScreen {
                 enabledIf = { prefs.clipboard.historyEnabled isEqualTo true && prefs.clipboard.historyAutoCleanSensitiveEnabled isEqualTo true },
                 visibleIf = { AndroidVersion.ATLEAST_API33_T },
             )
-            SwitchPreference(
-                prefs.clipboard.historySizeLimitEnabled,
-                title = stringRes(R.string.pref__clipboard__limit_history_size__label),
-                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
-            )
             DialogSliderPreference(
                 prefs.clipboard.historySizeLimit,
                 title = stringRes(R.string.pref__clipboard__max_history_size__label),
                 valueLabel = { pluralsRes(R.plurals.unit__items__written, it, "v" to it) },
                 min = 5,
-                max = 100,
+                max = 500,
                 stepIncrement = 5,
-                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true && prefs.clipboard.historySizeLimitEnabled isEqualTo true },
+                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
+            )
+            ListPreference(
+                prefs.clipboard.historyDuplicateBehavior,
+                title = stringRes(R.string.pref__clipboard__duplicate_behavior__label),
+                entries = enumDisplayEntriesOf(DuplicateBehavior::class),
+                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.clipboard.storeDetectedSecrets,
+                title = stringRes(R.string.pref__clipboard__store_detected_secrets__label),
+                summary = stringRes(R.string.pref__clipboard__store_detected_secrets__summary),
+                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
             )
 
             SwitchPreference(

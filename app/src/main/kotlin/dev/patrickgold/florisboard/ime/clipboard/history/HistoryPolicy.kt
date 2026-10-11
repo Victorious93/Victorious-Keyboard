@@ -105,6 +105,13 @@ fun HistoryPolicy.planInsert(existing: List<ClipEntry>, candidate: ClipEntry): I
         }
     }
 
+    return capacityPlan(existing)
+}
+
+/** Capacity-only planning for rows that carry no text (images, videos): no blank/size/duplicate checks. */
+fun HistoryPolicy.planInsertNonText(existing: List<ClipEntry>): InsertPlan = capacityPlan(existing)
+
+private fun HistoryPolicy.capacityPlan(existing: List<ClipEntry>): InsertPlan {
     val needed = existing.size + 1 - maxEntries
     if (needed <= 0) return InsertPlan.Add(emptyList())
 

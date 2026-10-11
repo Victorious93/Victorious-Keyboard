@@ -21,6 +21,7 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.settings.theme.DisplayKbdAfterDialogs
 import dev.patrickgold.florisboard.app.settings.theme.SnyggLevel
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
+import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.input.HapticVibrationMode
@@ -126,6 +127,25 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
                 key = ClipboardSyncBehavior.ALL_EVENTS,
                 label = stringRes(R.string.enum__clipboard_sync_behavior__all_events),
                 description = stringRes(R.string.enum__clipboard_sync_behavior__all_events__description),
+            )
+        }
+    },
+    DuplicateBehavior::class to DEFAULT to {
+        listPrefEntries {
+            entry(
+                key = DuplicateBehavior.MOVE_TO_TOP,
+                label = stringRes(R.string.enum__clipboard_duplicate_behavior__move_to_top),
+                description = stringRes(R.string.enum__clipboard_duplicate_behavior__move_to_top__description),
+            )
+            entry(
+                key = DuplicateBehavior.IGNORE,
+                label = stringRes(R.string.enum__clipboard_duplicate_behavior__ignore),
+                description = stringRes(R.string.enum__clipboard_duplicate_behavior__ignore__description),
+            )
+            entry(
+                key = DuplicateBehavior.KEEP_BOTH,
+                label = stringRes(R.string.enum__clipboard_duplicate_behavior__keep_both),
+                description = stringRes(R.string.enum__clipboard_duplicate_behavior__keep_both__description),
             )
         }
     },

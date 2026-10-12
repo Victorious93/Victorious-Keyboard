@@ -30,6 +30,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Dictionary packs: five bundled word lists (Kali Linux tools, Kali NetHunter, AI/LLM vocabulary, slash commands, Termux
+  and shell commands) as small zips, a strict bounded zip reader, non-destructive install/remove and a "Dictionary packs"
+  screen under Settings → Typing → Dictionary. Words go to the internal user dictionary and today only affect the system
+  spell checker; no suggestions exist yet. The lists were written from memory and are not verified online. Pure parts
+  JVM-tested; screen compiled, never run (`DICTIONARY_PACKS.md`).
 - Snippet picker in the keyboard: a "Snippets" smartbar quick action opens a panel with your enabled snippets (tag chips to
   narrow), tap to insert at the caret (replaces a selection); `{{selection}}` now works from there. Clipboard and selection
   are never read in password-like fields, clips the platform marked sensitive are not substituted, nothing is shown while

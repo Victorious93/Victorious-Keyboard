@@ -506,6 +506,21 @@
     <string name="pref__spelling__use_udm_entries__label" comment="Label of Use user dictionary entries pref">Use user dictionary entries</string>
     <string name="pref__spelling__use_udm_entries__summary" comment="Summary of Use user dictionary entries pref">Look up entries from the user dictionaries</string>
 
+    <string name="settings__dictionary_packs__title" comment="Screen title and settings entry">Dictionary packs</string>
+    <string name="settings__dictionary_packs__entry_summary" comment="Summary of the settings entry">Ready-made word lists: Kali tools, NetHunter, AI terms, slash commands, Termux</string>
+    <string name="settings__dictionary_packs__note_title" comment="Heading of the explanation at the top of the screen">What packs do</string>
+    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages. Today they stop the system spell checker from flagging these words in apps that use it. Word suggestions while typing do not exist in this keyboard yet. Lists were written from memory and not checked against current releases.</string>
+    <string name="settings__dictionary_packs__import" comment="Preference title">Open a pack file</string>
+    <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device</string>
+    <string name="settings__dictionary_packs__install" comment="Dialog button">Add words</string>
+    <string name="settings__dictionary_packs__remove" comment="Dialog button">Remove</string>
+    <string name="settings__dictionary_packs__install_hint" comment="Dialog text">Words you already have are left exactly as they are. Nothing is overwritten.</string>
+    <string name="settings__dictionary_packs__remove_confirm" comment="Dialog text">Removes only words that are still exactly as this pack added them (same frequency, all languages, no shortcut). Words you changed or added yourself stay.</string>
+    <string name="settings__dictionary_packs__added" comment="Toast, followed by a number">Words added:</string>
+    <string name="settings__dictionary_packs__removed" comment="Toast, followed by a number">Words removed:</string>
+    <string name="settings__dictionary_packs__unavailable" comment="Toast">Turn on the internal user dictionary first</string>
+    <string name="settings__dictionary_packs__failed" comment="Toast">Could not change the dictionary</string>
+    <string name="settings__dictionary_packs__invalid_file" comment="Toast">This is not a valid dictionary pack</string>
     <string name="settings__dictionary__title" comment="Title of the User dictionaries screen">User dictionaries</string>
     <string name="pref__dictionary__enable_system_user_dictionary__label" comment="Preference title">Enable system user dictionary</string>
     <string name="pref__dictionary__enable_system_user_dictionary__summary" comment="Preference summary">Suggest words stored in the system user dictionary</string>

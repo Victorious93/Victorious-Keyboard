@@ -40,6 +40,11 @@ Long builds: run in the background with `--no-parallel --max-workers=2`, log to 
    `noBackupFilesDir` or is explicitly excluded in `res/xml/backup_rules.xml`; Android auto-backup must not carry it.
 8. Version codes stay ≥ 120 (in-app restore rejects < 64) and only increase.
 
+## Working method (owner's instruction)
+Build **phase by phase**; after each phase finish (code, tests, docs, honest status) open **one pull request** for it. Do not
+batch several phases into one PR. Open the PR only after the phase builds and its tests pass; keep PR descriptions honest
+about what was not run (device validation).
+
 ## Conventions
 * Match surrounding code; Apache-2.0 header on new files (`Copyright (C) 2026 Victorious Keyboard Contributors`).
 * Don't remove upstream copyright lines. Prefer additive changes to upstream files.

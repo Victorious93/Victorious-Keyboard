@@ -1,0 +1,7 @@
+{
+  "format": "victorious-dictionary-pack",
+  "version": 1,
+  "id": "ai-terms",
+  "title": "AI and LLM vocabulary",
+  "description": "Terms, parameter names, models, products and libraries used when working with large language models. Proper-noun spellings; availability of each name was not checked online."
+}

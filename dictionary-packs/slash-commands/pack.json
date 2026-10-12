@@ -1,0 +1,7 @@
+{
+  "format": "victorious-dictionary-pack",
+  "version": 1,
+  "id": "slash-commands",
+  "title": "Slash commands",
+  "description": "Slash commands typed in AI coding assistants and chat tools (Claude Code built-ins as known to the author, plus common generic chat commands). The set changes between versions."
+}

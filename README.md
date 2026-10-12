@@ -8,11 +8,14 @@
 snippets and offline tools.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B_(API_26)-3DDC84)
+[![Kotlin 2.3](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
+![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B_(API_26)-3DDC84?logo=android&logoColor=white)
+[![Based on FlorisBoard](https://img.shields.io/badge/based_on-FlorisBoard_v0.6.0--alpha02-green)](https://github.com/florisboard/florisboard)
 ![Status: early development](https://img.shields.io/badge/status-early_development-orange)
 
-[Features](#features) · [Status](#status) · [APK details](#apk-at-a-glance) · [Build](#build-and-install) ·
-[Documentation](#documentation) · [Licence](#licence)
+[Overview](#overview) · [Features](#features) · [Status](#status) · [Tech stack](#tech-stack) · [Build](#build-and-install) ·
+[Structure](#project-structure) · [Contributing](#contributing) · [Licence](#licence)
 
 </div>
 
@@ -20,6 +23,21 @@ snippets and offline tools.**
 > **Early development.** The core logic of the Victorious additions is unit-tested on the JVM. The Android screens and
 > wiring compile, but **none of the additions has been run on an Android device yet.** Do not use this as your only
 > keyboard. Details: [Status](#status).
+
+## Table of contents
+
+* [Overview](#overview)
+* [Features](#features)
+* [Status](#status)
+* [APK at a glance](#apk-at-a-glance)
+* [Tech stack](#tech-stack)
+* [Build and install](#build-and-install)
+* [Project structure](#project-structure)
+* [Logo and launcher icons](#logo-and-launcher-icons)
+* [Documentation](#documentation)
+* [Contributing](#contributing)
+* [Licence](#licence)
+* [Acknowledgements](#acknowledgements)
 
 ## Overview
 
@@ -33,7 +51,9 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
   and text expansion on the space key.
 * **Dictionary packs**: five bundled word lists for technical vocabulary, installed and removed on your choice.
 
-It is not affiliated with the FlorisBoard project. The design goal is that nothing leaves the device: there is no
+It is not affiliated with or endorsed by the FlorisBoard project. The repository contains upstream's full Git history
+(the first commit is Patrick Goldinger's initial FlorisBoard commit from April 2020), so per-file authorship is
+preserved. The design goal is that nothing leaves the device: there is no
 analytics, no ads and no `INTERNET` permission.
 
 ## Features
@@ -142,6 +162,20 @@ No screenshots are included yet, because the app has not been run on a device.
 
 Privacy statement, item by item: [PRIVACY.md](PRIVACY.md).
 
+## Tech stack
+
+| Area | What is used |
+|---|---|
+| Language | Kotlin 2.3 (JVM target 11), with KSP and the Kotlin Compose and serialization plugins |
+| UI | Jetpack Compose (BOM 2025.12.01), `androidx.navigation`, AboutLibraries; settings via JetPref (`patrickgold-jetpref`) |
+| Keyboard theming | `:lib:snygg`, upstream's own styling engine, and `:lib:color` |
+| Storage and data | AndroidX Room (clipboard database), kotlinx-serialization JSON, JCE cryptography (AES-256-GCM) for the clipboard vault and encrypted backups |
+| Build | Gradle (wrapper 9.2.0), Android Gradle Plugin 8.12.3, version catalog in `gradle/libs.versions.toml`, dependency verification |
+| Tests | JUnit platform with kotest; logic is kept in pure Kotlin so it runs on the JVM |
+| CI | GitHub Actions (`.github/workflows/android.yml`, JDK 21) |
+
+Versions are taken from `gradle/libs.versions.toml` and `gradle.properties`.
+
 ## Build and install
 
 Requirements: JDK 21 (used by this repository's CI workflow and in local verification), and the Android SDK packages
@@ -160,13 +194,37 @@ To try it on a phone, install the debug APK with `adb install app/build/outputs/
 Victorious Keyboard in Android's *Language & input* settings and select it as the active keyboard. Nothing in this
 repository has been installed or run on a device.
 
+## Project structure
+
+```text
+app/                         The Android application (single module)
+  src/main/kotlin/dev/patrickgold/florisboard/
+    FlorisImeService.kt      The input method service
+    app/                     Settings and setup screens
+    ime/                     Keyboard features, one package each:
+      clipboard/             Clipboard history, encrypted vault, backup and restore
+      developer/, terminal/  Developer row, key mapping, Ctrl/Alt modifier state machine
+      mode/                  Operating modes (Standard, Developer, Termux)
+      snippets/              Snippet templates, library, expansion and picker
+      dictionary/            Dictionaries and dictionary packs
+      keyboard/, text/, ...  Inherited FlorisBoard typing engine
+  src/test/                  JVM unit tests
+lib/                         android, color, compose, kotlin, snygg (inherited helper libraries)
+dictionary-packs/            Sources of the five bundled word lists
+tools/, utils/               Pack builder and upstream utility scripts
+docs/                        Branding assets, developer-keyboard notes, upstream documents
+```
+
+The Kotlin namespace stays `dev.patrickgold.florisboard` on purpose, to keep upstream merges manageable; the product
+identity is the application ID and resources. New features follow the rule *pure-Kotlin core plus a thin Android
+shell*, described in [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Logo and launcher icons
 
 The logo is in [`docs/branding/logo.png`](docs/branding/logo.png). The launcher icons are generated from it by
 [`docs/branding/make_icons.py`](docs/branding/make_icons.py) (Pillow required), which writes the adaptive-icon
 foreground and monochrome layers for every density, plus a 512 px Play Store icon. Background colour: `#11151C`.
-The icon set follows the adaptive-icon structure of the reference set supplied with the request; none of that set's
-artwork is used here.
+The logo is 117 px, so the larger icon outputs are upscaled; see [docs/branding/README.md](docs/branding/README.md).
 
 ## Documentation
 
@@ -186,7 +244,27 @@ artwork is used here.
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | How to contribute |
 | [LICENSES.md](LICENSES.md) · [docs/upstream/](docs/upstream/) | Licences and attribution; upstream's documents, kept verbatim |
 
+## Contributing
+
+Issues and pull requests are welcome. This is a security-sensitive app, so correctness and honesty about what was tested
+matter more than speed. Read [CONTRIBUTING.md](CONTRIBUTING.md) first; the short version:
+
+* One logical change per pull request, with the build green (`./gradlew assembleDebug testDebugUnitTest`).
+* Put logic in pure Kotlin and unit-test it, including failure paths.
+* Never log or transmit typed text, clipboard contents or snippets.
+* Say in the PR what you tested and what you could not (for example, no device).
+
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
+
 ## Licence
 
-Victorious Keyboard is licensed under the Apache License 2.0. See [LICENSE](LICENSE) and [LICENSES.md](LICENSES.md).
-Upstream copyright notices are preserved. The app is derived from FlorisBoard, and the About screen credits it.
+Victorious Keyboard is licensed under the [Apache License 2.0](LICENSE); see also [LICENSES.md](LICENSES.md).
+Upstream copyright notices are preserved, and the app's About screen credits FlorisBoard.
+
+## Acknowledgements
+
+* **[FlorisBoard](https://github.com/florisboard/florisboard)** by Patrick Goldinger and The FlorisBoard Contributors
+  (Apache-2.0). This project is built on its `v0.6.0-alpha02` release (commit `0ea0481c`). The typing engine, layouts,
+  themes, Snygg styling engine and settings framework are theirs. The FlorisBoard name and icon belong to upstream.
+* The authors of the libraries listed in [LICENSES.md](LICENSES.md) and in the app's About screen, including AndroidX,
+  Jetpack Compose, Kotlin, kotest and JetPref.

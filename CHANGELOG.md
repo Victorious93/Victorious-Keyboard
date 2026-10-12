@@ -15,6 +15,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Phase 5 core (pure Kotlin, tested): snippet template language (`{{date}} {{time}} {{clipboard}} {{selection}}
+  {{cursor}}`, inert by design), opt-in expansion rules, snippet library, versioned JSON import/export, atomic file
+  store with safety copies. Not wired into the keyboard; no UI. See `SNIPPETS.md`.
 - Developer row (Settings → Keyboard → Developer mode, off by default): Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn plus
   per-language symbol rows, sticky/locked Ctrl and Alt with an indicator, arrow key repeat, Ctrl/Alt on the keyboard's
   arrow keys. Compiled and logic-tested; never rendered on a device.

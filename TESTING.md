@@ -4,7 +4,7 @@
 
 | Layer | Tooling | Status |
 |---|---|---|
-| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 406 tests, 0 failures, 0 errors, 0 skipped (`:app` 300 + `:lib:snygg` 106; counted from `**/build/test-results/testDebugUnitTest/TEST-*.xml`). 176 were measured on the unmodified baseline (`AUDIT.md` §6), so 230 are ours: clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49) |
+| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 461 tests, 0 failures, 0 errors, 0 skipped (`:app` 355 + `:lib:snygg` 106; counted from `**/build/test-results/testDebugUnitTest/TEST-*.xml`). 176 were measured on the unmodified baseline (`AUDIT.md` §6), so 285 are ours: clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55) |
 | Compile / package | `./gradlew assembleDebug` | **Run**, success |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
 | Lint | `./gradlew lintDebug` | **Run, fails on pre-existing upstream code** (52 errors, none in new code at time of writing; `AUDIT.md` §8). Not yet a CI gate |

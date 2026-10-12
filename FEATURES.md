@@ -48,7 +48,9 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |
 | Bracket pairing as automatic behaviour, indentation helpers | ⬜ (pair *keys* exist as models; nothing auto-closes) |
 | Termux / SSH / vim / tmux behaviour | ⬜ **device-test only; not verified** |
-| Command library, snippets, text expansion | ⬜ Phase 5
+| Snippet template language, opt-in expansion rules, library, JSON import/export, safe file store | ✅ pure core, JVM-tested (`SNIPPETS.md`) |
+| Snippet panel/editor UI, expansion in the keyboard, settings, encrypted export | ⬜ |
+| Command library | ⬜
 
 ## Prediction and voice (Phase 6)
 
@@ -68,7 +70,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 406 JVM unit tests pass | ✅ (`TESTING.md`) |
+| Debug APK builds; 461 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ written; **never run** (needs GitHub Actions) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

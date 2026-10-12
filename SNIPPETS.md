@@ -1,7 +1,23 @@
 # Snippets and text expansion (Phase 5)
 
-Status: **pure-Kotlin core implemented and JVM-tested. Not wired into the keyboard, no UI, no persistence hook in the
-app, never run on a device.** Nothing in this document is user-visible yet.
+Status: **pure-Kotlin core JVM-tested; Android shell (store, expansion on the space key, settings screen with
+import/export) compiled but never run or rendered on a device.** Expansion is off by default.
+
+## Using it (as built, unverified on a device)
+
+* Settings → Keyboard → Developer mode → **Snippets**: add, edit, delete, search, import and export. Snippets live in
+  `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at app start.
+* Same group: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\` `;;` `::`),
+  **Case-sensitive abbreviations**.
+* With expansion on, typing `;sig` and then **space** replaces `;sig` with the rendered snippet and keeps the space,
+  unless the snippet contains `{{cursor}}`: then the space is consumed and the caret is placed at `{{cursor}}`.
+* Never in password-like fields, never while text is selected, and a rendering that is too large (> 20 000 characters)
+  is not inserted (the typed text is left as it is).
+* `{{date}}`, `{{time}}` and `{{datetime}}` follow the date and time format chosen in Advanced developer settings; an
+  explicit pattern such as `{{date:yyyy}}` always wins. A pattern that cannot be used is inserted as the text you wrote.
+* "Keep the typed space after expanding" (default on) can be switched off.
+* `{{clipboard}}` uses the current clipboard text only if it is plain text; `{{selection}}` is always empty in
+  expansion (there is no snippet picker yet that could supply a selection).
 
 ## What exists (`dev.patrickgold.florisboard.ime.snippets`)
 
@@ -61,8 +77,10 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 
 ## Not done
 
-* Android shell: app-level store/manager (`noBackupFilesDir`), the expansion hook in the text-commit path, a snippet
-  panel/editor UI, settings (enable expansion, prefix, case), insertion with the caret placed from `{{cursor}}`.
-* Per-mode defaults (no expansion in terminal mode unless chosen), snippet variables beyond the six above, folders.
+* A way to insert a snippet from the keyboard itself (a picker/panel): today snippets only insert by abbreviation.
+  `{{selection}}` needs that picker.
+* Expansion on Enter or Tab (only the space key is hooked; the core supports more boundaries).
+* Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode).
+* Further per-mode defaults, snippet variables beyond the six above, folders.
 * Encrypted export. Translations.
 * Device validation of any of it (expansion timing against the IME's own composing text is the main unknown).

@@ -5,7 +5,7 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, not wired; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run.**
+**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store/expansion/settings screen) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run.**
 Status table: `ROADMAP.md`. Update it with every phase. Phase 4 details/limits: `TERMINAL.md`.
 
 ## Verified environment
@@ -57,7 +57,7 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 
 ## Next milestone
 Needs a device first: validate Phase 3 and the Phase 4 wiring on hardware (checklist in `TESTING.md`). Without a
-device the next work is the Phase 5 Android shell (store under `noBackupFilesDir`, expansion hook, panel UI; see `SNIPPETS.md`).
+device the next work is the in-keyboard snippet picker and then Termux integration (verify the current `RUN_COMMAND` contract from Termux's documentation first); see `SNIPPETS.md`, `docs/ARCHITECTURE_ASSESSMENT.md`.
 
 Gotcha: run the whole unit-test suite; kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
 

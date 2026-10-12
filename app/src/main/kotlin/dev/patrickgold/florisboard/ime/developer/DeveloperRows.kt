@@ -61,11 +61,16 @@ object DeveloperRows {
     private fun pair(open: String, close: String, desc: String) = DevKey(open + close, DevKeyAction.Insert(open + close, close.length), desc)
     private fun special(label: String, key: SpecialKey, desc: String = label) = DevKey(label, DevKeyAction.Special(key), desc)
 
-    val terminalRow: List<DevKey> = listOf(
+    /** Esc, Tab, Ctrl, Alt. */
+    val modifierRow: List<DevKey> = listOf(
         special("Esc", SpecialKey.ESCAPE, "Escape"),
         special("Tab", SpecialKey.TAB),
         DevKey("Ctrl", DevKeyAction.Modifier(TerminalModifier.CTRL), "Control (tap: next key, double tap: lock)"),
         DevKey("Alt", DevKeyAction.Modifier(TerminalModifier.ALT), "Alt (tap: next key, double tap: lock)"),
+    )
+
+    /** Arrows, Home, End, PgUp, PgDn. */
+    val navigationRow: List<DevKey> = listOf(
         special("←", SpecialKey.LEFT, "Left"),
         special("↓", SpecialKey.DOWN, "Down"),
         special("↑", SpecialKey.UP, "Up"),
@@ -75,6 +80,9 @@ object DeveloperRows {
         special("PgUp", SpecialKey.PAGE_UP, "Page up"),
         special("PgDn", SpecialKey.PAGE_DOWN, "Page down"),
     )
+
+    /** Both groups, in the original order. */
+    val terminalRow: List<DevKey> = modifierRow + navigationRow
 
     fun symbolRow(profile: LanguageProfile): List<DevKey> = when (profile) {
         LanguageProfile.SHELL -> listOf(
@@ -115,5 +123,54 @@ object DeveloperRows {
 
     /** The full row as shown: terminal keys first (if enabled), then the profile's symbols. */
     fun row(profile: LanguageProfile, includeTerminalKeys: Boolean): List<DevKey> =
-        (if (includeTerminalKeys) terminalRow else emptyList()) + symbolRow(profile)
+        row(profile, RowOptions(terminalKeys = includeTerminalKeys, navigationKeys = includeTerminalKeys))
+
+    /**
+     * The row for [options]: Esc/Tab/Ctrl/Alt, then the navigation keys, then symbols. Custom keys are appended to the
+     * profile's symbols, or replace them when [CustomSymbolsMode.REPLACE] is chosen and there is at least one custom key
+     * (an empty custom list never blanks the row by accident).
+     */
+    fun row(profile: LanguageProfile, options: RowOptions): List<DevKey> {
+        val symbols = if (options.customMode == CustomSymbolsMode.REPLACE && options.custom.isNotEmpty()) {
+            options.custom
+        } else {
+            (if (options.symbols) symbolRow(profile) else emptyList()) + options.custom
+        }
+        return (if (options.terminalKeys) modifierRow else emptyList()) +
+            (if (options.navigationKeys) navigationRow else emptyList()) + symbols
+    }
+}
+
+enum class CustomSymbolsMode { APPEND, REPLACE }
+
+data class RowOptions(
+    val terminalKeys: Boolean = true,
+    val navigationKeys: Boolean = true,
+    val symbols: Boolean = true,
+    val custom: List<DevKey> = emptyList(),
+    val customMode: CustomSymbolsMode = CustomSymbolsMode.APPEND,
+)
+
+/** Persisted by name: only add at the end. */
+enum class DevRowSize(val label: String, val scale: Float) {
+    COMPACT("Compact", 0.8f),
+    NORMAL("Normal", 1.0f),
+    LARGE("Large", 1.25f),
+}
+
+/** Bounds and defaults for the developer row's timing settings (also used to clamp stored values). */
+object DeveloperRowTiming {
+    const val HOLD_DEFAULT = 350
+    const val HOLD_MIN = 150
+    const val HOLD_MAX = 800
+    const val REPEAT_DEFAULT = 60
+    const val REPEAT_MIN = 20
+    const val REPEAT_MAX = 200
+    const val LOCK_WINDOW_DEFAULT = 400
+    const val LOCK_WINDOW_MIN = 200
+    const val LOCK_WINDOW_MAX = 800
+
+    fun hold(v: Int): Long = v.coerceIn(HOLD_MIN, HOLD_MAX).toLong()
+    fun repeat(v: Int): Long = v.coerceIn(REPEAT_MIN, REPEAT_MAX).toLong()
+    fun lockWindow(v: Int): Long = v.coerceIn(LOCK_WINDOW_MIN, LOCK_WINDOW_MAX).toLong()
 }

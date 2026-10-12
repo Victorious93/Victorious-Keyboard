@@ -23,6 +23,7 @@ import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
 import dev.patrickgold.florisboard.ime.landscapeinput.LandscapeInputUiMode
@@ -126,6 +127,32 @@ fun KeyboardScreen() = FlorisScreen {
                 title = stringRes(R.string.pref__devrow__profile__label),
                 entries = enumDisplayEntriesOf(LanguageProfile::class),
                 visibleIf = { prefs.devrow.enabled isEqualTo true },
+            )
+            Preference(
+                title = stringRes(R.string.devadv__title),
+                summary = stringRes(R.string.devadv__link_summary),
+                onClick = { navController.navigate(Routes.Settings.AdvancedDeveloper) },
+            )
+            Preference(
+                title = stringRes(R.string.snippets__title),
+                summary = stringRes(R.string.snippets__link_summary),
+                onClick = { navController.navigate(Routes.Settings.Snippets) },
+            )
+            SwitchPreference(
+                prefs.snippets.expansionEnabled,
+                title = stringRes(R.string.pref__snippets__expansion__label),
+                summary = stringRes(R.string.pref__snippets__expansion__summary),
+            )
+            ListPreference(
+                prefs.snippets.prefix,
+                title = stringRes(R.string.pref__snippets__prefix__label),
+                entries = enumDisplayEntriesOf(SnippetPrefix::class),
+                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.snippets.caseSensitive,
+                title = stringRes(R.string.pref__snippets__case_sensitive__label),
+                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
             )
             SwitchPreference(
                 prefs.devrow.terminalKeys,

@@ -51,10 +51,22 @@ enum class OperatingMode(val displayName: String, val availability: ModeAvailabi
 }
 
 /** The user's developer-row preferences, as stored. */
-data class DeveloperRowPrefs(val enabled: Boolean, val profile: LanguageProfile, val terminalKeys: Boolean)
+data class DeveloperRowPrefs(
+    val enabled: Boolean,
+    val profile: LanguageProfile,
+    val terminalKeys: Boolean,
+    val navigationKeys: Boolean = true,
+    val symbols: Boolean = true,
+)
 
 /** What the developer row should actually do right now. */
-data class EffectiveDeveloperRow(val visible: Boolean, val profile: LanguageProfile, val terminalKeys: Boolean)
+data class EffectiveDeveloperRow(
+    val visible: Boolean,
+    val profile: LanguageProfile,
+    val terminalKeys: Boolean,
+    val navigationKeys: Boolean = true,
+    val symbols: Boolean = true,
+)
 
 object ModePresets {
     /**
@@ -64,9 +76,10 @@ object ModePresets {
      * * Planned modes behave like STANDARD.
      */
     fun developerRow(mode: OperatingMode, prefs: DeveloperRowPrefs): EffectiveDeveloperRow = when (OperatingMode.sanitize(mode)) {
-        OperatingMode.DEVELOPER -> EffectiveDeveloperRow(true, prefs.profile, prefs.terminalKeys)
-        OperatingMode.TERMUX -> EffectiveDeveloperRow(true, LanguageProfile.SHELL, true)
-        else -> EffectiveDeveloperRow(prefs.enabled, prefs.profile, prefs.terminalKeys)
+        OperatingMode.DEVELOPER ->
+            EffectiveDeveloperRow(true, prefs.profile, prefs.terminalKeys, prefs.navigationKeys, prefs.symbols)
+        OperatingMode.TERMUX -> EffectiveDeveloperRow(true, LanguageProfile.SHELL, true, true, true)
+        else -> EffectiveDeveloperRow(prefs.enabled, prefs.profile, prefs.terminalKeys, prefs.navigationKeys, prefs.symbols)
     }
 }
 

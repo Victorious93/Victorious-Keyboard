@@ -37,6 +37,8 @@ elements, so existing themes style it.
   (`()`, `{}`, `""`, …) insert both halves and move the cursor between them.
 * Ctrl/Alt now also apply to the keyboard's own arrow and line-start/line-end keys.
 * The row is hidden while the Smartbar's actions overflow panel is open.
+* Advanced developer settings add: row size, separate navigation-key and symbol toggles, your own symbol keys, hold and
+  repeat timing, the Ctrl/Alt lock window and vibration (`docs/DEVELOPER_KEYBOARD.md`).
 
 | Piece | Where |
 |---|---|

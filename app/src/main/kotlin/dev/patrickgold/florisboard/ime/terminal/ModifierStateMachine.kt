@@ -60,7 +60,10 @@ data class ModifierSnapshot(
  *
  * Time is passed in, never read, so behaviour is deterministic. Every public call is atomic (guarded by one lock) because key events and "field changed" resets arrive on different threads; a *sequence* of calls is not.
  */
-class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
+class ModifierStateMachine(doubleTapWindowMs: Long = 400L) {
+    /** How quickly a second tap must follow the first to lock. Adjustable at runtime (a setting). */
+    @Volatile
+    var doubleTapWindowMs: Long = doubleTapWindowMs
     private class Slot {
         var mode = ModifierMode.OFF
         var held = false

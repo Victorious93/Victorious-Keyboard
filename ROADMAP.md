@@ -9,11 +9,11 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 473 JVM tests (297 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 512 JVM tests (336 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
-| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested (templates, expansion rules, library, import/export, safe file store); shell/UI ⬜ (see `SNIPPETS.md`) |
+| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space, settings screen, import/export) 🟦 compiled, **never run**; no in-keyboard picker (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | ⬜ |
 | 7 | AI workspace | ⬜ |
 | 8 | Themes and responsive UI | ⬜ |
@@ -82,7 +82,7 @@ Done and JVM-tested: key+modifier → `KeyEvent` mapper (US-layout table, consta
 Compiled but **never run**: `KeyboardManager` handling of Ctrl/Alt/Esc/Tab key codes and the key-event path for typed
 characters.
 
-Also compiled, never run: developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
+Also compiled, never run: Advanced developer settings screen, developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
 keyboard's arrow keys.
 
 Open: seeing the row on a real screen (sizing, window height, theming, scroll-vs-tap), all Termux/SSH behaviour on a
@@ -94,13 +94,14 @@ Done and JVM-tested: template language and renderer, expansion matcher (opt-in, 
 recursion), snippet library with validation and unique abbreviations, versioned JSON import/export with a
 non-destructive importer, atomic file store with `.bak`/`.corrupt` safety copies. Details and limits: `SNIPPETS.md`.
 
-Open: Android shell (store under `noBackupFilesDir`, expansion hook, panel/editor UI, settings), per-mode defaults,
-encrypted export, device validation.
+Android shell compiled, never run: `SnippetManager` (store under `noBackupFilesDir`), expansion on the space key, Snippets settings
+screen with import/export. Open: in-keyboard snippet picker, expansion on Enter/Tab, per-mode defaults, encrypted export,
+device validation.
 
 ## Mapping to the "VictorKeys master brief"
 
-A longer brief (repository `Victorious93/VictorKeys`, a separate public fork not part of this repository or session)
-uses different phase numbers. Where its topics land in this repository's plan:
+A longer brief (written for "VictorKeys"; the owner confirmed Victorious Keyboard is the correct project) uses different
+phase numbers. Where its topics land in this repository's plan:
 
 | Master brief phase | Here |
 |---|---|
@@ -111,5 +112,5 @@ uses different phase numbers. Where its topics land in this repository's plan:
 | 9 Clipboard and workflows | clipboard = Phase 3 (done, unrun); workflows not started |
 | 10 Knowledge / token efficiency, 11 UI, 12–14 tests, docs, CI | partly covered by existing docs/CI; the rest not started |
 
-Nothing from the brief beyond what is listed in `FEATURES.md` exists in this repository. Which repository the brief
-should be applied to is an open question for the owner.
+Nothing from the brief beyond what is listed in `FEATURES.md` exists in this repository. The owner confirmed that this
+repository (Victorious Keyboard) is the target; the "VictorKeys" name in the brief is not a rename.

@@ -41,8 +41,14 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
+import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
+import dev.patrickgold.florisboard.ime.developer.DevRowSize
+import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
+import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
+import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickAction
@@ -302,6 +308,38 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
     }
 
+    val snippets = Snippets()
+    inner class Snippets {
+        val expansionEnabled = boolean(
+            key = "snippets__expansion_enabled",
+            default = false,
+        )
+        val prefix = enum(
+            key = "snippets__prefix",
+            default = SnippetPrefix.SEMICOLON,
+        )
+        val caseSensitive = boolean(
+            key = "snippets__case_sensitive",
+            default = true,
+        )
+        val expandInTerminalMode = boolean(
+            key = "snippets__expand_in_terminal_mode",
+            default = false,
+        )
+        val keepSpace = boolean(
+            key = "snippets__keep_space",
+            default = true,
+        )
+        val dateFormat = enum(
+            key = "snippets__date_format",
+            default = SnippetDateFormat.ISO,
+        )
+        val timeFormat = enum(
+            key = "snippets__time_format",
+            default = SnippetTimeFormat.H24,
+        )
+    }
+
     val modes = Modes()
     inner class Modes {
         val defaultMode = enum(
@@ -311,6 +349,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val autoDetect = boolean(
             key = "modes__auto_detect",
             default = false,
+        )
+        val appOverrides = string(
+            key = "modes__app_overrides",
+            default = "",
         )
     }
 
@@ -326,6 +368,42 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val terminalKeys = boolean(
             key = "devrow__terminal_keys",
+            default = true,
+        )
+        val navigationKeys = boolean(
+            key = "devrow__navigation_keys",
+            default = true,
+        )
+        val symbols = boolean(
+            key = "devrow__symbols",
+            default = true,
+        )
+        val size = enum(
+            key = "devrow__size",
+            default = DevRowSize.NORMAL,
+        )
+        val customSymbols = string(
+            key = "devrow__custom_symbols",
+            default = "",
+        )
+        val customSymbolsMode = enum(
+            key = "devrow__custom_symbols_mode",
+            default = CustomSymbolsMode.APPEND,
+        )
+        val holdDelayMs = int(
+            key = "devrow__hold_delay_ms",
+            default = DeveloperRowTiming.HOLD_DEFAULT,
+        )
+        val repeatIntervalMs = int(
+            key = "devrow__repeat_interval_ms",
+            default = DeveloperRowTiming.REPEAT_DEFAULT,
+        )
+        val lockWindowMs = int(
+            key = "devrow__lock_window_ms",
+            default = DeveloperRowTiming.LOCK_WINDOW_DEFAULT,
+        )
+        val haptics = boolean(
+            key = "devrow__haptics",
             default = true,
         )
     }

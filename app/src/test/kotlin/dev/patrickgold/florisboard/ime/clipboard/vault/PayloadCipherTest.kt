@@ -65,13 +65,35 @@ class PayloadCipherTest : FunSpec({
         shouldThrow<VaultDecryptionException> { other.decrypt(cipher.encrypt("text", "c"), "c") }
     }
 
-    test("flipping any character of the stored value is detected") {
-        val stored = cipher.encrypt("tamper me", "c")
-        for (i in PayloadCipher.PREFIX.length until stored.length) {
-            val ch = stored[i]
-            val flipped = if (ch == 'A') 'B' else 'A'
-            val bad = stored.substring(0, i) + flipped + stored.substring(i + 1)
-            shouldThrow<VaultDecryptionException> { cipher.decrypt(bad, "c") }
+    test("changing any character of the stored value is detected (many random values, several replacements)") {
+        repeat(50) { round ->
+            val stored = cipher.encrypt("tamper me $round", "c")
+            for (i in PayloadCipher.PREFIX.length until stored.length) {
+                for (replacement in "AB-_0z") {
+                    if (replacement == stored[i]) continue
+                    val bad = stored.substring(0, i) + replacement + stored.substring(i + 1)
+                    shouldThrow<VaultDecryptionException> { cipher.decrypt(bad, "c") }
+                }
+            }
+        }
+    }
+
+    test("non-canonical base64 (same bytes, different last character) is rejected") {
+        val alphabet = ('A'..'Z') + ('a'..'z') + ('0'..'9') + listOf('-', '_')
+        repeat(20) { round ->
+            val stored = cipher.encrypt("canonical $round", "c")
+            var accepted = 0
+            for (c in alphabet) {
+                try { cipher.decrypt(stored.dropLast(1) + c, "c"); accepted++ } catch (_: VaultDecryptionException) {}
+            }
+            accepted shouldBe 1 // only the original encoding
+        }
+    }
+
+    test("trailing padding or whitespace is rejected") {
+        val stored = cipher.encrypt("x", "c")
+        for (suffix in listOf("=", "==", "\n", " ")) {
+            shouldThrow<VaultDecryptionException> { cipher.decrypt(stored + suffix, "c") }
         }
     }
 

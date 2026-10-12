@@ -102,6 +102,13 @@ object SnippetTemplate {
 
     fun unknownPlaceholders(body: String): List<String> = parse(body).unknown.distinct()
 
+    /**
+     * Whether [body] really contains the placeholder [name] (`clipboard`, `selection`, ...), so the shell reads the
+     * clipboard or the selection only when a snippet uses it. An escaped `\{{selection}}` is literal text and does not count.
+     */
+    fun usesPlaceholder(body: String, name: String): Boolean =
+        parse(body).parts.any { it is Part.Value && it.name == name }
+
     fun render(body: String, ctx: TemplateContext): RenderResult {
         val out = StringBuilder()
         var cursorAt = -1

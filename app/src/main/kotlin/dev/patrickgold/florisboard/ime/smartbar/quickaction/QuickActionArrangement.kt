@@ -64,6 +64,14 @@ data class QuickActionArrangement(
         )
     }
 
+    /**
+     * Appends [action] to the dynamic (overflow-reachable) actions unless it is already anywhere in the arrangement
+     * (sticky, dynamic or hidden), so an action the user hid or moved stays where they put it. Idempotent: applying it
+     * twice equals applying it once, which the preference migration relies on (it runs on every load).
+     */
+    fun withActionIfAbsent(action: QuickAction): QuickActionArrangement =
+        if (contains(action)) this else copy(dynamicActions = dynamicActions + action)
+
     companion object {
         val Default = QuickActionArrangement(
             stickyAction = QuickAction.InsertKey(TextKeyData.VOICE_INPUT),
@@ -74,6 +82,7 @@ data class QuickActionArrangement(
                 QuickAction.InsertKey(TextKeyData.TOGGLE_FLOATING_WINDOW),
                 QuickAction.InsertKey(TextKeyData.TOGGLE_RESIZE_MODE),
                 QuickAction.InsertKey(TextKeyData.IME_UI_MODE_CLIPBOARD),
+                QuickAction.InsertKey(TextKeyData.IME_UI_MODE_SNIPPETS),
                 QuickAction.InsertKey(TextKeyData.IME_UI_MODE_MEDIA),
                 QuickAction.InsertKey(TextKeyData.TOGGLE_COMPACT_LAYOUT),
                 QuickAction.InsertKey(TextKeyData.TOGGLE_AUTOCORRECT),

@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.smartbar.quickaction
 
+import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.withData
@@ -163,6 +164,51 @@ class QuickActionArrangementTest : FunSpec({
             ),
         ) { (beforeDistinct, afterDistinct) ->
             beforeDistinct.distinct() shouldBe afterDistinct
+        }
+    }
+    context("snippet picker action (Victorious Keyboard)") {
+        val snippets = QuickAction.InsertKey(TextKeyData.IME_UI_MODE_SNIPPETS)
+        val old = QuickActionArrangement(
+            stickyAction = QuickAction.InsertKey(TextKeyData.VOICE_INPUT),
+            dynamicActions = listOf(QuickAction.InsertKey(TextKeyData.UNDO)),
+            hiddenActions = listOf(QuickAction.InsertKey(TextKeyData.REDO)),
+        )
+
+        test("the default arrangement offers it, exactly once") {
+            QuickActionArrangement.Default.contains(snippets) shouldBe true
+            QuickActionArrangement.Default.dynamicActions.count { it == snippets } shouldBe 1
+            QuickActionArrangement.Default.distinct() shouldBe QuickActionArrangement.Default
+        }
+        test("its key data is distinct from the clipboard action's and keeps the stored code") {
+            TextKeyData.IME_UI_MODE_SNIPPETS.code shouldBe KeyCode.IME_UI_MODE_SNIPPETS
+            TextKeyData.IME_UI_MODE_SNIPPETS.label shouldBe "ime_ui_mode_snippets"
+            (TextKeyData.IME_UI_MODE_SNIPPETS.label == TextKeyData.IME_UI_MODE_CLIPBOARD.label) shouldBe false
+            (KeyCode.IME_UI_MODE_SNIPPETS == KeyCode.IME_UI_MODE_CLIPBOARD) shouldBe false
+            // Stored in users' quick-action preference: this number must never change.
+            KeyCode.IME_UI_MODE_SNIPPETS shouldBe -214
+        }
+        test("an existing arrangement gets it appended to the dynamic actions, nothing else moves") {
+            val migrated = old.withActionIfAbsent(snippets)
+            migrated.dynamicActions shouldBe old.dynamicActions + snippets
+            migrated.stickyAction shouldBe old.stickyAction
+            migrated.hiddenActions shouldBe old.hiddenActions
+        }
+        test("migrating twice changes nothing more (it runs on every preference load)") {
+            val once = old.withActionIfAbsent(snippets)
+            once.withActionIfAbsent(snippets) shouldBe once
+        }
+        test("a user who hid it keeps it hidden") {
+            val hidden = old.copy(hiddenActions = old.hiddenActions + snippets)
+            hidden.withActionIfAbsent(snippets) shouldBe hidden
+        }
+        test("a user who made it sticky keeps it sticky") {
+            val sticky = old.copy(stickyAction = snippets)
+            sticky.withActionIfAbsent(snippets) shouldBe sticky
+        }
+        test("it survives the JSON round trip used by the preference") {
+            val arrangement = old.withActionIfAbsent(snippets)
+            val json = QuickActionJsonConfig.encodeToString(arrangement)
+            QuickActionJsonConfig.decodeFromString<QuickActionArrangement>(json) shouldBe arrangement
         }
     }
 })

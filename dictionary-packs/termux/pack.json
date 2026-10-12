@@ -1,0 +1,7 @@
+{
+  "format": "victorious-dictionary-pack",
+  "version": 1,
+  "id": "termux",
+  "title": "Termux and shell commands",
+  "description": "Command names for Termux on Android: pkg and its subcommands, the termux-* helpers, Termux:API commands and common shell/developer tools. Names only."
+}

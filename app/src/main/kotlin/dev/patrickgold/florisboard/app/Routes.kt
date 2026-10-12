@@ -62,6 +62,7 @@ import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardManagerScreen
 import dev.patrickgold.florisboard.app.settings.keyboard.AdvancedDeveloperScreen
 import dev.patrickgold.florisboard.app.settings.snippets.SnippetsScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardScreen
+import dev.patrickgold.florisboard.app.settings.dictionary.DictionaryPacksScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.DictionaryScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.UserDictionaryScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.UserDictionaryType
@@ -163,6 +164,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/dictionary/user-dictionary")
         data class UserDictionary(val type: UserDictionaryType)
+
+        @Serializable
+        @Deeplink("settings/dictionary/packs")
+        object DictionaryPacks
 
         @Serializable
         @Deeplink("settings/gestures")
@@ -323,6 +328,7 @@ object Routes {
             composableWithDeepLink(Settings.Typing::class) { TypingScreen() }
 
             composableWithDeepLink(Settings.Dictionary::class) { DictionaryScreen() }
+            composableWithDeepLink(Settings.DictionaryPacks::class) { DictionaryPacksScreen() }
             composableWithDeepLink(Settings.UserDictionary::class) { navBackStack ->
                 val payload = navBackStack.toRoute<Settings.UserDictionary>()
                 UserDictionaryScreen(payload.type)

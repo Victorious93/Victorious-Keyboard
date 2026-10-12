@@ -1,0 +1,7 @@
+{
+  "format": "victorious-dictionary-pack",
+  "version": 1,
+  "id": "kali-tools",
+  "title": "Kali Linux tools",
+  "description": "Command names of common tools in the Kali Linux repositories (network, web, password, wireless, forensics, reverse engineering). Names only, no options."
+}

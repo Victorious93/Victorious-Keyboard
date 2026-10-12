@@ -77,6 +77,8 @@
     <string name="quick_action__forward_delete" comment="Please mind the limited available space for the quick action strings">Forward delete</string>
     <string name="quick_action__ime_ui_mode_clipboard" comment="Please mind the limited available space for the quick action strings">Clipboard</string>
     <string name="quick_action__ime_ui_mode_clipboard__tooltip">Open clipboard history</string>
+    <string name="quick_action__ime_ui_mode_snippets" comment="Please mind the limited available space for the quick action strings">Snippets</string>
+    <string name="quick_action__ime_ui_mode_snippets__tooltip">Open snippet picker</string>
     <string name="quick_action__ime_ui_mode_media" comment="Please mind the limited available space for the quick action strings">Emoji</string>
     <string name="quick_action__ime_ui_mode_media__tooltip">Open emoji panel</string>
     <string name="quick_action__language_switch" comment="Please mind the limited available space for the quick action strings">Switch language</string>
@@ -504,6 +506,21 @@
     <string name="pref__spelling__use_udm_entries__label" comment="Label of Use user dictionary entries pref">Use user dictionary entries</string>
     <string name="pref__spelling__use_udm_entries__summary" comment="Summary of Use user dictionary entries pref">Look up entries from the user dictionaries</string>
 
+    <string name="settings__dictionary_packs__title" comment="Screen title and settings entry">Dictionary packs</string>
+    <string name="settings__dictionary_packs__entry_summary" comment="Summary of the settings entry">Ready-made word lists: Kali tools, NetHunter, AI terms, slash commands, Termux</string>
+    <string name="settings__dictionary_packs__note_title" comment="Heading of the explanation at the top of the screen">What packs do</string>
+    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages. Today they stop the system spell checker from flagging these words in apps that use it. Word suggestions while typing do not exist in this keyboard yet. Lists were written from memory and not checked against current releases.</string>
+    <string name="settings__dictionary_packs__import" comment="Preference title">Open a pack file</string>
+    <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device</string>
+    <string name="settings__dictionary_packs__install" comment="Dialog button">Add words</string>
+    <string name="settings__dictionary_packs__remove" comment="Dialog button">Remove</string>
+    <string name="settings__dictionary_packs__install_hint" comment="Dialog text">Words you already have are left exactly as they are. Nothing is overwritten.</string>
+    <string name="settings__dictionary_packs__remove_confirm" comment="Dialog text">Removes only words that are still exactly as this pack added them (same frequency, all languages, no shortcut). Words you changed or added yourself stay.</string>
+    <string name="settings__dictionary_packs__added" comment="Toast, followed by a number">Words added:</string>
+    <string name="settings__dictionary_packs__removed" comment="Toast, followed by a number">Words removed:</string>
+    <string name="settings__dictionary_packs__unavailable" comment="Toast">Turn on the internal user dictionary first</string>
+    <string name="settings__dictionary_packs__failed" comment="Toast">Could not change the dictionary</string>
+    <string name="settings__dictionary_packs__invalid_file" comment="Toast">This is not a valid dictionary pack</string>
     <string name="settings__dictionary__title" comment="Title of the User dictionaries screen">User dictionaries</string>
     <string name="pref__dictionary__enable_system_user_dictionary__label" comment="Preference title">Enable system user dictionary</string>
     <string name="pref__dictionary__enable_system_user_dictionary__summary" comment="Preference summary">Suggest words stored in the system user dictionary</string>
@@ -612,6 +629,17 @@
     <string name="devrow__alt_armed" comment="Accessibility description">Alt, applies to the next key</string>
     <string name="snippets__title" comment="Screen title and settings entry">Snippets</string>
     <string name="snippets__link_summary" comment="Settings entry summary">Reusable text with placeholders, optionally expanded as you type</string>
+    <string name="snippets__picker_empty_title" comment="Snippet picker in the keyboard, shown when there is nothing to pick">No snippets to show</string>
+    <string name="snippets__picker_empty_message" comment="Snippet picker in the keyboard">Add or enable snippets in Settings → Keyboard → Developer mode → Snippets.</string>
+    <string name="snippets__picker_locked_title" comment="Snippet picker in the keyboard, device locked">Locked</string>
+    <string name="snippets__picker_locked_message" comment="Snippet picker in the keyboard, device locked">Unlock your device to use snippets.</string>
+    <string name="snippets__picker_unreadable_title" comment="Snippet picker in the keyboard, stored snippets file is damaged">Snippets could not be read</string>
+    <string name="snippets__picker_unreadable_message" comment="Snippet picker in the keyboard">The stored file was left untouched. Open Settings → Keyboard → Developer mode → Snippets to restore or import.</string>
+    <string name="snippets__picker_insert" comment="Accessibility label of a snippet row in the keyboard picker">Insert snippet</string>
+    <string name="snippets__picker_backspace" comment="Accessibility label of the backspace button in the snippet picker">Backspace</string>
+    <string name="snippets__picker_too_large" comment="Toast after tapping a snippet in the picker">This snippet is too large to insert</string>
+    <string name="snippets__picker_nothing" comment="Toast after tapping a snippet in the picker">Nothing to insert: this snippet is empty right now</string>
+    <string name="snippets__picker_failed" comment="Toast after tapping a snippet in the picker">Could not insert the snippet</string>
     <string name="snippets__empty" comment="Empty list message">No snippets yet. Add one, or import a file.</string>
     <string name="snippets__search" comment="Search field label">Search snippets</string>
     <string name="snippets__add" comment="Button">Add</string>
@@ -640,7 +668,7 @@
     <string name="snippets__field_body" comment="Field label">Text</string>
     <string name="snippets__field_tags" comment="Field label">Tags (comma separated)</string>
     <string name="snippets__field_enabled" comment="Switch label">Enabled</string>
-    <string name="snippets__placeholder_help" comment="Help under the text field">Placeholders: {{date}}, {{time}}, {{datetime}}, {{clipboard}}, {{cursor}}. Write \\{{ for a literal {{. Nothing is ever executed.</string>
+    <string name="snippets__placeholder_help" comment="Help under the text field">Placeholders: {{date}}, {{time}}, {{datetime}}, {{clipboard}}, {{cursor}}, and {{selection}} (only when you insert the snippet from the keyboard\'s Snippets panel). Write \\{{ for a literal {{. Nothing is ever executed.</string>
     <string name="snippets__unknown_placeholders" comment="Warning">Not recognised, will be inserted as plain text:</string>
     <string name="snippets__error_invalid" comment="Error">The snippet is not valid.</string>
     <string name="snippets__error_duplicate" comment="Error">A snippet with this id already exists.</string>

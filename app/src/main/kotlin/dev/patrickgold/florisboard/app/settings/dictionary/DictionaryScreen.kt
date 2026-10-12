@@ -55,5 +55,11 @@ fun DictionaryScreen() = FlorisScreen {
             onClick = { navController.navigate(Routes.Settings.UserDictionary(UserDictionaryType.FLORIS)) },
             enabledIf = { prefs.dictionary.enableFlorisUserDictionary isEqualTo true },
         )
+        Preference(
+            title = stringRes(R.string.settings__dictionary_packs__title),
+            summary = stringRes(R.string.settings__dictionary_packs__entry_summary),
+            onClick = { navController.navigate(Routes.Settings.DictionaryPacks) },
+            enabledIf = { prefs.dictionary.enableFlorisUserDictionary isEqualTo true },
+        )
     }
 }

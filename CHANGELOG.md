@@ -13,6 +13,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Snippet store in Direct Boot: before the first unlock after a reboot the storage is unavailable and a missing file
+  looked like "no snippets"; opening a snippet screen/panel then latched an empty library, and a later save would have
+  replaced the real file (a `.bak` copy remained). `SnippetManager` now loads nothing until the user is unlocked and
+  refuses to save before a real load.
+- Snippet expansion now goes through the same pure insertion rules as the picker: a result that is empty or too large is no
+  longer applied (before, an empty result could delete the typed abbreviation), `{{clipboard}}` is read only if the snippet
+  uses it, and `{{cursor}}` placement counts user-perceived characters instead of code points (emoji with skin tone,
+  flags, combining accents no longer overshoot) and is skipped for very long tails.
 - `curlyFormat` (the `{name}` string formatter behind `stringRes(id, "x" to value)`) looped until out of memory when a
   value contained its own placeholder. Reachable through text we do not control, e.g. the `{error}` argument built from
   an exception message while importing a backup file, or the delete-confirmation name. Values are now inserted once and
@@ -22,6 +30,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Dictionary packs: five bundled word lists (Kali Linux tools, Kali NetHunter, AI/LLM vocabulary, slash commands, Termux
+  and shell commands) as small zips, a strict bounded zip reader, non-destructive install/remove and a "Dictionary packs"
+  screen under Settings → Typing → Dictionary. Words go to the internal user dictionary and today only affect the system
+  spell checker; no suggestions exist yet. The lists were written from memory and are not verified online. Pure parts
+  JVM-tested; screen compiled, never run (`DICTIONARY_PACKS.md`).
+- Snippet picker in the keyboard: a "Snippets" smartbar quick action opens a panel with your enabled snippets (tag chips to
+  narrow), tap to insert at the caret (replaces a selection); `{{selection}}` now works from there. Clipboard and selection
+  are never read in password-like fields, clips the platform marked sensitive are not substituted, nothing is shown while
+  the device is locked. The caret goes to `{{cursor}}` per user-perceived character, capped at 500 presses. Existing
+  installs get the quick action appended once to the overflow panel. Pure parts JVM-tested; panel compiled, never run or
+  rendered on a device (`SNIPPETS.md`).
 - Advanced developer settings screen: developer row size, separate navigation/symbol key toggles, your own symbol keys
   (validated, never executed), key-repeat and Ctrl/Alt lock timing, vibration, snippet date/time formats and
   keep-space option, expansion in Termux mode (off by default), your own app-to-mode mappings, reset to defaults.

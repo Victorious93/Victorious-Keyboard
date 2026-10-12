@@ -115,7 +115,7 @@ class FlorisApplication : Application() {
         }
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)
-        snippetManager.value // starts loading the snippet file off the main thread
+        snippetManager.value.ensureLoaded() // loads the snippet file off the main thread (also after a Direct Boot start)
         DictionaryManager.init(this)
     }
 

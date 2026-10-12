@@ -1,7 +1,7 @@
 # Snippets and text expansion (Phase 5)
 
 Status: **pure-Kotlin core JVM-tested; Android shell (store, expansion on the space key, settings screen with
-import/export) compiled but never run or rendered on a device.** Expansion is off by default.
+import/export, in-keyboard picker) compiled but never run or rendered on a device.** Expansion is off by default.
 
 ## Using it (as built, unverified on a device)
 
@@ -16,15 +16,36 @@ import/export) compiled but never run or rendered on a device.** Expansion is of
 * `{{date}}`, `{{time}}` and `{{datetime}}` follow the date and time format chosen in Advanced developer settings; an
   explicit pattern such as `{{date:yyyy}}` always wins. A pattern that cannot be used is inserted as the text you wrote.
 * "Keep the typed space after expanding" (default on) can be switched off.
-* `{{clipboard}}` uses the current clipboard text only if it is plain text; `{{selection}}` is always empty in
-  expansion (there is no snippet picker yet that could supply a selection).
+* `{{clipboard}}` uses the current clipboard text only if it is plain text **and the platform did not mark the clip
+  sensitive** (`EXTRA_IS_SENSITIVE`, e.g. a password manager); it is read only if the snippet uses it.
+  `{{selection}}` is always empty in abbreviation expansion (expansion never runs with a selection); it works when the
+  snippet is inserted from the picker (below).
+* An expansion whose result is empty or too large is not applied; what you typed stays as it is.
+
+## The snippet picker (in the keyboard)
+
+* A smartbar quick action **Snippets** (new installs: in the default arrangement; existing installs: appended once to the
+  overflow panel, and left where you put it if you already hid or moved it) opens a panel that lists your **enabled**
+  snippets (title, abbreviation hint, one-line preview) sorted by title. Tags you used become filter chips. There is no
+  typed search in the panel (it would need a text field inside the keyboard).
+* Tap a snippet: it is rendered and committed at the caret, **replacing the current selection** like typing would, then the
+  keyboard returns to the text view. `{{selection}}` is the text that was selected when you tapped. A `{{cursor}}` moves the
+  caret with plain left-arrow presses (counted per user-perceived character; if more than 500 would be needed, the caret is
+  left at the end instead).
+* In password-like fields `{{clipboard}}` and `{{selection}}` are never read or inserted (empty); the rest of the snippet
+  is inserted. Nothing is shown while the device is locked, and the store is not read before the first unlock.
+* Failures say so with a short message: too large (> 20 000 characters), nothing to insert (renders empty right now),
+  or no input connection. The panel stays open in those cases. Titles, bodies, clipboard and selection are never logged.
+* Uses the clipboard panel's theme elements, so existing themes style it.
 
 ## What exists (`dev.patrickgold.florisboard.ime.snippets`)
 
 | Piece | Purpose |
 |---|---|
 | `Snippet`, `SnippetLimits`, `SnippetValidator` | The data model and its limits (500 snippets, title 80, body 10 000 chars, abbreviation 2–32 chars without whitespace, 10 tags) |
-| `SnippetTemplate` | The template language and renderer (below) |
+| `SnippetTemplate` | The template language and renderer (below); `usesPlaceholder` tells the shell whether the clipboard or selection is needed at all |
+| `SnippetInsertion`, `InsertionRequest`, `InsertionPlan`, `CaretPlacement` | Turns a snippet into text to insert for **both** expansion and the picker, and applies the sensitive-field rule in one place (clipboard and selection are dropped); counts the left-arrow presses for `{{cursor}}` per grapheme cluster with a cap |
+| `SnippetPickerModel`, `SnippetPreview` | The picker list (enabled only, optional tag, sorted) and the one-line preview (whitespace collapsed, bidi controls dropped, cut on a code point) |
 | `ExpansionSettings`, `ExpansionMatcher` | Opt-in text expansion: decides whether a typed boundary character completes `<prefix><abbreviation>` |
 | `SnippetLibrary` | Immutable collection: add/update/remove, unique abbreviations (case-insensitive), search. Never drops anything silently |
 | `SnippetBackup`, `SnippetImporter` | Versioned JSON export/import (`format: "victorious-snippets"`, `version: 1`) and a non-destructive merge |
@@ -65,7 +86,11 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 * Nothing in the core logs or reports snippet content. The shell must not either.
 * Exports are **plain, unencrypted JSON** (they contain whatever the user wrote). Encryption can reuse the clipboard
   backup container later; it is not done.
-* `{{clipboard}}` and `{{selection}}` must be passed as `null` in sensitive fields.
+* `{{clipboard}}` and `{{selection}}` must be passed as `null` in sensitive fields (`SnippetInsertion.plan` enforces it for
+  both callers; a test per path).
+* Before the first unlock after a reboot (Direct Boot) the credential-encrypted storage is unavailable: `SnippetManager`
+  loads nothing until the user is unlocked and **refuses every save until a real load happened**, so an empty in-memory
+  library can never replace the stored file.
 
 ## Failure behaviour
 
@@ -77,10 +102,13 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 
 ## Not done
 
-* A way to insert a snippet from the keyboard itself (a picker/panel): today snippets only insert by abbreviation.
-  `{{selection}}` needs that picker.
+* Typed search inside the picker; folders; recently used ordering.
+* A password-like field with selected text and a snippet that uses `{{selection}}`: the selection is replaced like any
+  commit would, but its text is (deliberately) not read.
 * Expansion on Enter or Tab (only the space key is hooked; the core supports more boundaries).
 * Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode).
 * Further per-mode defaults, snippet variables beyond the six above, folders.
 * Encrypted export. Translations.
-* Device validation of any of it (expansion timing against the IME's own composing text is the main unknown).
+* Device validation of any of it (expansion timing against the IME's own composing text is the main unknown; for the
+  picker: panel height and look, the left-arrow caret placement in real editors and in Termux, and `{{selection}}` in
+  editors that report no selection). See the checklist in `TESTING.md`.

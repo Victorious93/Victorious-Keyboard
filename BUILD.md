@@ -35,21 +35,27 @@ Result of these commands on the unmodified baseline is in `AUDIT.md` §6; result
 
 ## Dependency verification
 
-`gradle/verification-metadata.xml` pins SHA-256 checksums of every dependency and plugin (809 components at the time
-of writing). Gradle fails the build if a downloaded artifact differs. The checksums were generated
-trust-on-first-use **through a mirror** (see below); the first CI run against Maven Central directly is therefore an
-independent cross-check — if it fails with a checksum mismatch, treat it as a real supply-chain signal and
-investigate before regenerating.
+`gradle/verification-metadata.xml` pins SHA-256 checksums of every dependency and plugin. Gradle fails the build if a
+downloaded artifact differs. Signature (PGP) verification is **off**; checksums only.
 
-Regenerate after adding/updating a dependency (run the tasks that resolve the relevant classpaths, one at a time if
-memory is tight — a combined run was OOM-killed in a 16 GB sandbox):
+**First real CI run = real cross-check, and it failed (2026-10-12, runs 1-4).** Cause, verified byte-by-byte:
+the checksums had been recorded through a Maven Central mirror placed first in the plugin repositories, but real builds
+resolve plugin markers from the **Gradle Plugin Portal** first. For five markers that exist on both (Kotlin
+`android`/`jvm`/`plugin.compose`/`plugin.serialization`, Kover) the Portal serves its own generated POM (about 680
+bytes, same single dependency, no licence/SCM metadata) while Central serves the full POM. The mirror and real Maven
+Central were byte-identical (5/5 spot-checked), so this was not a tampered mirror. Those five entries now record the
+Portal's checksum and list Central's as `also-trust`. The remaining six markers already matched CI's lookup order.
+The CI log only reports the first failing artifact, so further mismatches were possible until CI passes; see
+`TESTING.md` for the current CI status.
+
+Regenerate after adding/updating a dependency (one task at a time if memory is tight; a combined run was OOM-killed in a
+16 GB sandbox). **Do not use `docs/build-env-mirror.gradle.kts` for this** (see its warning), or compare the result
+against the Portal:
 
 ```sh
 ./gradlew --write-verification-metadata sha256 assembleDebug testDebugUnitTest
 ./gradlew --write-verification-metadata sha256 assembleRelease
 ```
-
-Signature (PGP) verification is **off**; checksums only.
 
 ## Known environment issue: HTTP 429 from Maven Central
 

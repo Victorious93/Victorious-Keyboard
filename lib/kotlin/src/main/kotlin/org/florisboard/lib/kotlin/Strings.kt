@@ -58,8 +58,12 @@ fun String.curlyFormat(argValueFactory: (argName: String) -> String?): String {
         val argValue = argValueFactory(argName)
         if (argValue != null) {
             sb.replace(curlyOpenIndex, nextCurlyCloseIndex + 1, argValue)
+            // Continue after the inserted text: a value is data and must never be scanned for placeholders again
+            // (a value containing its own placeholder would otherwise grow the buffer forever).
+            curlyOpenIndex = sb.indexOf(CURLY_ARG_OPEN, curlyOpenIndex + argValue.length)
+        } else {
+            curlyOpenIndex = sb.indexOf(CURLY_ARG_OPEN, curlyOpenIndex + 1)
         }
-        curlyOpenIndex = sb.indexOf(CURLY_ARG_OPEN, curlyOpenIndex + 1)
     }
     return sb.toString()
 }
@@ -70,23 +74,13 @@ fun String.curlyFormat(vararg args: CurlyArg): String {
 
 fun String.curlyFormat(args: List<CurlyArg>): String {
     if (args.isEmpty()) return this
-    val sb = StringBuilder(this)
+    // Same precedence as before: the first argument that claims a name wins; arg n is also addressable as {n}.
+    val values = HashMap<String, String>()
     for ((n, arg) in args.withIndex()) {
         val (argName, argValue) = arg
-        sb.formatCurlyArg(n.toString(), argValue)
-        sb.formatCurlyArg(argName, argValue)
+        val text = argValue.toString()
+        values.putIfAbsent(n.toString(), text)
+        if (argName.isNotBlank()) values.putIfAbsent(argName, text)
     }
-    return sb.toString()
-}
-
-private fun StringBuilder.formatCurlyArg(name: String, value: Any?) {
-    if (name.isBlank()) return
-    val spec = "$CURLY_ARG_OPEN$name$CURLY_ARG_CLOSE"
-    var index = this.lastIndexOf(spec)
-    while (index >= 0) {
-        val start = index
-        val end = index + spec.length
-        this.replace(start, end, value.toString())
-        index = this.lastIndexOf(spec)
-    }
+    return curlyFormat { name -> values[name] }
 }

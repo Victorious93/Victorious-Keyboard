@@ -147,4 +147,35 @@ class StringsTest : FunSpec({
             } shouldBe formattedStr
         }
     }
+    // Regression: a value that contains its own placeholder used to make the formatter loop forever. Values may come
+    // from user text (snippet titles, custom symbols) or untrusted files (exception messages from a backup import).
+    context("Test String.curlyFormat (values are never re-scanned)") {
+        test("named value containing its own placeholder") {
+            "Failed: {error}".curlyFormat("error" to "bad {error}") shouldBe "Failed: bad {error}"
+        }
+        test("named value containing its own placeholder after other text") {
+            "{error}".curlyFormat("error" to "x{error}") shouldBe "x{error}"
+        }
+        test("positional value containing its own index") {
+            "A {0} B".curlyFormat("" to "{0}") shouldBe "A {0} B"
+        }
+        test("value that is only the placeholder") {
+            "{name}".curlyFormat("name" to "{name}") shouldBe "{name}"
+        }
+        test("one value does not inject another argument's placeholder") {
+            "{a} {b}".curlyFormat("a" to "{b}", "b" to "B") shouldBe "{b} B"
+        }
+        test("repeated placeholder with a self-referencing value") {
+            "{n}-{n}".curlyFormat("n" to "{n}{n}") shouldBe "{n}{n}-{n}{n}"
+        }
+        test("factory variant: value containing its own placeholder") {
+            "Hi {who}!".curlyFormat { if (it == "who") "x{who}" else null } shouldBe "Hi x{who}!"
+        }
+        test("factory variant: value containing another placeholder is not expanded") {
+            "{a}".curlyFormat { if (it == "a") "{a}{b}" else "B" } shouldBe "{a}{b}"
+        }
+        test("null argument value renders as null, as before") {
+            "{x}".curlyFormat("x" to null) shouldBe "null"
+        }
+    }
 })

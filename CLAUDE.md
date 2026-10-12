@@ -59,7 +59,8 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 Needs a device first: validate Phase 3 and the Phase 4 wiring on hardware (checklist in `TESTING.md`). Without a
 device the next work is the in-keyboard snippet picker and then Termux integration (verify the current `RUN_COMMAND` contract from Termux's documentation first); see `SNIPPETS.md`, `docs/ARCHITECTURE_ASSESSMENT.md`.
 
-Gotcha: run the whole unit-test suite; kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
+Gotcha: run the whole unit-test suite (`testDebugUnitTest` and `:lib:kotlin:test`); kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
+Gotcha: the `{name}` formatter used to loop forever on values containing their own placeholder; fixed in `lib/kotlin` Strings.kt (values are never re-scanned). Still prefer concatenating user text over passing it as a `stringRes` argument.
 
 ## Upstream
 `upstream` remote = `https://github.com/florisboard/florisboard.git`; baseline `0ea0481c40616b0fd6eb4cd09c57521181b9a4b6`

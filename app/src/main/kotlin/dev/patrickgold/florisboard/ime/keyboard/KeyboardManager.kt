@@ -19,6 +19,8 @@ package dev.patrickgold.florisboard.ime.keyboard
 import android.content.Context
 import android.icu.lang.UCharacter
 import android.os.SystemClock
+import java.text.BreakIterator
+import java.time.LocalDateTime
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -62,11 +64,20 @@ import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
 import dev.patrickgold.florisboard.nlpManager
+import dev.patrickgold.florisboard.snippetManager
 import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
+import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
+import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.mode.ActiveMode
+import dev.patrickgold.florisboard.ime.snippets.ExpansionMatcher
+import dev.patrickgold.florisboard.ime.snippets.ExpansionSettings
+import dev.patrickgold.florisboard.ime.snippets.RenderResult
+import dev.patrickgold.florisboard.ime.snippets.SnippetLimits
+import dev.patrickgold.florisboard.ime.snippets.SnippetTemplate
+import dev.patrickgold.florisboard.ime.snippets.TemplateContext
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.developer.DevStep
 import dev.patrickgold.florisboard.ime.developer.DeveloperKeyResolver
@@ -104,6 +115,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val extensionManager by context.extensionManager()
     private val nlpManager by context.nlpManager()
     private val subtypeManager by context.subtypeManager()
+    private val snippetManager by context.snippetManager()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val layoutManager = LayoutManager(context)
@@ -599,7 +611,45 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Handles a [KeyCode.SPACE] event. Also handles the auto-correction of two space taps if
      * enabled by the user.
      */
+    /**
+     * Snippet expansion for the space key (opt-in, never in password-like fields). Replaces the typed
+     * `<prefix><abbreviation>` with the rendered snippet and returns true if it did, in which case the caller must not
+     * process the space itself: the space is re-inserted here unless the snippet places the caret with `{{cursor}}`.
+     * Never logs anything about the snippet or the text.
+     */
+    private fun tryExpandSnippet(): Boolean {
+        if (!prefs.snippets.expansionEnabled.get()) return false
+        val settings = ExpansionSettings(true, prefs.snippets.prefix.get().text, prefs.snippets.caseSensitive.get())
+        val sensitive = editorInstance.activeInfo.inputAttributes.isPasswordLike()
+        if (sensitive || editorInstance.activeContent.selection.isSelectionMode) return false
+        val before = editorInstance.run { activeContent.getTextBeforeCursor(SnippetLimits.MAX_ABBREVIATION + 8) }
+        val match = ExpansionMatcher.match(before, ' ', snippetManager.snapshot().snippets, settings, sensitiveField = false)
+            ?: return false
+        val clip = clipboardManager.primaryClip?.takeIf { it.type == ItemType.TEXT }?.stringRepresentation()
+        val rendered = SnippetTemplate.render(match.snippet.body, TemplateContext(LocalDateTime.now(), clip, null))
+            as? RenderResult.Rendered ?: return false
+        val token = before.takeLast(match.deleteCount)
+        repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
+        editorInstance.commitText(rendered.text)
+        val back = rendered.cursorBackCodePoints
+        if (back == null) {
+            editorInstance.commitText(KeyCode.SPACE.toChar().toString())
+        } else if (back > 0) {
+            editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), back)
+        }
+        return true
+    }
+
+    private fun graphemeCount(text: String): Int {
+        val it = BreakIterator.getCharacterInstance()
+        it.setText(text)
+        var n = 0
+        while (it.next() != BreakIterator.DONE) n++
+        return n
+    }
+
     private fun handleSpace(data: KeyData) {
+        if (tryExpandSnippet()) return
         val candidate = nlpManager.getAutoCommitCandidate()
         candidate?.let { commitCandidate(it) }
         if (prefs.keyboard.spaceBarSwitchesToCharacters.get()) {

@@ -28,6 +28,7 @@ import androidx.core.os.UserManagerCompat
 import dev.patrickgold.florisboard.app.FlorisPreferenceModel
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardManager
+import dev.patrickgold.florisboard.ime.snippets.SnippetManager
 import dev.patrickgold.florisboard.ime.core.SubtypeManager
 import dev.patrickgold.florisboard.ime.dictionary.DictionaryManager
 import dev.patrickgold.florisboard.ime.editor.EditorInstance
@@ -68,6 +69,7 @@ class FlorisApplication : Application() {
     val editorInstance = lazy { EditorInstance(this) }
     val extensionManager = lazy { ExtensionManager(this) }
     val glideTypingManager = lazy { GlideTypingManager(this) }
+    val snippetManager = lazy { SnippetManager(this) }
     val keyboardManager = lazy { KeyboardManager(this) }
     val nlpManager = lazy { NlpManager(this) }
     val subtypeManager = lazy { SubtypeManager(this) }
@@ -113,6 +115,7 @@ class FlorisApplication : Application() {
         }
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)
+        snippetManager.value // starts loading the snippet file off the main thread
         DictionaryManager.init(this)
     }
 
@@ -157,6 +160,8 @@ fun Context.glideTypingManager() = this.florisApplication().glideTypingManager
 fun Context.keyboardManager() = this.florisApplication().keyboardManager
 
 fun Context.nlpManager() = this.florisApplication().nlpManager
+
+fun Context.snippetManager() = this.florisApplication().snippetManager
 
 fun Context.subtypeManager() = this.florisApplication().subtypeManager
 

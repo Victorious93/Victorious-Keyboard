@@ -18,7 +18,7 @@ package dev.patrickgold.florisboard.ime.snippets
 
 import java.util.Locale
 
-enum class LibraryError { INVALID, DUPLICATE_ID, DUPLICATE_ABBREVIATION, FULL, NOT_FOUND }
+enum class LibraryError { INVALID, DUPLICATE_ID, DUPLICATE_ABBREVIATION, FULL, NOT_FOUND, SAVE_FAILED }
 
 sealed interface LibraryResult {
     data class Ok(val library: SnippetLibrary) : LibraryResult

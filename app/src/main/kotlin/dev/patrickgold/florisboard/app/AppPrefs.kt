@@ -43,6 +43,7 @@ import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickAction
@@ -299,6 +300,22 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val suggestionCandidateMaxCount = int(
             key = "emoji__suggestion_candidate_max_count",
             default = 5,
+        )
+    }
+
+    val snippets = Snippets()
+    inner class Snippets {
+        val expansionEnabled = boolean(
+            key = "snippets__expansion_enabled",
+            default = false,
+        )
+        val prefix = enum(
+            key = "snippets__prefix",
+            default = SnippetPrefix.SEMICOLON,
+        )
+        val caseSensitive = boolean(
+            key = "snippets__case_sensitive",
+            default = true,
         )
     }
 

@@ -9,11 +9,11 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 623 JVM tests (345 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 680 JVM tests (402 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
-| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space, settings screen, import/export) 🟦 compiled, **never run**; no in-keyboard picker (see `SNIPPETS.md`) |
+| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | ⬜ |
 | 7 | AI workspace | ⬜ |
 | 8 | Themes and responsive UI | ⬜ |
@@ -95,8 +95,8 @@ recursion), snippet library with validation and unique abbreviations, versioned 
 non-destructive importer, atomic file store with `.bak`/`.corrupt` safety copies. Details and limits: `SNIPPETS.md`.
 
 Android shell compiled, never run: `SnippetManager` (store under `noBackupFilesDir`), expansion on the space key, Snippets settings
-screen with import/export. Open: in-keyboard snippet picker, expansion on Enter/Tab, per-mode defaults, encrypted export,
-device validation.
+screen with import/export, in-keyboard picker (quick action, panel, `{{selection}}`). Open: expansion on Enter/Tab,
+per-mode defaults, encrypted export, typed search in the picker, device validation.
 
 ## Mapping to the "VictorKeys master brief"
 

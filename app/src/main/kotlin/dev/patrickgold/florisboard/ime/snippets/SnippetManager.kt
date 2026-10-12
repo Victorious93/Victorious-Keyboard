@@ -17,6 +17,7 @@
 package dev.patrickgold.florisboard.ime.snippets
 
 import android.content.Context
+import androidx.core.os.UserManagerCompat
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +51,23 @@ class SnippetManager(context: Context) {
     val state: StateFlow<State>
         field = MutableStateFlow(State())
 
+    private val appContext = context.applicationContext
+
     init {
+        ensureLoaded()
+    }
+
+    /**
+     * Loads the snippet file once the device is unlocked. Before the first unlock (Direct Boot) the credential-encrypted
+     * storage is unavailable and a missing file would look like "no snippets"; loading then would latch an empty library
+     * and a later save would replace the user's real file. So nothing is loaded and nothing can be saved until a real
+     * load has happened. Safe to call repeatedly and from any thread.
+     */
+    fun ensureLoaded() {
+        if (!UserManagerCompat.isUserUnlocked(appContext)) return
         scope.launch {
             lock.withLock {
+                if (state.value.loaded) return@withLock
                 state.value = when (val r = store.load()) {
                     is LoadResult.Loaded -> {
                         // Entries are already validated individually; a library built by adding them keeps the invariants.
@@ -84,6 +99,7 @@ class SnippetManager(context: Context) {
     /** Returns null if the merged library could not be saved (memory and disk are then unchanged). */
     suspend fun importMerge(incoming: List<Snippet>, mode: ImportMode): ImportOutcome? = lock.withLock {
         withContext(Dispatchers.IO) {
+            if (!state.value.loaded) return@withContext null
             val outcome = SnippetImporter.merge(state.value.library, incoming, mode)
             if (outcome.added + outcome.updated == 0) return@withContext outcome
             if (store.save(outcome.library.snippets) is SaveResult.Saved) {
@@ -100,6 +116,8 @@ class SnippetManager(context: Context) {
 
     private suspend fun change(op: (SnippetLibrary) -> LibraryResult): LibraryResult = lock.withLock {
         withContext(Dispatchers.IO) {
+            // Never save before a real load: the empty in-memory library would replace the stored file.
+            if (!state.value.loaded) return@withContext LibraryResult.Rejected(LibraryError.SAVE_FAILED)
             when (val r = op(state.value.library)) {
                 is LibraryResult.Rejected -> r
                 is LibraryResult.Ok -> if (store.save(r.library.snippets) is SaveResult.Saved) {

@@ -19,7 +19,7 @@ Android shell (`CLAUDE.md`).
 | Layout JSON, themes (Snygg), preferences (jetpref) | inherited | settings screens, enum display entries |
 | Clipboard manager: 500 cap, pinning, search, encrypted store, backup | implemented, unit-tested, **not run on device** | `CLIPBOARD.md`, `BACKUP_FORMAT.md` |
 | Terminal key mapper, Ctrl/Alt state machine, developer row UI, symbol rows for 7 languages | implemented, unit-tested, **UI never rendered** | `TERMINAL.md` |
-| Snippets: template engine, expansion rules, library, import/export, file store | pure core, unit-tested, **not wired, no UI** | `SNIPPETS.md` |
+| Snippets: template engine, expansion rules, library, import/export, file store, settings screen, expansion on space, in-keyboard picker | pure core unit-tested; shell and picker panel compiled, **never run or rendered** | `SNIPPETS.md` |
 | Suggestions / autocorrect / NLP | inherited, status **not verified**; upstream's dictionary support is minimal at this version | `AUDIT.md` |
 | Mode system | 3 of 6 modes exist as presets (see §5, `docs/DEVELOPER_KEYBOARD.md`); Claude Code / Kali / NetHunter AI do not | code |
 | Termux `RUN_COMMAND` integration, command execution, AI providers, command catalog, audit log | **do not exist** | grep |

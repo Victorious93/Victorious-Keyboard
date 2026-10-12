@@ -77,6 +77,8 @@
     <string name="quick_action__forward_delete" comment="Please mind the limited available space for the quick action strings">Forward delete</string>
     <string name="quick_action__ime_ui_mode_clipboard" comment="Please mind the limited available space for the quick action strings">Clipboard</string>
     <string name="quick_action__ime_ui_mode_clipboard__tooltip">Open clipboard history</string>
+    <string name="quick_action__ime_ui_mode_snippets" comment="Please mind the limited available space for the quick action strings">Snippets</string>
+    <string name="quick_action__ime_ui_mode_snippets__tooltip">Open snippet picker</string>
     <string name="quick_action__ime_ui_mode_media" comment="Please mind the limited available space for the quick action strings">Emoji</string>
     <string name="quick_action__ime_ui_mode_media__tooltip">Open emoji panel</string>
     <string name="quick_action__language_switch" comment="Please mind the limited available space for the quick action strings">Switch language</string>
@@ -612,6 +614,17 @@
     <string name="devrow__alt_armed" comment="Accessibility description">Alt, applies to the next key</string>
     <string name="snippets__title" comment="Screen title and settings entry">Snippets</string>
     <string name="snippets__link_summary" comment="Settings entry summary">Reusable text with placeholders, optionally expanded as you type</string>
+    <string name="snippets__picker_empty_title" comment="Snippet picker in the keyboard, shown when there is nothing to pick">No snippets to show</string>
+    <string name="snippets__picker_empty_message" comment="Snippet picker in the keyboard">Add or enable snippets in Settings → Keyboard → Developer mode → Snippets.</string>
+    <string name="snippets__picker_locked_title" comment="Snippet picker in the keyboard, device locked">Locked</string>
+    <string name="snippets__picker_locked_message" comment="Snippet picker in the keyboard, device locked">Unlock your device to use snippets.</string>
+    <string name="snippets__picker_unreadable_title" comment="Snippet picker in the keyboard, stored snippets file is damaged">Snippets could not be read</string>
+    <string name="snippets__picker_unreadable_message" comment="Snippet picker in the keyboard">The stored file was left untouched. Open Settings → Keyboard → Developer mode → Snippets to restore or import.</string>
+    <string name="snippets__picker_insert" comment="Accessibility label of a snippet row in the keyboard picker">Insert snippet</string>
+    <string name="snippets__picker_backspace" comment="Accessibility label of the backspace button in the snippet picker">Backspace</string>
+    <string name="snippets__picker_too_large" comment="Toast after tapping a snippet in the picker">This snippet is too large to insert</string>
+    <string name="snippets__picker_nothing" comment="Toast after tapping a snippet in the picker">Nothing to insert: this snippet is empty right now</string>
+    <string name="snippets__picker_failed" comment="Toast after tapping a snippet in the picker">Could not insert the snippet</string>
     <string name="snippets__empty" comment="Empty list message">No snippets yet. Add one, or import a file.</string>
     <string name="snippets__search" comment="Search field label">Search snippets</string>
     <string name="snippets__add" comment="Button">Add</string>
@@ -640,7 +653,7 @@
     <string name="snippets__field_body" comment="Field label">Text</string>
     <string name="snippets__field_tags" comment="Field label">Tags (comma separated)</string>
     <string name="snippets__field_enabled" comment="Switch label">Enabled</string>
-    <string name="snippets__placeholder_help" comment="Help under the text field">Placeholders: {{date}}, {{time}}, {{datetime}}, {{clipboard}}, {{cursor}}. Write \\{{ for a literal {{. Nothing is ever executed.</string>
+    <string name="snippets__placeholder_help" comment="Help under the text field">Placeholders: {{date}}, {{time}}, {{datetime}}, {{clipboard}}, {{cursor}}, and {{selection}} (only when you insert the snippet from the keyboard\'s Snippets panel). Write \\{{ for a literal {{. Nothing is ever executed.</string>
     <string name="snippets__unknown_placeholders" comment="Warning">Not recognised, will be inserted as plain text:</string>
     <string name="snippets__error_invalid" comment="Error">The snippet is not valid.</string>
     <string name="snippets__error_duplicate" comment="Error">A snippet with this id already exists.</string>

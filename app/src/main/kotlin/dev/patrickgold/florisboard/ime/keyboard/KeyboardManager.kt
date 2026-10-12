@@ -75,11 +75,15 @@ import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.mode.ActiveMode
 import dev.patrickgold.florisboard.ime.mode.ModeOverrides
 import dev.patrickgold.florisboard.ime.snippets.ExpansionMatcher
+import dev.patrickgold.florisboard.ime.snippets.CaretPlacement
 import dev.patrickgold.florisboard.ime.snippets.ExpansionSettings
-import dev.patrickgold.florisboard.ime.snippets.RenderResult
+import dev.patrickgold.florisboard.ime.snippets.InsertionPlan
+import dev.patrickgold.florisboard.ime.snippets.InsertionRequest
+import dev.patrickgold.florisboard.ime.snippets.Snippet
+import dev.patrickgold.florisboard.ime.snippets.SnippetInsertOutcome
+import dev.patrickgold.florisboard.ime.snippets.SnippetInsertion
 import dev.patrickgold.florisboard.ime.snippets.SnippetLimits
 import dev.patrickgold.florisboard.ime.snippets.SnippetTemplate
-import dev.patrickgold.florisboard.ime.snippets.TemplateContext
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.developer.DevStep
 import dev.patrickgold.florisboard.ime.developer.DeveloperKeyResolver
@@ -634,25 +638,95 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         val before = editorInstance.run { activeContent.getTextBeforeCursor(SnippetLimits.MAX_ABBREVIATION + 8) }
         val match = ExpansionMatcher.match(before, ' ', snippetManager.snapshot().snippets, settings, sensitiveField = false)
             ?: return false
-        val clip = clipboardManager.primaryClip?.takeIf { it.type == ItemType.TEXT }?.stringRepresentation()
-        val context = TemplateContext(
-            now = LocalDateTime.now(),
-            clipboard = clip,
-            selection = null,
-            datePattern = prefs.snippets.dateFormat.get().pattern,
-            timePattern = prefs.snippets.timeFormat.get().pattern,
+        val plan = SnippetInsertion.plan(
+            InsertionRequest(
+                snippet = match.snippet,
+                now = LocalDateTime.now(),
+                clipboardText = if (SnippetTemplate.usesPlaceholder(match.snippet.body, "clipboard")) currentClipboardText() else null,
+                selectionText = null, // expansion never runs with a selection
+                sensitiveField = sensitive,
+                datePattern = prefs.snippets.dateFormat.get().pattern,
+                timePattern = prefs.snippets.timeFormat.get().pattern,
+            )
         )
-        val rendered = SnippetTemplate.render(match.snippet.body, context) as? RenderResult.Rendered ?: return false
+        val insert = plan as? InsertionPlan.Insert ?: return false // too large / empty: leave what the user typed
         val token = before.takeLast(match.deleteCount)
         repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
-        editorInstance.commitText(rendered.text)
-        val back = rendered.cursorBackCodePoints
-        if (back == null) {
+        editorInstance.commitText(insert.text)
+        if (insert.cursorBackCodePoints == null) {
             if (prefs.snippets.keepSpace.get()) editorInstance.commitText(KeyCode.SPACE.toChar().toString())
-        } else if (back > 0) {
-            editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), back)
+        } else {
+            moveCaretLeft(insert)
         }
         return true
+    }
+
+    /** Plain clipboard text for \`{{clipboard}}\`; not for non-text clips and not for clips the platform marked sensitive. */
+    private fun currentClipboardText(): String? {
+        val item = clipboardManager.primaryClip ?: return null
+        if (item.type != ItemType.TEXT || item.isSensitive) return null
+        return item.stringRepresentation()
+    }
+
+    /**
+     * Puts the caret on \`{{cursor}}\` after [insert] was committed, with plain left-arrow presses (the developer row's
+     * armed Ctrl/Alt never applies: \`meta()\` is empty). Counted in grapheme clusters and skipped for huge tails, see
+     * [CaretPlacement]. A failure here never undoes or hides the insertion.
+     */
+    private fun moveCaretLeft(insert: InsertionPlan.Insert) {
+        val presses = CaretPlacement.leftPresses(insert.text, insert.cursorBackCodePoints)
+        if (presses < 1) return
+        try {
+            editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), presses)
+        } catch (_: Exception) {
+            // The text is already in; the caret stays where it is.
+        }
+    }
+
+    /**
+     * Inserts [snippet] at the caret (replacing the current selection, like typing would) for the snippet picker.
+     * Clipboard and selection are read only if the snippet uses them and never in password-like fields; the rendering
+     * and its privacy rule live in the pure [SnippetInsertion]. Must be called on the main thread; never throws and
+     * never logs snippet, clipboard or selection text.
+     */
+    fun insertSnippet(snippet: Snippet): SnippetInsertOutcome = try {
+        val sensitive = editorInstance.activeInfo.inputAttributes.isPasswordLike()
+        val clip = if (!sensitive && SnippetTemplate.usesPlaceholder(snippet.body, "clipboard")) currentClipboardText() else null
+        val selection = if (!sensitive && SnippetTemplate.usesPlaceholder(snippet.body, "selection")) {
+            // Raw editors (e.g. terminals) do not report their text, so only they need to be asked directly.
+            editorInstance.activeContent.selectedText.ifEmpty {
+                if (editorInstance.activeInfo.isRawInputEditor) {
+                    FlorisImeService.currentInputConnection()?.getSelectedText(0)?.toString().orEmpty()
+                } else {
+                    ""
+                }
+            }
+        } else {
+            null
+        }
+        val plan = SnippetInsertion.plan(
+            InsertionRequest(
+                snippet = snippet,
+                now = LocalDateTime.now(),
+                clipboardText = clip,
+                selectionText = selection,
+                sensitiveField = sensitive,
+                datePattern = prefs.snippets.dateFormat.get().pattern,
+                timePattern = prefs.snippets.timeFormat.get().pattern,
+            )
+        )
+        when (plan) {
+            is InsertionPlan.TooLarge -> SnippetInsertOutcome.TOO_LARGE
+            is InsertionPlan.NothingToInsert -> SnippetInsertOutcome.NOTHING
+            is InsertionPlan.Insert -> if (editorInstance.commitText(plan.text)) {
+                moveCaretLeft(plan)
+                SnippetInsertOutcome.INSERTED
+            } else {
+                SnippetInsertOutcome.FAILED // no input connection: nothing was inserted, so do not close the panel
+            }
+        }
+    } catch (_: Exception) {
+        SnippetInsertOutcome.FAILED
     }
 
     private fun graphemeCount(text: String): Int {
@@ -908,6 +982,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.IME_UI_MODE_TEXT -> activeState.imeUiMode = ImeUiMode.TEXT
             KeyCode.IME_UI_MODE_MEDIA -> activeState.imeUiMode = ImeUiMode.MEDIA
             KeyCode.IME_UI_MODE_CLIPBOARD -> activeState.imeUiMode = ImeUiMode.CLIPBOARD
+            KeyCode.IME_UI_MODE_SNIPPETS -> activeState.imeUiMode = ImeUiMode.SNIPPETS
             KeyCode.VOICE_INPUT -> FlorisImeService.switchToVoiceInputMethod()
             KeyCode.KANA_SWITCHER -> handleKanaSwitch()
             KeyCode.KANA_HIRA -> handleKanaHira()

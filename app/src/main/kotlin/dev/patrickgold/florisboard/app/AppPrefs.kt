@@ -965,6 +965,9 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
                         dynamicActions = newArrangement.dynamicActions.plus(QuickAction.InsertKey(TextKeyData.TOGGLE_RESIZE_MODE))
                     )
                 }
+                // Victorious Keyboard: the snippet picker. Appended to the overflow panel for existing users; an action
+                // the user moved to the sticky or hidden list counts as present and is left where they put it.
+                newArrangement = newArrangement.withActionIfAbsent(QuickAction.InsertKey(TextKeyData.IME_UI_MODE_SNIPPETS))
                 val json = QuickActionJsonConfig.encodeToString(newArrangement.distinct())
                 entry.transform(rawValue = json)
             }

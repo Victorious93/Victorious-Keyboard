@@ -55,7 +55,9 @@ Build **phase by phase**. Each phase ends with **one pull request**; never batch
    same commit, honest status in `ROADMAP.md`.
 5. Re-run the full suite and `assembleDebug`. Commit with the attribution trailers, push to the assigned branch, and open
    the PR using `.github/PULL_REQUEST_TEMPLATE.md`. The PR must state what was **not** run (device, lint, CI).
-6. Stop after the PR is open. Do not begin the next phase. After the owner merges it, update `ROADMAP.md` (queue + status),
+6. Stop after the PR is open. Do not begin the next phase.
+   Standing owner instruction: open a pull request whenever it makes sense (a finished phase, a docs handoff), then wait
+   for the owner. Do not open PRs for work that is not finished. After the owner merges it, update `ROADMAP.md` (queue + status),
    `TESTING.md` counts and `CHANGELOG.md`, and this section's pointers, then wait for "continue".
 
 ## Conventions

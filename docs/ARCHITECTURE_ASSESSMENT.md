@@ -41,9 +41,9 @@ Android shell (`CLAUDE.md`).
 
 The GitHub Actions workflow has run **four times and failed every time** (runs 1-4: PR and push events, 2026-10-12),
 always at dependency verification, before compiling anything. Root cause found and fixed in `c92c878` (plugin-marker
-checksums recorded through a mirror differed from what the Gradle Plugin Portal serves; details in `BUILD.md`). A fix is
-not proven until CI is green; see `TESTING.md` for the current result. Until then, the "tests pass" claims in this
-repository are **local JVM runs only**.
+checksums recorded through a mirror differed from what the Gradle Plugin Portal serves; details in `BUILD.md`).
+**Run 5 (after the fix) passed the build and unit tests on GitHub's runner**; it was red only at the artifact upload
+("storage quota has been hit", a GitHub account limit), so no CI-built APK exists yet. Local runs and run 5 now agree.
 
 ## 5. Gap assessment by brief phase
 

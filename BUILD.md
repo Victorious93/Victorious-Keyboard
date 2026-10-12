@@ -45,8 +45,12 @@ resolve plugin markers from the **Gradle Plugin Portal** first. For five markers
 bytes, same single dependency, no licence/SCM metadata) while Central serves the full POM. The mirror and real Maven
 Central were byte-identical (5/5 spot-checked), so this was not a tampered mirror. Those five entries now record the
 Portal's checksum and list Central's as `also-trust`. The remaining six markers already matched CI's lookup order.
-The CI log only reports the first failing artifact, so further mismatches were possible until CI passes; see
-`TESTING.md` for the current CI status.
+**Result: CI run 5 (workflow_dispatch on this branch, commit `c92c878`) passed the dependency verification, the
+debug build and the unit tests on a GitHub runner with direct downloads** (`BUILD SUCCESSFUL in 10m 10s`, 178 tasks).
+The run was still red because the following artifact-upload step failed with "Artifact storage quota has been hit"
+(GitHub account storage; it recalculates every 6-12 hours, and old artifacts in any repository of the account count).
+The test-report upload is now non-fatal; the APK upload still fails loudly, so no debug APK artifact exists from CI
+until the quota is freed.
 
 Regenerate after adding/updating a dependency (one task at a time if memory is tight; a combined run was OOM-killed in a
 16 GB sandbox). **Do not use `docs/build-env-mirror.gradle.kts` for this** (see its warning), or compare the result

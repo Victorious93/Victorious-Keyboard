@@ -35,7 +35,9 @@ jobs:
         run: ./gradlew --no-daemon assembleDebug testDebugUnitTest
 
       - name: Upload unit test reports
+        # Diagnostic only: a GitHub artifact-storage quota problem must not turn a good build red.
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports

@@ -67,6 +67,7 @@ import org.florisboard.lib.android.AndroidClipboardManager
 import org.florisboard.lib.android.AndroidClipboardManager_OnPrimaryClipChangedListener
 import org.florisboard.lib.android.clearPrimaryClipAnyApi
 import org.florisboard.lib.android.setOrClearPrimaryClip
+import org.florisboard.lib.android.showShortToast
 import org.florisboard.lib.android.showShortToastSync
 import org.florisboard.lib.android.systemService
 import org.florisboard.lib.kotlin.tryOrNull
@@ -236,7 +237,7 @@ class ClipboardManager(
         val now = System.currentTimeMillis()
         if (now - lastNoticeAtMs < NOTICE_THROTTLE_MS) return
         lastNoticeAtMs = now
-        appContext.showShortToastSync(resId)
+        ioScope.launch { appContext.showShortToast(resId) }
     }
 
     /**
@@ -489,49 +490,73 @@ class ClipboardManager(
         }
     }
 
-    fun pinClip(item: ClipboardItem) {
-        mutate { store -> store.update(item.copy(isPinned = true)) }
+    /**
+     * Applies [change] to the **current stored version** of [item] (re-read inside the mutex). The UI's copy may
+     * be stale; applying a change to it would silently undo edits made since.
+     */
+    private fun update(item: ClipboardItem, change: (ClipboardItem) -> ClipboardItem) {
+        mutate { store ->
+            val current = store.get(item.uuid) ?: return@mutate
+            store.update(change(current))
+        }
     }
 
-    fun unpinClip(item: ClipboardItem) {
-        mutate { store -> store.update(item.copy(isPinned = false)) }
-    }
+    fun pinClip(item: ClipboardItem) = update(item) { it.copy(isPinned = true) }
+
+    fun unpinClip(item: ClipboardItem) = update(item) { it.copy(isPinned = false) }
 
     fun setPinned(items: List<ClipboardItem>, pinned: Boolean) {
-        mutate { store -> store.update(items.map { it.copy(isPinned = pinned) }) }
+        mutate { store ->
+            store.update(items.mapNotNull { store.get(it.uuid) }.map { it.copy(isPinned = pinned) })
+        }
     }
 
-    fun setFavorite(item: ClipboardItem, favorite: Boolean) {
-        mutate { store -> store.update(item.copy(isFavorite = favorite)) }
-    }
+    fun setFavorite(item: ClipboardItem, favorite: Boolean) = update(item) { it.copy(isFavorite = favorite) }
 
-    fun setTags(item: ClipboardItem, rawTags: Collection<String>) {
-        mutate { store -> store.update(item.copy(tags = formatTagColumn(ClipTags.normalizeAll(rawTags)))) }
-    }
+    fun setTags(item: ClipboardItem, rawTags: Collection<String>) =
+        update(item) { it.copy(tags = formatTagColumn(ClipTags.normalizeAll(rawTags))) }
 
     fun addTag(items: List<ClipboardItem>, rawTag: String) {
         val tag = ClipTags.normalize(rawTag) ?: return
         mutate { store ->
-            store.update(items.map { item ->
-                val current = item.toClipEntry().tags
-                item.copy(tags = formatTagColumn(ClipTags.normalizeAll(current + tag)))
+            store.update(items.mapNotNull { store.get(it.uuid) }.map { current ->
+                current.copy(tags = formatTagColumn(ClipTags.normalizeAll(current.toClipEntry().tags + tag)))
             })
         }
     }
 
-    fun setCategory(item: ClipboardItem, category: ClipCategory) {
-        mutate { store -> store.update(item.copy(category = category.name)) }
-    }
+    fun setCategory(item: ClipboardItem, category: ClipCategory) =
+        update(item) { it.copy(category = category.name) }
 
     /**
-     * Replaces the text of a text item. Applies the same size/blank rules as new clips and records the edit time.
-     * Returns false (and changes nothing) if the new text is not acceptable.
+     * Applies all user-editable fields in **one** write. [newText] null keeps the text. Returns false (and changes
+     * nothing) if the new text is blank, too long, or the item is not text.
      */
-    fun editText(item: ClipboardItem, newText: String): Boolean {
-        if (item.type != ItemType.TEXT || newText.isBlank() || newText.length > currentPolicy().maxItemChars) {
-            return false
+    fun updateUserFields(
+        item: ClipboardItem,
+        newText: String?,
+        rawTags: Collection<String>,
+        category: ClipCategory,
+        favorite: Boolean,
+        pinned: Boolean,
+    ): Boolean {
+        if (newText != null) {
+            if (item.type != ItemType.TEXT || newText.isBlank() || newText.length > currentPolicy().maxItemChars) {
+                return false
+            }
         }
-        mutate { store -> store.update(item.copy(text = newText, editedAtMs = System.currentTimeMillis())) }
+        val tags = formatTagColumn(ClipTags.normalizeAll(rawTags))
+        update(item) { cur ->
+            val textChanged = newText != null && newText != cur.text
+            cur.copy(
+                text = if (newText != null) newText else cur.text,
+                editedAtMs = if (textChanged) System.currentTimeMillis() else cur.editedAtMs,
+                tags = tags,
+                category = category.name,
+                isFavorite = favorite,
+                isPinned = pinned,
+            )
+        }
         return true
     }
 

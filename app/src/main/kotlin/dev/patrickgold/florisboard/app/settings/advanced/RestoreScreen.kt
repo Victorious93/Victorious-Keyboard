@@ -187,13 +187,6 @@ fun RestoreScreen() = FlorisScreen {
         if (restoreFilesSelector.provideClipboardItems()) {
             val clipboardFilesDir = workspace.outputDir.subDir("clipboard")
 
-            if (restoreFilesSelector.clipboardTextItems) {
-                val clipboardItems = clipboardFilesDir.subFile(Backup.CLIPBOARD_TEXT_ITEMS_JSON_NAME)
-                if (clipboardItems.exists()) {
-                    val clipboardItemsList = clipboardItems.readJson<List<ClipboardItem>>()
-                    clipboardManager.restoreHistory(items = clipboardItemsList.filter { it.type == ItemType.TEXT })
-                }
-            }
             if (restoreFilesSelector.clipboardImageItems) {
                 val clipboardItems = clipboardFilesDir.subFile(Backup.CLIPBOARD_IMAGES_JSON_NAME)
                 if (clipboardItems.exists()) {

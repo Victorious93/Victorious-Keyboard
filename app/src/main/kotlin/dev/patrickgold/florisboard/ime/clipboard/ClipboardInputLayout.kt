@@ -52,6 +52,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
@@ -66,6 +67,7 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.outlined.ContentPasteGo
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -128,6 +130,10 @@ import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
+
+private const val GRID_PREVIEW_MAX_CHARS = 1_000
+private const val POPUP_PREVIEW_MAX_CHARS = 20_000
+private const val DESCRIPTION_PROBE_MAX_CHARS = 2_000
 
 private val ItemWidth = 200.dp
 private val DialogWidth = 240.dp
@@ -346,7 +352,9 @@ fun ClipboardInputLayout(
                     )
                 }
             } else {
-                val text = item.stringRepresentation()
+                // Clips can be up to 50k characters and there can be 500 of them: never lay out or pattern-match the
+                // whole text in the grid. The popup (scrollable) view shows more, the grid only a preview.
+                val text = item.stringRepresentation().let { if (it.length <= DESCRIPTION_PROBE_MAX_CHARS) it else "" }
                 Column {
                     ClipTextItemDescription(
                         elementName = FlorisImeUi.ClipboardItemDescription.elementName,
@@ -357,7 +365,9 @@ fun ClipboardInputLayout(
                         modifier = Modifier
                             .fillMaxWidth()
                             .run { if (contentScrollInsteadOfClip) this.florisVerticalScroll() else this },
-                        text = item.displayText(),
+                        text = item.displayText().take(
+                            if (contentScrollInsteadOfClip) POPUP_PREVIEW_MAX_CHARS else GRID_PREVIEW_MAX_CHARS
+                        ),
                     )
                 }
             }
@@ -527,6 +537,17 @@ fun ClipboardInputLayout(
                                 } else {
                                     clipboardManager.pinClip(popupItem!!)
                                 }
+                                popupItem = null
+                            }
+                            PopupAction(
+                                icon = if (popupItem!!.isFavorite) Icons.Default.Star else Icons.Outlined.StarBorder,
+                                text = stringRes(if (popupItem!!.isFavorite) {
+                                    R.string.clip__unfavorite_item
+                                } else {
+                                    R.string.clip__favorite_item
+                                }),
+                            ) {
+                                clipboardManager.setFavorite(popupItem!!, !popupItem!!.isFavorite)
                                 popupItem = null
                             }
                             PopupAction(

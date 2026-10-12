@@ -22,8 +22,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
@@ -93,7 +96,12 @@ object Backup {
         var jetprefDatastore by mutableStateOf(true)
         var imeKeyboard by mutableStateOf(true)
         var imeTheme by mutableStateOf(true)
-        var clipboardTextItems by mutableStateOf(false)
+        /**
+         * Always false: clipboard *text* is deliberately not part of this general backup, because this archive is
+         * unencrypted. Use Clipboard → Backup and restore clipboard (encrypted, previewed, cap-safe) instead.
+         * The property stays so that the shared restore code can still read (and ignore) legacy archives.
+         */
+        val clipboardTextItems: Boolean = false
         var clipboardImageItems by mutableStateOf(false)
         var clipboardVideoItems by mutableStateOf(false)
 
@@ -102,11 +110,11 @@ object Backup {
 
         fun updateCheckboxState() {
             val newValue = if (
-                !clipboardVideoItems && !clipboardImageItems && !clipboardTextItems
+                !clipboardVideoItems && !clipboardImageItems
             ) {
                 ToggleableState.Off
             } else if (
-                clipboardVideoItems && clipboardImageItems && clipboardTextItems
+                clipboardVideoItems && clipboardImageItems
             ) {
                 ToggleableState.On
             } else {
@@ -198,10 +206,6 @@ fun BackupScreen() = FlorisScreen {
             val clipboardHistory = clipboardManager.currentHistory.all
             val clipboardFilesDir = workspace.inputDir.subDir("clipboard")
             clipboardFilesDir.mkdir()
-            if (backupFilesSelector.clipboardTextItems) {
-                clipboardFilesDir.subFile(Backup.CLIPBOARD_TEXT_ITEMS_JSON_NAME)
-                    .writeJson(clipboardHistory.filter { it.type == ItemType.TEXT })
-            }
             if (backupFilesSelector.clipboardImageItems) {
                 clipboardFilesDir.subFile(Backup.CLIPBOARD_IMAGES_JSON_NAME)
                     .writeJson(clipboardHistory.filter { it.type == ItemType.IMAGE })
@@ -344,11 +348,9 @@ internal fun BackupFilesSelector(
                 ) {
                     filesSelector.clipboardImageItems = true
                     filesSelector.clipboardVideoItems = true
-                    filesSelector.clipboardTextItems = true
                 } else {
                     filesSelector.clipboardImageItems = false
                     filesSelector.clipboardVideoItems = false
-                    filesSelector.clipboardTextItems = false
                 }
                 filesSelector.updateCheckboxState()
             },
@@ -357,14 +359,10 @@ internal fun BackupFilesSelector(
         )
 
 
-        CheckboxListItem(
-            onClick = {
-                filesSelector.clipboardTextItems = !filesSelector.clipboardTextItems
-                filesSelector.updateCheckboxState()
-            },
-            checked = filesSelector.clipboardTextItems,
-            text = stringRes(R.string.backup_and_restore__back_up__files_clipboard_history__clipboard_text_items),
-            isSecondaryListItem = true,
+        Text(
+            modifier = Modifier.padding(start = 56.dp, end = 16.dp, bottom = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            text = stringRes(R.string.backup_and_restore__clipboard_text_note),
         )
         CheckboxListItem(
             onClick = {

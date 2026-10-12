@@ -55,6 +55,9 @@ class ClipboardStore(
 
     fun loadAll(): List<ClipboardItem> = openAll(dao.getAll())
 
+    /** The current stored version of the row with this UUID (decrypted), or null if it no longer exists/readable. */
+    fun get(uuid: String): ClipboardItem? = dao.getByUuid(uuid)?.let { row -> openAll(listOf(row), publishUnreadable = false).firstOrNull() }
+
     fun insert(item: ClipboardItem): Long = dao.insert(seal(withUuid(item)))
 
     fun update(item: ClipboardItem) = dao.update(seal(withUuid(item)))
@@ -108,7 +111,7 @@ class ClipboardStore(
         return item.copy(text = cipher.encrypt(text, item.uuid))
     }
 
-    private fun openAll(rows: List<ClipboardItem>): List<ClipboardItem> {
+    private fun openAll(rows: List<ClipboardItem>, publishUnreadable: Boolean = true): List<ClipboardItem> {
         var unreadable = 0
         val out = ArrayList<ClipboardItem>(rows.size)
         for (row in rows) {
@@ -125,7 +128,7 @@ class ClipboardStore(
                 unreadable++
             }
         }
-        _unreadableCount.value = unreadable
+        if (publishUnreadable) _unreadableCount.value = unreadable
         return out
     }
 }

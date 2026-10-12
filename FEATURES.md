@@ -51,7 +51,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Operating modes: Standard / Developer / Termux (preset of the developer row), default-mode setting, opt-in auto-detect of Termux and ConnectBot from `EditorInfo.packageName` | ✅ core, JVM-tested · 🟦 settings and wiring compiled, **never run** (`docs/DEVELOPER_KEYBOARD.md`) |
 | Claude Code, Kali and NetHunter AI modes | ⬜ planned, deliberately not selectable until their features exist |
 | Snippet template language, opt-in expansion rules, library, JSON import/export, safe file store | ✅ pure core, JVM-tested (`SNIPPETS.md`) |
-| Snippet panel/editor UI, expansion in the keyboard, settings, encrypted export | ⬜ |
+| Snippets settings screen (add/edit/delete/search/import/export), expansion on the space key (opt-in), store in `noBackupFilesDir` | 🟦 compiled, **never run or rendered** |
+| In-keyboard snippet picker, expansion on Enter/Tab, encrypted export | ⬜ |
 | Command library | ⬜
 
 ## Prediction and voice (Phase 6)
@@ -72,7 +73,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 473 JVM unit tests pass | ✅ (`TESTING.md`) |
+| Debug APK builds; 476 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests passed on GitHub Actions (run 5, 2026-10-12); ⚠ artifact upload failed with "storage quota has been hit" (account-level, not code) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

@@ -17,6 +17,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Snippets: Android shell for the Phase 5 core: store in `noBackupFilesDir`, opt-in expansion on the space key, Settings →
+  Keyboard → Developer mode → Snippets screen (add/edit/delete/search, import/export through the system file picker).
+  Compiled and unit-tested (pure parts); never run on a device.
 - Operating modes (Standard, Developer, Termux) with a default-mode setting and opt-in automatic Termux mode in
   Termux/ConnectBot (uses only the package name Android gives every keyboard). Claude Code / Kali / NetHunter AI modes
   are planned and not selectable. See `docs/DEVELOPER_KEYBOARD.md`.

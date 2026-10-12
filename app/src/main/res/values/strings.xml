@@ -610,6 +610,63 @@
     <string name="devrow__ctrl_armed" comment="Accessibility description">Ctrl, applies to the next key</string>
     <string name="devrow__alt_locked" comment="Accessibility description">Alt, locked</string>
     <string name="devrow__alt_armed" comment="Accessibility description">Alt, applies to the next key</string>
+    <string name="snippets__title" comment="Screen title and settings entry">Snippets</string>
+    <string name="snippets__link_summary" comment="Settings entry summary">Reusable text with placeholders, optionally expanded as you type</string>
+    <string name="snippets__empty" comment="Empty list message">No snippets yet. Add one, or import a file.</string>
+    <string name="snippets__search" comment="Search field label">Search snippets</string>
+    <string name="snippets__add" comment="Button">Add</string>
+    <string name="snippets__import" comment="Button">Import</string>
+    <string name="snippets__export" comment="Button">Export</string>
+    <string name="snippets__export_warning" comment="Warning under the export button">Exports are plain, unencrypted text and contain everything you wrote in your snippets.</string>
+    <string name="snippets__disabled" comment="Label on a disabled snippet">disabled</string>
+    <string name="snippets__unreadable_banner" comment="Info card">The saved snippets file could not be read. It has not been changed. Saving something new keeps a copy of it next to the new file.</string>
+    <string name="snippets__invalid_banner" comment="Info card">{n} saved entries failed validation and are not shown. The previous file is kept as a backup when you save.</string>
+    <string name="snippets__import_unreadable" comment="Toast">The file could not be read.</string>
+    <string name="snippets__export_done" comment="Toast">Snippets exported.</string>
+    <string name="snippets__export_failed" comment="Toast">Export failed. The file was not written correctly.</string>
+    <string name="snippets__import_title" comment="Dialog title">Import snippets</string>
+    <string name="snippets__import_text" comment="Dialog text">The file contains {n} snippets. What should happen to ones you already have (same id)?</string>
+    <string name="snippets__import_invalid" comment="Dialog text">{n} entries in the file are invalid and will be skipped.</string>
+    <string name="snippets__import_overwrite" comment="Dialog button">Overwrite</string>
+    <string name="snippets__import_skip" comment="Dialog button">Keep mine</string>
+    <string name="snippets__import_result" comment="Toast">Imported: {added} added, {updated} updated, {skipped} skipped.</string>
+    <string name="snippets__delete_title" comment="Dialog title">Delete snippet?</string>
+    <string name="snippets__delete_text" comment="Dialog text">This snippet will be deleted:</string>
+    <string name="snippets__delete" comment="Button">Delete</string>
+    <string name="snippets__new_title" comment="Dialog title">New snippet</string>
+    <string name="snippets__edit_title" comment="Dialog title">Edit snippet</string>
+    <string name="snippets__field_title" comment="Field label">Title</string>
+    <string name="snippets__field_abbreviation" comment="Field label">Abbreviation (optional)</string>
+    <string name="snippets__field_body" comment="Field label">Text</string>
+    <string name="snippets__field_tags" comment="Field label">Tags (comma separated)</string>
+    <string name="snippets__field_enabled" comment="Switch label">Enabled</string>
+    <string name="snippets__placeholder_help" comment="Help under the text field">Placeholders: {{date}}, {{time}}, {{datetime}}, {{clipboard}}, {{cursor}}. Write \\{{ for a literal {{. Nothing is ever executed.</string>
+    <string name="snippets__unknown_placeholders" comment="Warning">Not recognised, will be inserted as plain text:</string>
+    <string name="snippets__error_invalid" comment="Error">The snippet is not valid.</string>
+    <string name="snippets__error_duplicate" comment="Error">A snippet with this id already exists.</string>
+    <string name="snippets__error_duplicate_abbreviation" comment="Error">Another snippet already uses this abbreviation.</string>
+    <string name="snippets__error_full" comment="Error">The snippet list is full (500). Delete one first.</string>
+    <string name="snippets__error_not_found" comment="Error">The snippet no longer exists.</string>
+    <string name="snippets__error_save_failed" comment="Error">Could not save. Nothing was changed.</string>
+    <string name="snippets__file_too_large" comment="Toast">The file is too large (over 8 MB).</string>
+    <string name="snippets__file_malformed" comment="Toast">The file is not a valid snippets file.</string>
+    <string name="snippets__file_wrong_format" comment="Toast">This is not a snippets file.</string>
+    <string name="snippets__file_newer_version" comment="Toast">The file was made by a newer version of the app.</string>
+    <string name="snippets__file_too_many" comment="Toast">The file has too many snippets (limit 500).</string>
+    <string name="snippets__issue_bad_id" comment="Validation">Internal id is invalid.</string>
+    <string name="snippets__issue_blank_title" comment="Validation">Enter a title.</string>
+    <string name="snippets__issue_title_too_long" comment="Validation">The title is too long (80 characters at most).</string>
+    <string name="snippets__issue_bad_title_chars" comment="Validation">The title must be a single line.</string>
+    <string name="snippets__issue_empty_body" comment="Validation">Enter the text.</string>
+    <string name="snippets__issue_body_too_long" comment="Validation">The text is too long (10,000 characters at most).</string>
+    <string name="snippets__issue_bad_body_chars" comment="Validation">The text contains characters that are not allowed.</string>
+    <string name="snippets__issue_bad_abbreviation" comment="Validation">The abbreviation needs 2 to 32 characters without spaces.</string>
+    <string name="snippets__issue_too_many_tags" comment="Validation">Too many tags (10 at most).</string>
+    <string name="snippets__issue_bad_tag" comment="Validation">A tag is empty or too long (32 characters at most).</string>
+    <string name="pref__snippets__expansion__label" comment="Preference title">Expand snippets while typing</string>
+    <string name="pref__snippets__expansion__summary" comment="Preference summary">Typing the prefix and an abbreviation, then space, inserts the snippet. Off by default; never in password fields</string>
+    <string name="pref__snippets__prefix__label" comment="Preference title">Expansion prefix</string>
+    <string name="pref__snippets__case_sensitive__label" comment="Preference title">Case-sensitive abbreviations</string>
     <string name="about__based_on__title" comment="Preference title: credit to the upstream project">Based on FlorisBoard</string>
     <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to open the original project.</string>
     <string name="about__third_party_licenses__title" comment="Preference title">Third-party licenses</string>

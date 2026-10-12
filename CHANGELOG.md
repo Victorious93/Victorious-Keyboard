@@ -13,6 +13,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- `curlyFormat` (the `{name}` string formatter behind `stringRes(id, "x" to value)`) looped until out of memory when a
+  value contained its own placeholder. Reachable through text we do not control, e.g. the `{error}` argument built from
+  an exception message while importing a backup file, or the delete-confirmation name. Values are now inserted once and
+  never re-scanned (this also stops one argument injecting another's placeholder). Reproduced before the fix (OOM),
+  9 regression tests after.
 - `PayloadCipher.decrypt` rejects non-canonical base64url (an altered last character could decode to identical bytes
   and still authenticate); tamper tests are now deterministic.
 

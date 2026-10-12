@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Changed
+- Logo and launcher icons: the project logo (`docs/branding/logo.png`) is the master. `docs/branding/make_icons.py` generates
+  the adaptive-icon foreground and monochrome layers for every density and the 512 px Play Store icon. The earlier generated
+  vector mark and its generator (`make_logo.py`, SVG masters) were removed; they remain in git history.
+- README rewritten as the project homepage: feature status per item, phase status, APK facts, build and install steps, and a
+  documentation index. It no longer describes Phase 3–5 features as planned.
 - CI: dependency-verification checksums for five Gradle plugin marker POMs now match what the Gradle Plugin Portal serves
   (Central's copy kept as `also-trust`); CI run 5 passed build + unit tests on GitHub. Test-report upload is non-fatal.
 - About screen: "Based on FlorisBoard" credit with licence and baseline version, linking to upstream.

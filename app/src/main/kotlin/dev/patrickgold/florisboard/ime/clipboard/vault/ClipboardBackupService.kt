@@ -128,6 +128,10 @@ class ClipboardBackupService(
     private val policy: () -> HistoryPolicy = { HistoryPolicy() },
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+    /** The default file name offered in the system file picker. */
+    fun suggestedFileName(format: ExportFormat): String =
+        "victorious-clipboard-${FILE_STAMP.format(Instant.ofEpochMilli(clock()))}.${format.extension}"
+
     suspend fun export(options: ExportOptions): ExportResult = withContext(Dispatchers.Default) {
         val snap = repo.snapshot()
         val unsupported = snap.entries.size - snap.textEntries.size

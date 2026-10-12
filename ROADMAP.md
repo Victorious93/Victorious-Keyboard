@@ -9,9 +9,9 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ⬜ |
+| 1 | Project foundation | ✅ (builds, 300+ JVM tests, dependency verification; CI written but never run; lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
-| 3 | Advanced clipboard | ⬜ |
+| 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | ⬜ |
 | 5 | Snippets and productivity | ⬜ |
 | 6 | Predictive and gesture typing | ⬜ |
@@ -56,3 +56,20 @@ As in the project brief. Notable decisions already taken:
 * P6: suggestions/autocorrect do not exist upstream; they are built here or not shipped. No placeholder toggles.
 * P7: no `INTERNET` permission until a provider adapter is enabled by the user.
 * P10: no production signing material in the repo; debug builds are never published as releases.
+
+## Phase 3 — status detail
+
+Done and JVM-tested: retention policy, search, categoriser, credential detector, backup formats (JSON/ZIP/encrypted),
+hostile-file-safe reader, import planner (replace/merge/skip, exact cap preview), export/restore service with
+consent and rollback semantics, backup library model, AES-GCM value cipher, password-field detection.
+
+Compiled but **never run**: Android Keystore key provider, Room v5 + `ClipboardStore`, `ClipboardManager` rewrite,
+Clipboard manager screen, Backup/restore screen with SAF pickers, keyboard panel favourite action.
+
+Open before Phase 3 can be called complete:
+* Run it on a device: persistence across restarts, Keystore behaviour, password-field copy guard, SAF export/import,
+  responsiveness with 500 long entries (measure; set thresholds).
+* Instrumented Room migration test (4→5).
+* Typed search inside the keyboard clipboard panel (needs an IME-internal text input; deliberately not attempted
+  blind).
+* Image/URI clips in backups (v1 is text-only by design).

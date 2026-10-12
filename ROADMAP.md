@@ -82,7 +82,7 @@ Done and JVM-tested: key+modifier → `KeyEvent` mapper (US-layout table, consta
 Compiled but **never run**: `KeyboardManager` handling of Ctrl/Alt/Esc/Tab key codes and the key-event path for typed
 characters.
 
-Also compiled, never run: developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
+Also compiled, never run: Advanced developer settings screen, developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
 keyboard's arrow keys.
 
 Open: seeing the row on a real screen (sizing, window height, theming, scroll-vs-tap), all Termux/SSH behaviour on a

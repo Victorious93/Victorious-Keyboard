@@ -17,6 +17,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Advanced developer settings screen: developer row size, separate navigation/symbol key toggles, your own symbol keys
+  (validated, never executed), key-repeat and Ctrl/Alt lock timing, vibration, snippet date/time formats and
+  keep-space option, expansion in Termux mode (off by default), your own app-to-mode mappings, reset to defaults.
 - Snippets: Android shell for the Phase 5 core: store in `noBackupFilesDir`, opt-in expansion on the space key, Settings →
   Keyboard → Developer mode → Snippets screen (add/edit/delete/search, import/export through the system file picker).
   Compiled and unit-tested (pure parts); never run on a device.

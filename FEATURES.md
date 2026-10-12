@@ -44,7 +44,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
 | `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
 | Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; off by default |
-| Per-app automatic profile, terminal-mode toggle separate from the row | ⬜ |
+| Advanced developer settings: row size, navigation/symbol toggles, own symbol keys, key repeat and Ctrl/Alt lock timing, vibration, snippet date/time formats, own app-to-mode mappings, reset | ✅ parsers/rows JVM-tested · 🟦 screen and wiring compiled, **never run or rendered** |
+| Per-app automatic profile (language symbols per app) | ⬜ |
 | Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |
 | Bracket pairing as automatic behaviour, indentation helpers | ⬜ (pair *keys* exist as models; nothing auto-closes) |
 | Termux / SSH / vim / tmux behaviour | ⬜ **device-test only; not verified** |

@@ -6,6 +6,21 @@ yet** (no device/emulator available; see `AUDIT.md` §5), so no phase is marked 
 
 Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 
+## Phase queue
+
+Started by the owner's words "continue with phase implementation" (procedure in `CLAUDE.md`, "Working method"). One
+pull request per item. Items are listed in the order they should be built; the owner may reorder them.
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 1 | Snippets: expansion on Enter and Tab (the core already supports more boundaries, `ExpansionSettings.boundaries`) | `next` | Per-field opt-in; never in sensitive fields; must not swallow a real Enter/Tab when no snippet matches (test that). |
+| 2 | Snippets: per-mode defaults (e.g. expansion on/off per operating mode) | queued | Builds on `OperatingMode` and the Advanced developer settings. |
+| 3 | Snippets: encrypted export, reusing the clipboard backup container | queued | Must follow `BACKUP_FORMAT.md` (JCE primitives only, versioned header, no keys in metadata). |
+| 4 | Dictionary packs: device validation and a decision on the word lists (verify against official sources) | blocked on owner | The lists were written from memory; verification needs network access the sandbox does not have. |
+| 5 | Termux `RUN_COMMAND` integration | blocked on owner | Not started. Do not begin unless the owner explicitly asks (see `CLAUDE.md`). |
+
+Completed phases of this queue are recorded in `CHANGELOG.md` and in the status tables above.
+
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |

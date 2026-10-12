@@ -418,6 +418,7 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
      * @return True on success, false if an error occurred or the input connection is invalid.
      */
     fun performClipboardCut(): Boolean {
+        if (activeInfo.inputAttributes.isPasswordLike()) return false // never move password text into the clipboard
         autoSpace.setInactive()
         phantomSpace.setInactive()
         val text = activeContent.selectedText.ifBlank { currentInputConnection()?.getSelectedText(0) }
@@ -436,6 +437,7 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
      * @return True on success, false if an error occurred or the input connection is invalid.
      */
     fun performClipboardCopy(): Boolean {
+        if (activeInfo.inputAttributes.isPasswordLike()) return false // never move password text into the clipboard
         autoSpace.setInactive()
         phantomSpace.setInactive()
         val text = activeContent.selectedText.ifBlank { currentInputConnection()?.getSelectedText(0) }

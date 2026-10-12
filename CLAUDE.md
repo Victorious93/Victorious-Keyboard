@@ -5,7 +5,7 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done (foundation); Phase 3 core in progress.** Status table: `ROADMAP.md`. Update it with every phase.
+**Phases 0–1 done; Phase 3 implemented but not device-validated (see ROADMAP.md).** Status table: `ROADMAP.md`. Update it with every phase.
 
 ## Verified environment
 JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0 (NDK/CMake/Rust are no longer needed:
@@ -55,8 +55,9 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 * Upstream licence provenance of emoji/Han data unconfirmed (`LICENSES.md`).
 
 ## Next milestone
-Phase 1 exit: applicationId + branding, `:lib:native` removed, dependency verification, CI workflow, debug APK built.
-Then Phase 3 (clipboard core).
+Needs a device first: validate Phase 3 on hardware (checklist in `TESTING.md`). Without a device the next buildable,
+JVM-testable work is Phase 4 core logic (terminal key-event mapping, modifier state machine, developer row models) and
+Phase 5 (snippet template engine, expansion rules) as pure Kotlin, then their thin UI.
 
 ## Upstream
 `upstream` remote = `https://github.com/florisboard/florisboard.git`; baseline `0ea0481c40616b0fd6eb4cd09c57521181b9a4b6`

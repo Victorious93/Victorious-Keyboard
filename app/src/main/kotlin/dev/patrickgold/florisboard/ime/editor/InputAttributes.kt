@@ -165,3 +165,14 @@ value class InputAttributes private constructor(val raw: Int) {
         fun toInt() = value
     }
 }
+
+/**
+ * True for password-like fields (text, visible, web and numeric passwords). The keyboard's own Copy/Cut keys and the
+ * clipboard history must never take text from these.
+ */
+fun InputAttributes.isPasswordLike(): Boolean = when (variation) {
+    InputAttributes.Variation.PASSWORD,
+    InputAttributes.Variation.VISIBLE_PASSWORD,
+    InputAttributes.Variation.WEB_PASSWORD -> true
+    else -> false
+}

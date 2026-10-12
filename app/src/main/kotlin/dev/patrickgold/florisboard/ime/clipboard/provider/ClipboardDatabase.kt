@@ -300,6 +300,9 @@ interface ClipboardHistoryDao {
     @Query("SELECT * FROM $CLIPBOARD_HISTORY_TABLE")
     fun getAllAsFlow(): Flow<List<ClipboardItem>>
 
+    @Query("SELECT * FROM $CLIPBOARD_HISTORY_TABLE WHERE uuid = :uuid LIMIT 1")
+    fun getByUuid(uuid: String): ClipboardItem?
+
     @Insert
     fun insert(item: ClipboardItem): Long
 

@@ -16,8 +16,13 @@
 
 package dev.patrickgold.florisboard.app.settings.clipboard
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.runtime.Composable
 import dev.patrickgold.florisboard.R
+import dev.patrickgold.florisboard.app.LocalNavController
+import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
@@ -26,6 +31,7 @@ import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.ui.DialogSliderPreference
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
 import dev.patrickgold.jetpref.datastore.ui.ListPreference
+import dev.patrickgold.jetpref.datastore.ui.Preference
 import dev.patrickgold.jetpref.datastore.ui.PreferenceGroup
 import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.android.AndroidVersion
@@ -39,6 +45,19 @@ fun ClipboardScreen() = FlorisScreen {
     previewFieldVisible = true
 
     content {
+        val navController = LocalNavController.current
+        Preference(
+            icon = Icons.Default.ContentPaste,
+            title = stringRes(R.string.clipboard_manager__title),
+            summary = stringRes(R.string.clipboard_manager__link_summary),
+            onClick = { navController.navigate(Routes.Settings.ClipboardManager) },
+        )
+        Preference(
+            icon = Icons.Default.Backup,
+            title = stringRes(R.string.clipboard_backup__title),
+            summary = stringRes(R.string.clipboard_backup__link_summary),
+            onClick = { navController.navigate(Routes.Settings.ClipboardBackup) },
+        )
         SwitchPreference(
             prefs.clipboard.useInternalClipboard,
             title = stringRes(R.string.pref__clipboard__use_internal_clipboard__label),

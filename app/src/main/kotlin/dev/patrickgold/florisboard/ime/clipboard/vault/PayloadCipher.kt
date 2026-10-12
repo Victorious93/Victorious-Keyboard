@@ -66,11 +66,15 @@ class PayloadCipher(
 
     fun decrypt(stored: String, context: String): String {
         if (!isEncrypted(stored)) throw VaultDecryptionException("value is not in the encrypted format")
+        val encoded = stored.substring(PREFIX.length)
         val raw = try {
-            DECODER.decode(stored.substring(PREFIX.length))
+            DECODER.decode(encoded)
         } catch (_: IllegalArgumentException) {
             throw VaultDecryptionException("malformed encrypted value")
         }
+        // Unpadded base64url is not canonical in its last character (unused low bits are ignored by the decoder), so an
+        // altered value could decode to identical bytes and still authenticate. Accept only the exact form we produce.
+        if (ENCODER.encodeToString(raw) != encoded) throw VaultDecryptionException("non-canonical encoding")
         if (raw.size < NONCE_LEN + TAG_BITS / 8) throw VaultDecryptionException("encrypted value too short")
         val key = keyProvider.dataKey()
         try {

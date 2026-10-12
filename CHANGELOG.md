@@ -4,10 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Fixed
+- `PayloadCipher.decrypt` rejects non-canonical base64url (an altered last character could decode to identical bytes
+  and still authenticate); tamper tests are now deterministic.
+
 ### Added
 - Project documentation set (`AUDIT.md`, `ARCHITECTURE.md`, `LICENSES.md`, `BUILD.md`, `ROADMAP.md`, `CLAUDE.md`, `PRIVACY.md`, `SECURITY.md`).
 - CI workflow: build debug APK and run JVM unit tests.
-- Gradle dependency verification (SHA-256).
+- Gradle dependency verification (SHA-256), regenerated and proven from a cold Gradle home.
 - Clipboard core (pure Kotlin, unit-tested): 500-entry retention policy that never evicts pinned data, search,
   local categoriser, credential detector, backup formats (JSON / ZIP / password-encrypted with AES-256-GCM +
   PBKDF2-HMAC-SHA256), hostile-file-safe reader, and an import planner with replace/merge/skip modes and exact

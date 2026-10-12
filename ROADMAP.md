@@ -9,7 +9,7 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 300+ JVM tests, dependency verification; CI written but never run; lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 357 JVM tests (181 ours), dependency verification proven from a cold Gradle home through a mirror; CI written but never run; lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | ⬜ |

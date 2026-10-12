@@ -4,12 +4,33 @@
 
 | Layer | Tooling | Status |
 |---|---|---|
-| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: all pass. 176 inherited from upstream (app + libs) plus 134 new clipboard-core tests (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip). Numbers: `AUDIT.md` §6 and the phase report |
+| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 357 tests, 0 failures, 0 errors, 0 skipped (`:app` 251 + `:lib:snygg` 106; counted from `**/build/test-results/testDebugUnitTest/TEST-*.xml`). 176 were measured on the unmodified baseline (`AUDIT.md` §6), so 181 are ours: clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection |
 | Compile / package | `./gradlew assembleDebug` | **Run**, success |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
 | Lint | `./gradlew lintDebug` | **Run, fails on pre-existing upstream code** (52 errors, none in new code at time of writing; `AUDIT.md` §8). Not yet a CI gate |
 | Instrumented tests (`androidTest`) | one upstream example test | **Not run** (no device/emulator) |
 | Manual device matrix | below | **Not run** |
+
+### Kotest and Gradle's `--tests` filter
+
+`./gradlew testDebugUnitTest --tests '*SomeTest'` does **not** work with this kotest version: every excluded spec
+fails with `IllegalStateException: Could not find spec TestDescriptor` (`initializationError`). Run the whole suite.
+
+### Dependency verification, cold checkout
+
+`gradle/verification-metadata.xml` was regenerated from an empty Gradle home (`clean assembleDebug
+testDebugUnitTest`, then `assembleRelease`, then `testReleaseUnitTest`, each with `--write-verification-metadata
+sha256`) and then proven: with a *second* empty Gradle home, `./gradlew --no-daemon assembleDebug
+testDebugUnitTest` (no write flag, the CI command) succeeded. Both runs fetched through a Maven Central mirror, so
+the checksums are trust-on-first-use; the first GitHub Actions run (direct Central) is the independent check.
+
+### Latest debug APK (built locally, not installed anywhere)
+
+`app/build/outputs/apk/debug/app-debug.apk`: 31,077,571 bytes, sha256
+`5bf28e6e24d95435f4a181ec7760066afd43a661943dc7971fc5e4bff9bf7197`. `aapt2 dump badging`: package
+`com.victorious.keyboard.debug`, versionCode 120, versionName `0.1.0-debug+f9968b4`, label "Victorious Keyboard Debug".
+Permissions: `VIBRATE`, `POST_NOTIFICATIONS` and the app-internal `...DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; no
+`INTERNET`. This only shows what the manifest declares; the APK has never been installed or run.
 
 ## Environment limits
 

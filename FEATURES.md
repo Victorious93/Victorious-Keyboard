@@ -56,7 +56,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 300+ JVM unit tests pass | ✅ (`TESTING.md` for exact numbers) |
+| Debug APK builds; 357 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ written; **never run** (needs GitHub Actions) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

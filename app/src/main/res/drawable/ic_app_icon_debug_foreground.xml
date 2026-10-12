@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original Victorious Keyboard mark: a "V" key legend. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+  <path android:pathData="M31,34 L45,34 L54,56 L63,34 L77,34 L60,76 L48,76 Z">
+    <aapt:attr name="android:fillColor">
+      <gradient android:startX="54" android:startY="34" android:endX="54" android:endY="76" android:type="linear">
+        <item android:offset="0" android:color="#FFFCD34D"/>
+        <item android:offset="1" android:color="#FFF59E0B"/>
+      </gradient>
+    </aapt:attr>
+  </path>
+</vector>

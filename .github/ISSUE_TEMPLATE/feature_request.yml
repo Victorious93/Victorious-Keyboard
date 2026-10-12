@@ -1,0 +1,29 @@
+name: ✨ Feature request
+description: Suggest an improvement
+labels:
+  - "enhancement"
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy considerations
+      description: Does this touch typed text, the clipboard, or the network? How?
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and ROADMAP.md.
+          required: true

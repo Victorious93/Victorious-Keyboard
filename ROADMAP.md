@@ -9,10 +9,10 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 357 JVM tests (181 ours), dependency verification proven from a cold Gradle home through a mirror; CI written but never run; lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 394 JVM tests (218 ours), dependency verification proven from a cold Gradle home through a mirror; CI written but never run; lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
-| 4 | Developer and terminal modes | ⬜ |
+| 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; `KeyboardManager` wiring 🟦 compiled, **not run**; no UI yet (see `TERMINAL.md`) |
 | 5 | Snippets and productivity | ⬜ |
 | 6 | Predictive and gesture typing | ⬜ |
 | 7 | AI workspace | ⬜ |
@@ -73,3 +73,15 @@ Open before Phase 3 can be called complete:
 * Typed search inside the keyboard clipboard panel (needs an IME-internal text input; deliberately not attempted
   blind).
 * Image/URI clips in backups (v1 is text-only by design).
+
+## Phase 4 — status detail
+
+Done and JVM-tested: key+modifier → `KeyEvent` mapper (US-layout table, constants checked against
+`android.view.KeyEvent`), Ctrl/Alt sticky/lock/hold state machine, developer row and language-profile models.
+
+Compiled but **never run**: `KeyboardManager` handling of Ctrl/Alt/Esc/Tab key codes and the key-event path for typed
+characters.
+
+Open: developer row / terminal-mode UI (nothing currently displays the models or offers a Ctrl key), Ctrl/Alt on the
+existing arrow keys, observable modifier state for the UI (armed/locked indicator), all Termux/SSH behaviour on a
+device.

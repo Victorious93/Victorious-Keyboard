@@ -44,7 +44,7 @@ data class Modifiers(val ctrl: Boolean = false, val alt: Boolean = false, val sh
  *   (so a chord does not arm the modifier afterwards)
  * * a dedicated lock key ([toggleLock]) switches OFF/ARMED ↔ LOCKED directly
  *
- * Time is passed in, never read, so behaviour is deterministic. Not thread-safe: call from the main thread only.
+ * Time is passed in, never read, so behaviour is deterministic. Every public call is atomic (guarded by one lock) because key events and "field changed" resets arrive on different threads; a *sequence* of calls is not.
  */
 class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
     private class Slot {
@@ -56,31 +56,31 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
 
     private val slots = TerminalModifier.entries.associateWith { Slot() }
 
-    fun mode(modifier: TerminalModifier): ModifierMode = slots.getValue(modifier).mode
+    @Synchronized fun mode(modifier: TerminalModifier): ModifierMode = slots.getValue(modifier).mode
 
-    fun isHeld(modifier: TerminalModifier): Boolean = slots.getValue(modifier).held
+    @Synchronized fun isHeld(modifier: TerminalModifier): Boolean = slots.getValue(modifier).held
 
     /** What applies to a key sent right now. [shift] is passed through from the caller. */
-    fun current(shift: Boolean = false): Modifiers = Modifiers(
+    @Synchronized fun current(shift: Boolean = false): Modifiers = Modifiers(
         ctrl = isActive(TerminalModifier.CTRL),
         alt = isActive(TerminalModifier.ALT),
         shift = shift,
     )
 
-    val anyActive: Boolean get() = TerminalModifier.entries.any { isActive(it) }
+    val anyActive: Boolean @Synchronized get() = TerminalModifier.entries.any { isActive(it) }
 
     private fun isActive(modifier: TerminalModifier): Boolean {
         val s = slots.getValue(modifier)
         return s.held || s.mode != ModifierMode.OFF
     }
 
-    fun press(modifier: TerminalModifier) {
+    @Synchronized fun press(modifier: TerminalModifier) {
         val s = slots.getValue(modifier)
         s.held = true
         s.usedWhileHeld = false
     }
 
-    fun release(modifier: TerminalModifier, nowMs: Long) {
+    @Synchronized fun release(modifier: TerminalModifier, nowMs: Long) {
         val s = slots.getValue(modifier)
         if (!s.held) return
         s.held = false
@@ -89,19 +89,19 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
     }
 
     /** The press was cancelled (finger slid away): no tap, no change. */
-    fun cancel(modifier: TerminalModifier) {
+    @Synchronized fun cancel(modifier: TerminalModifier) {
         val s = slots.getValue(modifier)
         s.held = false
         s.usedWhileHeld = false
     }
 
-    fun toggleLock(modifier: TerminalModifier) {
+    @Synchronized fun toggleLock(modifier: TerminalModifier) {
         val s = slots.getValue(modifier)
         s.mode = if (s.mode == ModifierMode.LOCKED) ModifierMode.OFF else ModifierMode.LOCKED
     }
 
     /** Call after a key has been sent with [current]: one-shot modifiers are spent, locked ones stay. */
-    fun consume() {
+    @Synchronized fun consume() {
         for (s in slots.values) {
             if (s.held) s.usedWhileHeld = true
             if (s.mode == ModifierMode.ARMED) s.mode = ModifierMode.OFF
@@ -109,7 +109,7 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
     }
 
     /** E.g. when the focused field changes: nothing may stay armed or locked into another app. */
-    fun reset() {
+    @Synchronized fun reset() {
         for (s in slots.values) {
             s.mode = ModifierMode.OFF
             s.held = false

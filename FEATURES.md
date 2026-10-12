@@ -34,9 +34,21 @@ possible as specified (reason given).
 
 ## Developer / terminal / productivity (Phases 4–5)
 
-Developer rows, symbol rows, profiles, bracket pairing, indentation helpers, terminal mode and Ctrl/Alt key
-events, command library, snippets and text expansion: ⬜ **not started.** Upstream defines key codes for Ctrl/Alt/Esc/
-Tab/arrows but has no verified Ctrl+letter path (`AUDIT.md`).
+Details, mapping table and limits: `TERMINAL.md`. **None of this is visible to a user yet**: no layout contains a
+Ctrl/Alt/Esc/Tab key and no UI shows the developer rows, so the keyboard behaves exactly like upstream until the
+Phase 4 UI exists.
+
+| Feature | Status |
+|---|---|
+| Key + Ctrl/Alt/Shift → real `KeyEvent` (never literal "Ctrl+C" text), special keys, F1–F12 | ✅ pure core, JVM-tested |
+| Sticky / double-tap-locked / held Ctrl and Alt state machine | ✅ pure core, JVM-tested |
+| Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
+| `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
+| Developer row / terminal mode UI, language-profile picker, per-app auto profile | ⬜ |
+| Ctrl/Alt applied to arrow, Home/End, Delete keys that already exist on layouts | ⬜ (existing arrow handling ignores Ctrl/Alt) |
+| Bracket pairing as automatic behaviour, indentation helpers | ⬜ (pair *keys* exist as models; nothing auto-closes) |
+| Termux / SSH / vim / tmux behaviour | ⬜ **device-test only; not verified** |
+| Command library, snippets, text expansion | ⬜ Phase 5
 
 ## Prediction and voice (Phase 6)
 
@@ -56,7 +68,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 357 JVM unit tests pass | ✅ (`TESTING.md`) |
+| Debug APK builds; 394 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ written; **never run** (needs GitHub Actions) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

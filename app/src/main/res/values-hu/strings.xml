@@ -165,7 +165,6 @@
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Kiemelőszín (Material You témák)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Telepített témák kezelése</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">FlorisBoard alkalmazásadatok</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Belső tárhely</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Külső szolgáltató</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Nappali téma kiválasztása</string>
@@ -803,7 +802,6 @@
     <string name="ext__addon_management_box__managing_placeholder">{extensions} kezelése</string>
     <string name="ext__addon_management_box__addon_manager_info">A kiterjesztések importálásával, exportálásával, létrehozásával, testreszabásával és eltávolításával kapcsolatos összes feladat a központi kiterjesztéskezelőn keresztül kezelhető.</string>
     <string name="ext__addon_management_box__go_to_page">Ugrás erre: {ext_home_title}</string>
-    <string name="ext__home__info">Letöltheti és telepítheti a kiterjesztéseket a FlorisBoard kiegészítőboltból, vagy importálhat bármely, az internetről letöltött kiterjesztés fájlt.</string>
     <string name="ext__home__visit_store">Kiegészítőbolt meglátogatása</string>
     <string name="ext__home__manage_extensions">Telepített kiterjesztések kezelése</string>
     <string name="ext__list__view_details">Részletek megtekintése</string>

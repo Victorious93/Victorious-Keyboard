@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import dev.patrickgold.florisboard.BuildConfig
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
@@ -60,13 +59,6 @@ fun ImportExtensionBox(navController: NavController) {
                 .fillMaxWidth()
                 .padding(horizontal = 6.dp),
         ) {
-            FlorisTextButton(
-                onClick = {
-                    context.launchUrl("https://${BuildConfig.FLADDONS_STORE_URL}/")
-                },
-                icon = Icons.Default.Shop,
-                text = stringRes(id = R.string.ext__home__visit_store),
-            )
             Spacer(modifier = Modifier.weight(1f))
             FlorisTextButton(
                 onClick = {

@@ -4,6 +4,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Changed
+- Removed user-visible upstream branding: theme names, "FlorisBoard" wording in strings (translated copies removed,
+  English fallback), the button that opened upstream's add-on store, the upstream feedback link, an Albanian app-name
+  override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
+
 ### Fixed
 - `PayloadCipher.decrypt` rejects non-canonical base64url (an altered last character could decode to identical bytes
   and still authenticate); tamper tests are now deterministic.

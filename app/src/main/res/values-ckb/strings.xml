@@ -143,7 +143,6 @@
     <string name="pref__theme__day" comment="Label of the day group (day means light theme)">ڕووناک</string>
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">تاریک</string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">ڕێکخستنی رووکارەکان</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">ڕەنگی بنەڕەتی بەرنامەکە</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">بیرگەی ناخۆیی</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">بیرگەی دەرەکی</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">ڕووکارەکانی دۆخی ڕووناک</string>
@@ -447,7 +446,6 @@
     <string name="backup_and_restore__restore__success">داتاکان بەسەرکەوتوویی گەڕێنرانەوە!</string>
     <string name="backup_and_restore__restore__failure">گێڕانەوەی داتاکان سەرکەوتو نەبوو: {error_message}</string>
     <!-- Crash Dialog strings -->
-    <string name="crash_dialog__title" comment="Title of crash dialog">FlorisBorad ڕاپۆرتی هەڵەی</string>
     <string name="crash_dialog__description" comment="Description of crash dialog">بەداخەوە، بەهۆی هەڵەیەکی لەناکاو تەختەکلیلی Victorious Keyboard لەکارکەوت.</string>
     <string name="crash_dialog__report_instructions" comment="Issue tracker report instructions for the crash dialog. The %s placeholder is the name of the crash report template and always in English/LTR.">بەهۆی هەڵەیەکی لەناکاو تەختەکلیل  لەکارکەوت...\nبەکارهێنەری بەرێز لەکاتی بوونی کێشە یان وەستانی لەناکاوی بەرنامەکە تکایە ئەم بەشە فەرامۆش مەکەو هاوکاربە لە چارەسەرکردنیدا\n
 پەنجەبنێ بە دوگمەی <b>لەبەرگرتنەوەی ڕاپۆرتی هەڵە</b>، دواتر پەنجەبنێ بە دوگمەی <b>ناردنی ڕاپۆرتی هەڵە</b> بۆ دۆزینەوەی جۆری کێشەکە و چارەسەرکردن و باشترکردنی بەرنامەکەمان لە وەشانەکانی دواتردا</string>
@@ -456,7 +454,6 @@
     <string name="crash_dialog__copy_to_clipboard_failure" comment="Label of Copy to clipboard failure message in crash dialog">ناتوانرێ کۆپی بکرێت چونکە مۆبایلەکەت پشتگیری ناکات</string>
     <string name="crash_dialog__open_issue_tracker" comment="Label of Open issue tracker button in crash dialog">ڕاگەیاندنی ڕاپۆرتی هەڵە لە (github.com)</string>
     <string name="crash_dialog__close" comment="Label of Close button in crash dialog">داخستن</string>
-    <string name="crash_notification_channel__title" comment="Title of crash notification channel">FlorisBorad ڕاپۆرتی هەڵەی</string>
     <string name="crash_once_notification__title" comment="Title of the notification for a single crash">تەختەکلیلی Victorious Keyboard لە کارکەوت…</string>
     <string name="crash_once_notification__body" comment="Body of the notification for a single crash">بینینی زانیاری ڕاپۆرتی هەڵە</string>
     <string name="crash_multiple_notification__title" comment="Title of the notification for consecutive crashes">تەختەکلیلی Victorious Keyboard لەوانەیە زوو زوو لەکارکردن بوەستێت…</string>

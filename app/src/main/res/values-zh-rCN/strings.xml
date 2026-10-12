@@ -164,7 +164,6 @@
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">夜间主题</string>
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">强调色（Material You 主题）</string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">管理已安装的主题</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">FlorisBoard应用资源</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">内部存储空间</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">外部提供者</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">选择日间主题</string>
@@ -806,7 +805,6 @@
     <string name="ext__addon_management_box__managing_placeholder">管理 {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">所有与导入、导出、创建、自定义和删除扩展相关的任务都可以通过集中的插件管理器来处理。</string>
     <string name="ext__addon_management_box__go_to_page">跳转到{ext_home_title}</string>
-    <string name="ext__home__info">您可以从 FlorisBoard 插件商店下载并安装扩展，或者导入您从互联网上下载的任何匹配和兼容的扩展文件。</string>
     <string name="ext__home__visit_store">访问插件商店</string>
     <string name="ext__home__manage_extensions">管理已安装的扩展</string>
     <string name="ext__list__view_details">查看详细信息</string>

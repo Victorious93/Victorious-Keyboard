@@ -164,7 +164,6 @@
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Dynamická barva (motivy Material You)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Spravovat nainstalované motivy</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Podklady aplikace FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Interní úložiště</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Externí poskytovatel</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Vyberte denní motiv</string>
@@ -612,7 +611,6 @@
     <string name="backup_and_restore__restore__success">Data úspěšně obnovena!</string>
     <string name="backup_and_restore__restore__failure">Nepodařilo se obnovit data: {error_message}</string>
     <!-- Crash Dialog strings -->
-    <string name="crash_dialog__title" comment="Title of crash dialog">Zpráva o chybě florisboardu</string>
     <string name="crash_dialog__description" comment="Description of crash dialog">Omlouváme se za potíže, ale aplikace Victorious Keyboard spadla kvůli neočekávané chybě.</string>
     <string name="crash_dialog__report_instructions" comment="Issue tracker report instructions for the crash dialog. The %s placeholder is the name of the crash report template and always in English/LTR.">Pokud chcete tuto chybu nahlásit, podívejte se nejprve do nástroje pro sledování problémů na GitHubu, pokud již nebyla chyba nahlášena.\nPokud tomu tak není, zkopírujte vygenerovaný záznam o chybě a otevřete nový problém. Použijte šablonu „%s“ a vyplňte popis, kroky k reprodukci a na konec vložte vygenerovaný záznam o pádu. Pomůžete tak k tomu, aby byl Victorious Keyboard lepší a stabilnější pro všechny. Děkujeme!</string>
     <string name="crash_dialog__copy_to_clipboard" comment="Label of Copy to clipboard button in crash dialog">Kopírovat do schránky</string>
@@ -808,7 +806,6 @@
     <string name="ext__addon_management_box__managing_placeholder">Správa {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Všechny úlohy spojené s importováním, exportováním, vytvářením, přizpůsobováním a odstraňováním rozšíření mohou být prováděny skrze centralizovaného správce doplňků.</string>
     <string name="ext__addon_management_box__go_to_page">Přejít na {ext_home_title}</string>
-    <string name="ext__home__info">Rozšíření můžete stahovat a instalovat z Obchodu s doplňky FlorisBoard nebo importovat jakýkoli soubor rozšíření, který jste si stáhli z internetu.</string>
     <string name="ext__home__visit_store">Navštívit Obchod s doplňky</string>
     <string name="ext__home__manage_extensions">Správa nainstalovaných doplňků</string>
     <string name="ext__list__view_details">Zobrazit podrobnosti</string>

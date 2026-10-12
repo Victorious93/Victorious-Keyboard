@@ -155,7 +155,6 @@
     <string name="pref__theme__day" comment="Label of the day group (day means light theme)">نسق نهاري</string>
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">نسق ليلي</string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">أدارة السمات المثبتة</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">أصول تطبيق FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">الذاكرة الداخلية</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">مزود خارجي</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">اختيار النمط الصباحي</string>
@@ -666,7 +665,6 @@
     <string name="ext__addon_management_box__managing_placeholder">إدارة {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">يمكن التعامل مع جميع المهام المتعلقة باستيراد الملحقات وتصديرها وإنشائها وتخصيصها وإزالتها بواسطة مدير الإضافات المركزي.</string>
     <string name="ext__addon_management_box__go_to_page">انتقل إلى {ext_home_title}</string>
-    <string name="ext__home__info">يمكنك تنزيل الإضافات وتثبيتها من متجر إضافات FlorisBoard أو استيراد أي مِلَفّ ملحق قمت بتنزيله من الإنترنت.</string>
     <string name="ext__home__visit_store">زيارة متجر الإضافات</string>
     <string name="ext__home__manage_extensions">إدارة الإضافات المثبتة</string>
     <string name="ext__list__view_details">عرض التفاصيل</string>

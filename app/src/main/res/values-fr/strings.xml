@@ -157,7 +157,6 @@
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Couleur accentuée (Thèmes Material you)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Gérer les thèmes installés</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Ressources de l’application FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Stockage interne</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Fournisseur externe</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Sélectionner le thème clair</string>
@@ -711,7 +710,6 @@
     <string name="ext__addon_management_box__managing_placeholder">Gestion de {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Les tâches d\'importation, d\'exportation, de création, de personnalisation et de suppression d\'extensions peuvent être gérées par le gestionnaire d\'extensions centralisé.</string>
     <string name="ext__addon_management_box__go_to_page">Aller à {ext_home_title}</string>
-    <string name="ext__home__info">Vous pouvez télécharger et installer des extensions à partir du magasin d\'extensions FlorisBoard ou importer un fichier d\'extension téléchargé sur Internet.</string>
     <string name="ext__home__visit_store">Visiter le magasin d\'extensions</string>
     <string name="ext__home__manage_extensions">Gestion des Extensions Installées</string>
     <string name="ext__list__view_details">Voir les détails</string>

@@ -154,7 +154,6 @@
     <string name="pref__theme__day" comment="Label of the day group (day means light theme)">Денна тема</string>
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">Нічна тема</string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Керування встановленими темами</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Ресурси FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Внутрішня пам\'ять</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Зовнішнє джерело</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Виберіть денну тему</string>
@@ -667,7 +666,6 @@
     <string name="ext__addon_management_box__managing_placeholder">Керування {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Всі завдання, пов\'язані з імпортом, експортом, створенням, налаштуванням і видаленням розширень, можна вирішувати за допомогою централізованого менеджера розширень.</string>
     <string name="ext__addon_management_box__go_to_page">Перейти до {ext_home_title}</string>
-    <string name="ext__home__info">Ви можете завантажити і встановити розширення з магазину розширень FlorisBoard або імпортувати будь-який файл розширення, який ви завантажили з мережі.</string>
     <string name="ext__home__visit_store">Відвідати магазин розширень</string>
     <string name="ext__home__manage_extensions">Керування встановленими розширеннями</string>
     <string name="ext__list__view_details">Докладніше</string>

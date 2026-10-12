@@ -40,10 +40,23 @@ Long builds: run in the background with `--no-parallel --max-workers=2`, log to 
    `noBackupFilesDir` or is explicitly excluded in `res/xml/backup_rules.xml`; Android auto-backup must not carry it.
 8. Version codes stay ≥ 120 (in-app restore rejects < 64) and only increase.
 
-## Working method (owner's instruction)
-Build **phase by phase**; after each phase finish (code, tests, docs, honest status) open **one pull request** for it. Do not
-batch several phases into one PR. Open the PR only after the phase builds and its tests pass; keep PR descriptions honest
-about what was not run (device validation).
+## Working method (owner's instruction, 2026-10-12)
+Build **phase by phase**. Each phase ends with **one pull request**; never batch two phases into one PR. The owner says
+**"continue with phase implementation"** to start the next phase. When you hear that, do exactly this:
+
+1. Read the "Phase queue" in `ROADMAP.md` and take the first item marked `next`. If the previous phase's PR is not merged
+   yet (check with `mcp__github__pull_request_read`, `method: get`), stop and say so; do not start a new phase.
+2. Restart the assigned branch from the latest default branch: `git fetch origin main && git checkout -B
+   ccr-70296783-0teq6t origin/main`. Only do this when the previous PR is merged, so nothing unmerged is lost.
+3. Recreate the environment per `BUILD.md` (SDK, `local.properties`, the `docs/build-env-mirror.gradle.kts` copy to
+   `~/.gradle/init.d/` for building only). Run the baseline `./gradlew testDebugUnitTest :lib:kotlin:test assembleDebug`
+   in the background and record the counts from the result XMLs.
+4. Implement the phase to the Definition of done (below): pure-Kotlin core, JVM tests including failure paths, docs in the
+   same commit, honest status in `ROADMAP.md`.
+5. Re-run the full suite and `assembleDebug`. Commit with the attribution trailers, push to the assigned branch, and open
+   the PR using `.github/PULL_REQUEST_TEMPLATE.md`. The PR must state what was **not** run (device, lint, CI).
+6. Stop after the PR is open. Do not begin the next phase. After the owner merges it, update `ROADMAP.md` (queue + status),
+   `TESTING.md` counts and `CHANGELOG.md`, and this section's pointers, then wait for "continue".
 
 ## Conventions
 * Match surrounding code; Apache-2.0 header on new files (`Copyright (C) 2026 Victorious Keyboard Contributors`).
@@ -61,11 +74,10 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 * Upstream licence provenance of emoji/Han data unconfirmed (`LICENSES.md`).
 
 ## Next milestone
-Needs a device first: validate Phase 3, the Phase 4 wiring and the snippet picker on hardware (checklist in `TESTING.md`).
-The in-keyboard snippet picker is implemented (compiled, pure parts tested, never rendered). Without a device the next
-work is expansion on Enter/Tab, per-mode snippet defaults and encrypted snippet export; Termux integration only if the
-owner asks (verify the current `RUN_COMMAND` contract from Termux's documentation first); see `SNIPPETS.md`,
-`docs/ARCHITECTURE_ASSESSMENT.md`.
+The next phase is the first `next` item in the "Phase queue" in `ROADMAP.md`. Device validation of Phases 3–5 (checklist in
+`TESTING.md`) is the owner's to run; no AI session can do it. The in-keyboard snippet picker and dictionary packs are
+merged (PR #6) and compiled, never rendered. Termux integration only if the owner asks (verify the current `RUN_COMMAND`
+contract from Termux's documentation first); see `SNIPPETS.md`, `DICTIONARY_PACKS.md`, `docs/ARCHITECTURE_ASSESSMENT.md`.
 
 Gotcha: run the whole unit-test suite (`testDebugUnitTest` and `:lib:kotlin:test`); kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
 Gotcha: the `{name}` formatter used to loop forever on values containing their own placeholder; fixed in `lib/kotlin` Strings.kt (values are never re-scanned). Still prefer concatenating user text over passing it as a `stringRes` argument.

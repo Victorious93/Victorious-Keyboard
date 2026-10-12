@@ -160,7 +160,6 @@ Klik di sini untuk menyelesaikan masalah ini.</string>
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">Tema malam</string>
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Warna aksen (tema Material You)    </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Kelola tema terpasang</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Aset Aplikasi FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Penyimpanan Internal</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Penyedia Eksternal</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Pilih tema pagi</string>
@@ -777,7 +776,6 @@ Klik di sini untuk menyelesaikan masalah ini.</string>
     <string name="ext__addon_management_box__managing_placeholder">Kelola {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Semua tugas yang terkait dengan mengimpor, mengekspor, membuat, menyesuaikan, dan menghapus ekstensi dapat ditangani melalui manajer addon terpusat.</string>
     <string name="ext__addon_management_box__go_to_page">Ke {ext_home_title}</string>
-    <string name="ext__home__info">Anda dapat mengunduh dan menginstal ekstensi dari FlorisBoard Addons Store atau mengimpor file ekstensi apa pun yang telah Anda unduh dari internet.</string>
     <string name="ext__home__visit_store">Kunjungi Add-ons Store</string>
     <string name="ext__home__manage_extensions">Kelola ekstensi terpasang</string>
     <string name="ext__list__view_details">Lihat rincian</string>

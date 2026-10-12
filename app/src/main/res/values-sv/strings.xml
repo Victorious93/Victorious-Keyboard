@@ -44,7 +44,6 @@
     <string name="pref__theme__sunset_time__label" comment="Label of the sunset time preference">Solnedgångstid</string>
     <string name="pref__theme__day" comment="Label of the day group (day means light theme)">Dag tema</string>
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">Natt tema</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">FlorisBoard app-tillgångar</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Intern lagring</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Extern leverantör</string>
     <string name="snygg__rule_element__key">Tangent</string>

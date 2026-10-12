@@ -163,7 +163,6 @@
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Цвет акцента (для тем Material You)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Установленные темы</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Наборы приложений FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Внутреннее хранилище</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Внешний источник</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Выбрать светлую тему</string>
@@ -795,7 +794,6 @@
     <string name="ext__addon_management_box__managing_placeholder">Управление {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Все задачи, связанные с импортом, экспортом, созданием, персонализацией и удалением расширений могут быть выполнены через централизованный менеджер расширений.</string>
     <string name="ext__addon_management_box__go_to_page">Перейти к {ext_home_title}</string>
-    <string name="ext__home__info">Вы можете скачать и установить расширения через магазин расширений FlorisBoard или импортировать любые файлы расширений, скачанные из интернета.</string>
     <string name="ext__home__visit_store">Магазин расширений</string>
     <string name="ext__home__manage_extensions">Установленные расширения</string>
     <string name="ext__list__view_details">Подробности</string>

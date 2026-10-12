@@ -34,9 +34,25 @@ possible as specified (reason given).
 
 ## Developer / terminal / productivity (Phases 4–5)
 
-Developer rows, symbol rows, profiles, bracket pairing, indentation helpers, terminal mode and Ctrl/Alt key
-events, command library, snippets and text expansion: ⬜ **not started.** Upstream defines key codes for Ctrl/Alt/Esc/
-Tab/arrows but has no verified Ctrl+letter path (`AUDIT.md`).
+Details, mapping table and limits: `TERMINAL.md`. The developer row is **off by default** (Settings → Keyboard →
+Developer mode); with it off the keyboard behaves like upstream. The UI has not been seen on a screen.
+
+| Feature | Status |
+|---|---|
+| Key + Ctrl/Alt/Shift → real `KeyEvent` (never literal "Ctrl+C" text), special keys, F1–F12 | ✅ pure core, JVM-tested |
+| Sticky / double-tap-locked / held Ctrl and Alt state machine | ✅ pure core, JVM-tested |
+| Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
+| `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
+| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; off by default |
+| Per-app automatic profile, terminal-mode toggle separate from the row | ⬜ |
+| Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |
+| Bracket pairing as automatic behaviour, indentation helpers | ⬜ (pair *keys* exist as models; nothing auto-closes) |
+| Termux / SSH / vim / tmux behaviour | ⬜ **device-test only; not verified** |
+| Operating modes: Standard / Developer / Termux (preset of the developer row), default-mode setting, opt-in auto-detect of Termux and ConnectBot from `EditorInfo.packageName` | ✅ core, JVM-tested · 🟦 settings and wiring compiled, **never run** (`docs/DEVELOPER_KEYBOARD.md`) |
+| Claude Code, Kali and NetHunter AI modes | ⬜ planned, deliberately not selectable until their features exist |
+| Snippet template language, opt-in expansion rules, library, JSON import/export, safe file store | ✅ pure core, JVM-tested (`SNIPPETS.md`) |
+| Snippet panel/editor UI, expansion in the keyboard, settings, encrypted export | ⬜ |
+| Command library | ⬜
 
 ## Prediction and voice (Phase 6)
 
@@ -56,8 +72,8 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 300+ JVM unit tests pass | ✅ (`TESTING.md` for exact numbers) |
-| CI workflow (build + unit tests + debug APK artifact) | ✅ written; **never run** (needs GitHub Actions) |
+| Debug APK builds; 473 JVM unit tests pass | ✅ (`TESTING.md`) |
+| CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests passed on GitHub Actions (run 5, 2026-10-12); ⚠ artifact upload failed with "storage quota has been hit" (account-level, not code) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |
 | Instrumented / device tests, performance numbers | ⬜ |

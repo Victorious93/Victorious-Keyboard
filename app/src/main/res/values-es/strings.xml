@@ -161,7 +161,6 @@
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Color del énfasis (Temas Material You)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Gestionar temas instalados</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Recursos de aplicación de FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Almacenamiento interno</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Almacenamiento externo</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Elegir tema claro</string>
@@ -791,7 +790,6 @@
     <string name="ext__addon_management_box__managing_placeholder">Gestionando {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">Todas las tareas relacionadas con la importación, exportación, creación, personalización y eliminación de extensiones pueden ser manejadas a través del administrador de complementos centralizado.</string>
     <string name="ext__addon_management_box__go_to_page">Ir a {ext_home_title}</string>
-    <string name="ext__home__info">Puede descargar e instalar extensiones de la tienda FlorisBoard Addons o importar cualquier archivo de extensión que haya descargado de internet.</string>
     <string name="ext__home__visit_store">Visita la tienda de complementos</string>
     <string name="ext__home__manage_extensions">Administrar las extensiones instaladas</string>
     <string name="ext__list__view_details">Ver detalles</string>

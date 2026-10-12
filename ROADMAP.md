@@ -9,11 +9,11 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 300+ JVM tests, dependency verification; CI written but never run; lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 473 JVM tests (297 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
-| 4 | Developer and terminal modes | ⬜ |
-| 5 | Snippets and productivity | ⬜ |
+| 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
+| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested (templates, expansion rules, library, import/export, safe file store); shell/UI ⬜ (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | ⬜ |
 | 7 | AI workspace | ⬜ |
 | 8 | Themes and responsive UI | ⬜ |
@@ -73,3 +73,43 @@ Open before Phase 3 can be called complete:
 * Typed search inside the keyboard clipboard panel (needs an IME-internal text input; deliberately not attempted
   blind).
 * Image/URI clips in backups (v1 is text-only by design).
+
+## Phase 4 — status detail
+
+Done and JVM-tested: key+modifier → `KeyEvent` mapper (US-layout table, constants checked against
+`android.view.KeyEvent`), Ctrl/Alt sticky/lock/hold state machine, developer row and language-profile models.
+
+Compiled but **never run**: `KeyboardManager` handling of Ctrl/Alt/Esc/Tab key codes and the key-event path for typed
+characters.
+
+Also compiled, never run: developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
+keyboard's arrow keys.
+
+Open: seeing the row on a real screen (sizing, window height, theming, scroll-vs-tap), all Termux/SSH behaviour on a
+device, per-app automatic profile, translations.
+
+## Phase 5 — status detail
+
+Done and JVM-tested: template language and renderer, expansion matcher (opt-in, never in sensitive fields, no
+recursion), snippet library with validation and unique abbreviations, versioned JSON import/export with a
+non-destructive importer, atomic file store with `.bak`/`.corrupt` safety copies. Details and limits: `SNIPPETS.md`.
+
+Open: Android shell (store under `noBackupFilesDir`, expansion hook, panel/editor UI, settings), per-mode defaults,
+encrypted export, device validation.
+
+## Mapping to the "VictorKeys master brief"
+
+A longer brief (repository `Victorious93/VictorKeys`, a separate public fork not part of this repository or session)
+uses different phase numbers. Where its topics land in this repository's plan:
+
+| Master brief phase | Here |
+|---|---|
+| 1 Architecture / mode manager | not started; `ime.terminal`, `ime.developer` and the developer row are the first pieces |
+| 2 Termux keyboard (special keys, symbol row, shell snippets, `RUN_COMMAND`) | special keys/symbol row = our Phase 4 (done, unrun); snippets/templates = Phase 5 (core done); `RUN_COMMAND` integration not started |
+| 3 Claude Code keyboard, 4 Kali catalog, 5 NetHunter, 6 AI assistant, 7 terminal companion | not started (our Phase 7+); the template engine here is a prerequisite for prompt/command templates |
+| 8 Developer functions (pairing, indentation, snippets) | pair *keys* exist; auto-pairing/indentation not started; snippets = Phase 5 |
+| 9 Clipboard and workflows | clipboard = Phase 3 (done, unrun); workflows not started |
+| 10 Knowledge / token efficiency, 11 UI, 12–14 tests, docs, CI | partly covered by existing docs/CI; the rest not started |
+
+Nothing from the brief beyond what is listed in `FEATURES.md` exists in this repository. Which repository the brief
+should be applied to is an open question for the owner.

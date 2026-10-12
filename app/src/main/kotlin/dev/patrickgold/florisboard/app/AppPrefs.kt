@@ -41,6 +41,8 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
+import dev.patrickgold.florisboard.ime.developer.LanguageProfile
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickAction
@@ -297,6 +299,34 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val suggestionCandidateMaxCount = int(
             key = "emoji__suggestion_candidate_max_count",
             default = 5,
+        )
+    }
+
+    val modes = Modes()
+    inner class Modes {
+        val defaultMode = enum(
+            key = "modes__default",
+            default = OperatingMode.STANDARD,
+        )
+        val autoDetect = boolean(
+            key = "modes__auto_detect",
+            default = false,
+        )
+    }
+
+    val devrow = Devrow()
+    inner class Devrow {
+        val enabled = boolean(
+            key = "devrow__enabled",
+            default = false,
+        )
+        val profile = enum(
+            key = "devrow__profile",
+            default = LanguageProfile.SHELL,
+        )
+        val terminalKeys = boolean(
+            key = "devrow__terminal_keys",
+            default = true,
         )
     }
 

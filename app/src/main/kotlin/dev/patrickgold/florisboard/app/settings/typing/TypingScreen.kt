@@ -119,8 +119,8 @@ fun TypingScreen() = FlorisScreen {
                             """.trimIndent().replace('\n', ' '),
                         )
                         FlorisHyperlinkText(
-                            text = "Feedback thread (GitHub)",
-                            url = "https://github.com/florisboard/florisboard/discussions/1935",
+                            text = "Give feedback (GitHub issues)",
+                            url = stringRes(R.string.florisboard__issue_tracker_url),
                         )
                     }
                 }

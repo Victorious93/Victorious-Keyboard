@@ -157,7 +157,6 @@
     <string name="pref__theme__night" comment="Label of the night group (night means dark theme)">Tema scuro</string>
     <string name="pref__theme__theme_accent_color__label" comment="Label of accent color preference in Theme">        Colore dell\'accentMateria</string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Gestisci temi installati</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">Risorse dell\'app FlorisBoard</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Memoria interna</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">Provider esterno</string>
     <string name="settings__theme_manager__title_day" comment="Title of the theme manager screen for day theme selection">Seleziona tema chiaro</string>
@@ -640,7 +639,6 @@
     <string name="ext__validation__enter_component_id">Inserisci l\'ID corretto</string>
     <string name="ext__validation__hint_value_above_50_percent">Qualsiasi valore superiore al 50% si comporterà come se impostassi il 50%, prendi in considerazione di ridurre la dimensione percentuale</string>
     <string name="ext__addon_management_box__addon_manager_info">Tutte le attività relative all\'importazione, all\'esportazione, alla creazione, alla personalizzazione e alla rimozione delle estensioni possono essere gestite tramite il gestore interno</string>
-    <string name="ext__home__info">Puoi scaricare e installare estensioni dallo Store di FlorisBoard o importare qualsiasi addon</string>
     <string name="ext__home__visit_store">Vai allo Store degli addons</string>
     <string name="ext__home__manage_extensions">Gestisci temi installati</string>
     <string name="ext__list__view_details">Visualizza dettagli</string>

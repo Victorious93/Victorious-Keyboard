@@ -18,6 +18,7 @@ package dev.patrickgold.florisboard.ime.keyboard
 
 import android.content.Context
 import android.icu.lang.UCharacter
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -64,10 +65,22 @@ import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
+import dev.patrickgold.florisboard.ime.developer.DevKeyAction
+import dev.patrickgold.florisboard.ime.mode.ActiveMode
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.developer.DevStep
+import dev.patrickgold.florisboard.ime.developer.DeveloperKeyResolver
+import dev.patrickgold.florisboard.ime.terminal.ModifierSnapshot
+import dev.patrickgold.florisboard.ime.terminal.ModifierStateMachine
+import dev.patrickgold.florisboard.ime.terminal.SpecialKey
+import dev.patrickgold.florisboard.ime.terminal.TerminalAction
+import dev.patrickgold.florisboard.ime.terminal.TerminalKeyMapper
+import dev.patrickgold.florisboard.ime.terminal.TerminalModifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -98,6 +111,20 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     val resources = KeyboardManagerResources()
     val activeState = ObservableKeyboardState.new()
+
+    /** Sticky / locked / held Ctrl and Alt for terminal use. Inert unless a Ctrl/Alt key is on the active layout. */
+    val terminalModifiers = ModifierStateMachine()
+
+    /** Armed/locked state of Ctrl and Alt for the developer row's indicators. */
+    val activeMode: StateFlow<OperatingMode>
+        field = MutableStateFlow(OperatingMode.STANDARD)
+
+    val terminalModifierState: StateFlow<ModifierSnapshot>
+        field = MutableStateFlow(ModifierSnapshot())
+
+    init {
+        terminalModifiers.onChange = { terminalModifierState.value = it }
+    }
     var smartbarVisibleDynamicActionsCount by mutableIntStateOf(0)
     private var lastToastReference = WeakReference<Toast>(null)
 
@@ -161,6 +188,15 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             }
             clipboardManager.primaryClipFlow.collectLatestIn(scope) {
                 updateActiveEvaluators()
+            }
+            combine(
+                prefs.modes.defaultMode.asFlow(),
+                prefs.modes.autoDetect.asFlow(),
+                editorInstance.activeInfoFlow,
+            ) { default, autoDetect, info -> ActiveMode.resolve(default, autoDetect, info.packageName) }
+                .collectIn(scope) { activeMode.value = it }
+            editorInstance.activeInfoFlow.collectIn(scope) {
+                terminalModifiers.reset() // nothing may stay armed or locked into another field or app
             }
             editorInstance.activeContentFlow.collectIn(scope) { content ->
                 resetSuggestions(content)
@@ -317,6 +353,21 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Handles [KeyCode] arrow and move events, behaves differently depending on text selection.
      */
     fun handleArrow(code: Int, count: Int = 1) = editorInstance.apply {
+        if (terminalModifiers.anyActive) {
+            val special = when (code) {
+                KeyCode.ARROW_LEFT -> SpecialKey.LEFT
+                KeyCode.ARROW_RIGHT -> SpecialKey.RIGHT
+                KeyCode.ARROW_UP -> SpecialKey.UP
+                KeyCode.ARROW_DOWN -> SpecialKey.DOWN
+                KeyCode.MOVE_START_OF_LINE -> SpecialKey.HOME
+                KeyCode.MOVE_END_OF_LINE -> SpecialKey.END
+                else -> null
+            }
+            if (special != null) {
+                sendTerminalSpecial(special, count)
+                return@apply
+            }
+        }
         val isShiftPressed = activeState.isManualSelectionMode || inputEventDispatcher.isPressed(KeyCode.SHIFT)
         val content = activeContent
         val selection = content.selection
@@ -672,6 +723,51 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         activeState.isCharHalfWidth = true
     }
 
+    /**
+     * Sends [key] as a real key event, with Ctrl/Alt from [terminalModifiers] (and shift from the keyboard). Spends
+     * one-shot modifiers. Never logs or stores anything about the key.
+     */
+    private fun sendTerminalSpecial(key: SpecialKey, count: Int = 1) {
+        val mods = terminalModifiers.current(shift = inputEventDispatcher.isPressed(KeyCode.SHIFT))
+        val action = TerminalKeyMapper.mapSpecial(key, mods) as TerminalAction.Key
+        editorInstance.sendDownUpKeyEvent(action.keyCode, action.metaState, count)
+        terminalModifiers.consume()
+    }
+
+    /** Developer-row modifier key gestures (down / up / cancel), see [ModifierStateMachine]. */
+    fun terminalModifierDown(modifier: TerminalModifier) = terminalModifiers.press(modifier)
+    fun terminalModifierUp(modifier: TerminalModifier) =
+        terminalModifiers.release(modifier, SystemClock.uptimeMillis())
+    fun terminalModifierCancel(modifier: TerminalModifier) = terminalModifiers.cancel(modifier)
+
+    /** A tap on a developer-row key (not a modifier key). Never logs or stores what is sent. */
+    fun performDeveloperKey(action: DevKeyAction) {
+        if (action is DevKeyAction.Modifier) return
+        val mods = terminalModifiers.current(shift = inputEventDispatcher.isPressed(KeyCode.SHIFT))
+        val resolution = DeveloperKeyResolver.resolve(action, mods)
+        for (step in resolution.steps) {
+            when (step) {
+                is DevStep.Key -> editorInstance.sendDownUpKeyEvent(step.keyCode, step.metaState)
+                is DevStep.Text -> editorInstance.commitText(step.text)
+                is DevStep.CursorLeft ->
+                    editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), step.count)
+            }
+        }
+        if (resolution.consumesModifiers) terminalModifiers.consume()
+    }
+
+    /**
+     * A typed character while Ctrl and/or Alt is active. Returns true if it was sent as a key event (the caller must
+     * then skip the normal text path), false if the character has no key mapping and should be typed as plain text.
+     */
+    private fun sendTerminalChar(text: String): Boolean {
+        val mods = terminalModifiers.current()
+        val action = TerminalKeyMapper.mapChar(text, mods) as? TerminalAction.Key ?: return false
+        editorInstance.sendDownUpKeyEvent(action.keyCode, action.metaState)
+        terminalModifiers.consume()
+        return true
+    }
+
     override fun onInputKeyDown(data: KeyData) {
         val windowController = FlorisImeService.windowControllerOrNull()
         windowController?.editor?.disableIfNoGestureInProgress()
@@ -687,6 +783,8 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 editorInstance.massSelection.begin()
             }
             KeyCode.SHIFT -> handleShiftDown(data)
+            KeyCode.CTRL -> terminalModifiers.press(TerminalModifier.CTRL)
+            KeyCode.ALT -> terminalModifiers.press(TerminalModifier.ALT)
         }
     }
 
@@ -704,6 +802,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 editorInstance.massSelection.end()
                 handleArrow(data.code)
             }
+            KeyCode.CTRL -> terminalModifiers.release(TerminalModifier.CTRL, SystemClock.uptimeMillis())
+            KeyCode.ALT -> terminalModifiers.release(TerminalModifier.ALT, SystemClock.uptimeMillis())
+            KeyCode.CTRL_LOCK -> terminalModifiers.toggleLock(TerminalModifier.CTRL)
+            KeyCode.ALT_LOCK -> terminalModifiers.toggleLock(TerminalModifier.ALT)
+            KeyCode.ESCAPE -> sendTerminalSpecial(SpecialKey.ESCAPE)
+            KeyCode.TAB -> sendTerminalSpecial(SpecialKey.TAB)
             KeyCode.CAPS_LOCK -> handleCapsLock()
             KeyCode.CHAR_WIDTH_SWITCHER -> handleCharWidthSwitch()
             KeyCode.CHAR_WIDTH_FULL -> handleCharWidthFull()
@@ -801,10 +905,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                     else -> when (data.type) {
                         KeyType.CHARACTER, KeyType.NUMERIC ->{
                             val text = data.asString(isForDisplay = false)
-                            if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
-                                nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                            // With Ctrl/Alt active the character is sent as a key event instead of text.
+                            if (!(terminalModifiers.anyActive && sendTerminalChar(text))) {
+                                if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
+                                    nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                                }
+                                editorInstance.commitChar(text)
                             }
-                            editorInstance.commitChar(text)
                         }
                         else -> {
                             flogError(LogTopic.KEY_EVENTS) { "Received unknown key: $data" }
@@ -831,6 +938,8 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 editorInstance.massSelection.end()
             }
             KeyCode.SHIFT -> handleShiftCancel()
+            KeyCode.CTRL -> terminalModifiers.cancel(TerminalModifier.CTRL)
+            KeyCode.ALT -> terminalModifiers.cancel(TerminalModifier.ALT)
         }
     }
 

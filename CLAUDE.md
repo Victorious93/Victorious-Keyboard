@@ -5,7 +5,8 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done; Phase 3 implemented but not device-validated (see ROADMAP.md).** Status table: `ROADMAP.md`. Update it with every phase.
+**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, not wired; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run.**
+Status table: `ROADMAP.md`. Update it with every phase. Phase 4 details/limits: `TERMINAL.md`.
 
 ## Verified environment
 JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0 (NDK/CMake/Rust are no longer needed:
@@ -55,9 +56,10 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 * Upstream licence provenance of emoji/Han data unconfirmed (`LICENSES.md`).
 
 ## Next milestone
-Needs a device first: validate Phase 3 on hardware (checklist in `TESTING.md`). Without a device the next buildable,
-JVM-testable work is Phase 4 core logic (terminal key-event mapping, modifier state machine, developer row models) and
-Phase 5 (snippet template engine, expansion rules) as pure Kotlin, then their thin UI.
+Needs a device first: validate Phase 3 and the Phase 4 wiring on hardware (checklist in `TESTING.md`). Without a
+device the next work is the Phase 5 Android shell (store under `noBackupFilesDir`, expansion hook, panel UI; see `SNIPPETS.md`).
+
+Gotcha: run the whole unit-test suite; kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
 
 ## Upstream
 `upstream` remote = `https://github.com/florisboard/florisboard.git`; baseline `0ea0481c40616b0fd6eb4cd09c57521181b9a4b6`

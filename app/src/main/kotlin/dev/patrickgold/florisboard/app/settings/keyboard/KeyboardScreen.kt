@@ -21,6 +21,8 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
+import dev.patrickgold.florisboard.ime.developer.LanguageProfile
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
 import dev.patrickgold.florisboard.ime.landscapeinput.LandscapeInputUiMode
@@ -103,6 +105,35 @@ fun KeyboardScreen() = FlorisScreen {
             entries = enumDisplayEntriesOf(IncognitoDisplayMode::class),
         )
 
+        PreferenceGroup(title = stringRes(R.string.pref__devrow__group_label)) {
+            ListPreference(
+                prefs.modes.defaultMode,
+                title = stringRes(R.string.pref__modes__default__label),
+                entries = enumDisplayEntriesOf(OperatingMode::class),
+            )
+            SwitchPreference(
+                prefs.modes.autoDetect,
+                title = stringRes(R.string.pref__modes__auto_detect__label),
+                summary = stringRes(R.string.pref__modes__auto_detect__summary),
+            )
+            SwitchPreference(
+                prefs.devrow.enabled,
+                title = stringRes(R.string.pref__devrow__enabled__label),
+                summary = stringRes(R.string.pref__devrow__enabled__summary),
+            )
+            ListPreference(
+                prefs.devrow.profile,
+                title = stringRes(R.string.pref__devrow__profile__label),
+                entries = enumDisplayEntriesOf(LanguageProfile::class),
+                visibleIf = { prefs.devrow.enabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.devrow.terminalKeys,
+                title = stringRes(R.string.pref__devrow__terminal_keys__label),
+                summary = stringRes(R.string.pref__devrow__terminal_keys__summary),
+                visibleIf = { prefs.devrow.enabled isEqualTo true },
+            )
+        }
         PreferenceGroup(title = stringRes(R.string.pref__keyboard__group_layout__label)) {
             ListPreference(
                 prefs.keyboard.landscapeInputUiMode,

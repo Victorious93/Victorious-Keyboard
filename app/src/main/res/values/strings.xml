@@ -175,7 +175,7 @@
         Accent color (Material You themes)
     </string>
     <string name="settings__theme_manager__title_manage" comment="Title of the theme manager screen for managing installed and custom themes">Manage installed themes</string>
-    <string name="pref__theme__source_assets" comment="Label for the theme source field">FlorisBoard App Assets</string>
+    <string name="pref__theme__source_assets" comment="Label for the theme source field">Victorious Keyboard App Assets</string>
     <string name="pref__theme__source_internal" comment="Label for the theme source field">Internal Storage</string>
     <string name="pref__theme__source_external" comment="Label for the theme source field">External Provider</string>
 
@@ -597,6 +597,21 @@
     <string name="about__project_license__summary" comment="Preference summary">Victorious Keyboard is licensed under {license_name}</string>
     <string name="about__project_license__error_license_text_failed" comment="Error text for license text loading failure">Error: Failed to load license text.\n-&gt; Reason: {error_message}</string>
     <string name="about__project_license__error_reason_asset_manager_null" comment="Error text if asset manager is null">Asset manager reference is null</string>
+    <string name="pref__devrow__group_label" comment="Preference group title">Developer mode</string>
+    <string name="pref__devrow__enabled__label" comment="Preference title">Developer row</string>
+    <string name="pref__devrow__enabled__summary" comment="Preference summary">Show a row with Esc, Tab, Ctrl, Alt, arrows and programming symbols above the keyboard. Developer and Termux modes always show it</string>
+    <string name="pref__modes__default__label" comment="Preference title">Keyboard mode</string>
+    <string name="pref__modes__auto_detect__label" comment="Preference title">Switch mode in terminal apps</string>
+    <string name="pref__modes__auto_detect__summary" comment="Preference summary">Use Termux mode when typing in Termux or ConnectBot. Only the app name Android gives every keyboard is used; nothing is monitored</string>
+    <string name="pref__devrow__profile__label" comment="Preference title">Symbols for</string>
+    <string name="pref__devrow__terminal_keys__label" comment="Preference title">Terminal keys</string>
+    <string name="pref__devrow__terminal_keys__summary" comment="Preference summary">Esc, Tab, Ctrl, Alt, arrows, Home, End, PgUp and PgDn at the start of the row</string>
+    <string name="devrow__ctrl_locked" comment="Accessibility description">Ctrl, locked</string>
+    <string name="devrow__ctrl_armed" comment="Accessibility description">Ctrl, applies to the next key</string>
+    <string name="devrow__alt_locked" comment="Accessibility description">Alt, locked</string>
+    <string name="devrow__alt_armed" comment="Accessibility description">Alt, applies to the next key</string>
+    <string name="about__based_on__title" comment="Preference title: credit to the upstream project">Based on FlorisBoard</string>
+    <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to open the original project.</string>
     <string name="about__third_party_licenses__title" comment="Preference title">Third-party licenses</string>
     <string name="about__third_party_licenses__summary" comment="Preference summary">Licenses of the third-party libraries included in this app</string>
 
@@ -984,7 +999,7 @@
     <string name="ext__addon_management_box__managing_placeholder">Managing {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">All tasks related to importing, exporting, creating, customizing, and removing extensions can be handled through the centralized addon manager.</string>
     <string name="ext__addon_management_box__go_to_page">Go to {ext_home_title}</string>
-    <string name="ext__home__info">You can download and install extensions from the FlorisBoard Addons Store or import any extension file you have downloaded from the internet.</string>
+    <string name="ext__home__info">You can import extension files (themes, layouts, language packs). Only import files from sources you trust.</string>
     <string name="ext__home__visit_store">Visit Addons Store</string>
     <string name="ext__home__manage_extensions">Manage installed extensions</string>
     <string name="ext__list__view_details">View details</string>

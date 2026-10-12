@@ -1,18 +1,28 @@
 # Branding
 
-* `logo.svg`: master art (stable build, cyan accent); `logo_debug.svg`: debug build (amber accent).
-* `play_store_icon_512.png`: 512×512 raster of `logo.svg` (rendered with headless Chromium; Play applies its own mask).
-* `make_logo.py`: the single source of the geometry. It writes the four Android vector drawables
-  (`app/src/main/res/drawable/ic_app_icon_{stable,debug}_{foreground,monochrome}.xml`) and the two SVGs:
-  `python3 -I docs/branding/make_logo.py`. Do not hand-edit the generated XML.
+* `logo.png`: the project logo, supplied by the repository owner. 117 × 117 px RGBA, transparent outside a near-black
+  disc of exactly `#11151C`. It is the master for the launcher icons and the README header.
+* `make_icons.py`: builds all icon outputs from `logo.png`:
+  * `app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_app_icon_foreground.png`: adaptive-icon foreground (108 dp canvas);
+  * `app/src/main/res/mipmap-*/ic_app_icon_monochrome.png`: themed-icon layer for Android 13 and newer;
+  * `play_store_icon_512.png`: Play listing icon, 512 × 512, background filled (Play applies its own mask).
 
-The mark is original artwork (a hooded figure, neon-edged face with a `>_` prompt for eyes, a red-glowing laptop lid
-carrying the "V"). It is inspired by the mood of a reference wallpaper; none of that image is reused.
+  Run `python3 -I docs/branding/make_icons.py` (needs Pillow: `pip install pillow`). Run it again after changing `logo.png`.
+* `app/src/main/res/mipmap-anydpi-v26/ic_app_icon_{stable,debug}{,_round}.xml` combine the background colour
+  `@color/ic_app_icon_background` (`#11151C`, the same as the disc) with those two layers. Stable and debug builds share
+  the artwork; debug builds are told apart by the `.debug` package suffix and the "Victorious Keyboard Debug" label.
+
+The artwork is 117 px, so the density outputs are upscaled and will look soft at xxxhdpi and on the Play listing. For
+sharper icons, replace `logo.png` with a square PNG of at least 1024 px and run the script again.
+
+The script scales the artwork so its farthest pixel is 31 dp from the centre (the adaptive safe zone is 33 dp).
 The `DroidCommand AI` launcher set supplied alongside the request was used only as a *structure* template (adaptive icon
-with foreground/monochrome/background); none of its artwork is in this repository.
+with foreground, monochrome and background, and the same density set); none of its artwork is in this repository.
 
-Checks done: all outline control points inside the 33dp safe zone (asserted by the script); the debug APK built with
-the new vectors. **Not done:** viewing it on a real launcher or with themed (monochrome) icons enabled.
+Checks done: the outputs were composed into launcher-style masks (circle, rounded square, square) and a monochrome
+preview, and inspected by eye. The debug APK packages all ten layers, and `aapt2` resolves the launcher and splash
+references to them. **Not done:** viewing them on a real launcher, with themed (monochrome) icons enabled, or in the
+Play Console.
 
 ## What still says "Floris", and why
 

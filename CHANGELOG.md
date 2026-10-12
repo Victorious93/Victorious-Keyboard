@@ -9,6 +9,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Logo: hooded-figure mark with neon face and red laptop "V", as adaptive-icon vectors (stable cyan, debug amber,
+  monochrome), master SVGs and a generator in `docs/branding/`.
 - Phase 4 core: terminal key mapper (Ctrl/Alt/Shift + key → real `KeyEvent`), Ctrl/Alt sticky/lock/hold state machine,
   developer row and language-profile models (pure Kotlin, 37 tests). `KeyboardManager` now handles Ctrl/Alt/Esc/Tab key
   codes; inert unless a layout provides such a key (none does yet). No UI.

@@ -45,10 +45,10 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
-import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.developer.DevKey
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
 import dev.patrickgold.florisboard.ime.developer.DeveloperRows
+import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardManager
@@ -58,7 +58,6 @@ import dev.patrickgold.florisboard.ime.terminal.TerminalModifier
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
-import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
 import org.florisboard.lib.snygg.ui.SnyggBox
@@ -80,13 +79,9 @@ private val REPEATABLE = setOf(
  * ones are pressed *and* upper-case. Keys fire on release (so scrolling the row never types); arrows repeat while held.
  */
 @Composable
-fun DeveloperRowBar(modifier: Modifier = Modifier) {
+fun DeveloperRowBar(profile: LanguageProfile, terminalKeys: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
-    val prefs by FlorisPreferenceStore
-
-    val profile by prefs.devrow.profile.observeAsState()
-    val terminalKeys by prefs.devrow.terminalKeys.observeAsState()
     val modifierState by keyboardManager.terminalModifierState.collectAsState()
     val keys = remember(profile, terminalKeys) { DeveloperRows.row(profile, terminalKeys) }
 

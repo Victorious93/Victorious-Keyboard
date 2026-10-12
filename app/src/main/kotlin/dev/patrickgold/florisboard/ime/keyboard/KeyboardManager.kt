@@ -66,6 +66,8 @@ import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
+import dev.patrickgold.florisboard.ime.mode.ActiveMode
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.developer.DevStep
 import dev.patrickgold.florisboard.ime.developer.DeveloperKeyResolver
 import dev.patrickgold.florisboard.ime.terminal.ModifierSnapshot
@@ -78,6 +80,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -113,6 +116,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     val terminalModifiers = ModifierStateMachine()
 
     /** Armed/locked state of Ctrl and Alt for the developer row's indicators. */
+    val activeMode: StateFlow<OperatingMode>
+        field = MutableStateFlow(OperatingMode.STANDARD)
+
     val terminalModifierState: StateFlow<ModifierSnapshot>
         field = MutableStateFlow(ModifierSnapshot())
 
@@ -183,6 +189,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             clipboardManager.primaryClipFlow.collectLatestIn(scope) {
                 updateActiveEvaluators()
             }
+            combine(
+                prefs.modes.defaultMode.asFlow(),
+                prefs.modes.autoDetect.asFlow(),
+                editorInstance.activeInfoFlow,
+            ) { default, autoDetect, info -> ActiveMode.resolve(default, autoDetect, info.packageName) }
+                .collectIn(scope) { activeMode.value = it }
             editorInstance.activeInfoFlow.collectIn(scope) {
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
             }

@@ -599,7 +599,10 @@
     <string name="about__project_license__error_reason_asset_manager_null" comment="Error text if asset manager is null">Asset manager reference is null</string>
     <string name="pref__devrow__group_label" comment="Preference group title">Developer mode</string>
     <string name="pref__devrow__enabled__label" comment="Preference title">Developer row</string>
-    <string name="pref__devrow__enabled__summary" comment="Preference summary">Show a row with Esc, Tab, Ctrl, Alt, arrows and programming symbols above the keyboard</string>
+    <string name="pref__devrow__enabled__summary" comment="Preference summary">Show a row with Esc, Tab, Ctrl, Alt, arrows and programming symbols above the keyboard. Developer and Termux modes always show it</string>
+    <string name="pref__modes__default__label" comment="Preference title">Keyboard mode</string>
+    <string name="pref__modes__auto_detect__label" comment="Preference title">Switch mode in terminal apps</string>
+    <string name="pref__modes__auto_detect__summary" comment="Preference summary">Use Termux mode when typing in Termux or ConnectBot. Only the app name Android gives every keyboard is used; nothing is monitored</string>
     <string name="pref__devrow__profile__label" comment="Preference title">Symbols for</string>
     <string name="pref__devrow__terminal_keys__label" comment="Preference title">Terminal keys</string>
     <string name="pref__devrow__terminal_keys__summary" comment="Preference summary">Esc, Tab, Ctrl, Alt, arrows, Home, End, PgUp and PgDn at the start of the row</string>

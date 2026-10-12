@@ -38,6 +38,7 @@ import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.text.gestures.SwipeAction
@@ -352,6 +353,13 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
                 description = stringRes(R.string.enum__key_hint_mode__smart_priority__description),
                 showDescriptionOnlyIfSelected = true,
             )
+        }
+    },
+    OperatingMode::class to DEFAULT to {
+        listPrefEntries {
+            for (mode in OperatingMode.selectable) {
+                entry(key = mode, label = mode.displayName)
+            }
         }
     },
     LanguageProfile::class to DEFAULT to {

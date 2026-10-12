@@ -30,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowBar
+import dev.patrickgold.florisboard.ime.mode.DeveloperRowPrefs
+import dev.patrickgold.florisboard.ime.mode.ModePresets
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
@@ -60,9 +62,13 @@ fun TextInputLayout(
             .wrapContentHeight(),
     ) {
         Smartbar()
-        val developerRowEnabled by prefs.devrow.enabled.observeAsState()
-        if (developerRowEnabled && !state.isActionsOverflowVisible) {
-            DeveloperRowBar()
+        val operatingMode by keyboardManager.activeMode.collectAsState()
+        val devEnabled by prefs.devrow.enabled.observeAsState()
+        val devProfile by prefs.devrow.profile.observeAsState()
+        val devTerminalKeys by prefs.devrow.terminalKeys.observeAsState()
+        val developerRow = ModePresets.developerRow(operatingMode, DeveloperRowPrefs(devEnabled, devProfile, devTerminalKeys))
+        if (developerRow.visible && !state.isActionsOverflowVisible) {
+            DeveloperRowBar(profile = developerRow.profile, terminalKeys = developerRow.terminalKeys)
         }
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()

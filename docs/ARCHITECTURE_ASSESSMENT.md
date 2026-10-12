@@ -21,7 +21,7 @@ Android shell (`CLAUDE.md`).
 | Terminal key mapper, Ctrl/Alt state machine, developer row UI, symbol rows for 7 languages | implemented, unit-tested, **UI never rendered** | `TERMINAL.md` |
 | Snippets: template engine, expansion rules, library, import/export, file store | pure core, unit-tested, **not wired, no UI** | `SNIPPETS.md` |
 | Suggestions / autocorrect / NLP | inherited, status **not verified**; upstream's dictionary support is minimal at this version | `AUDIT.md` |
-| Mode system (Standard / Developer / Termux / Claude Code / Kali / NetHunter) | **does not exist** (only the developer row on/off preference) | grep |
+| Mode system | 3 of 6 modes exist as presets (see §5, `docs/DEVELOPER_KEYBOARD.md`); Claude Code / Kali / NetHunter AI do not | code |
 | Termux `RUN_COMMAND` integration, command execution, AI providers, command catalog, audit log | **do not exist** | grep |
 
 ## 3. Security posture (verified from `AndroidManifest.xml`)
@@ -51,7 +51,7 @@ Dependency order is the order that avoids rework, not the brief's numbering.
 
 | Brief phase | Gap | Depends on | Next concrete step |
 |---|---|---|---|
-| 1 Architecture, mode manager | modes do not exist | prefs, developer row | pure `KeyboardMode` + manager; only modes with real features selectable |
+| 1 Architecture, mode manager | **started**: `OperatingMode` (Standard/Developer/Termux available; Claude Code/Kali/NetHunter AI planned, not selectable), presets, opt-in app detection (`docs/DEVELOPER_KEYBOARD.md`); missing: quick switch from the keyboard, per-mode autocorrect off | prefs, developer row | quick mode switch; per-mode settings |
 | 2 Termux keyboard | special keys + symbol row done; missing: Insert/Del keys in the row, multi-line paste protection, shell escaping helper, `RUN_COMMAND` | snippets shell, modes | snippet shell; then verify the current `RUN_COMMAND` contract from Termux's documentation before writing any code |
 | 3 Claude Code keyboard | no slash-command palette; no catalog | snippet/template engine (done), modes | provider-adapter interface + user-editable command list (no hardcoded "complete" list) |
 | 4 Kali knowledge system | nothing | importer design, licensing review of Kali docs | catalog schema + importer from package metadata; no bundled third-party manuals |

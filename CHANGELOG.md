@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Changed
+- CI: dependency-verification checksums for five Gradle plugin marker POMs now match what the Gradle Plugin Portal serves
+  (Central's copy kept as `also-trust`); CI run 5 passed build + unit tests on GitHub. Test-report upload is non-fatal.
 - About screen: "Based on FlorisBoard" credit with licence and baseline version, linking to upstream.
 - Removed user-visible upstream branding: theme names, "FlorisBoard" wording in strings (translated copies removed,
   English fallback), the button that opened upstream's add-on store, the upstream feedback link, an Albanian app-name
@@ -15,6 +17,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Operating modes (Standard, Developer, Termux) with a default-mode setting and opt-in automatic Termux mode in
+  Termux/ConnectBot (uses only the package name Android gives every keyboard). Claude Code / Kali / NetHunter AI modes
+  are planned and not selectable. See `docs/DEVELOPER_KEYBOARD.md`.
+- `docs/ARCHITECTURE_ASSESSMENT.md`: architecture and gap assessment against the master brief.
 - Phase 5 core (pure Kotlin, tested): snippet template language (`{{date}} {{time}} {{clipboard}} {{selection}}
   {{cursor}}`, inert by design), opt-in expansion rules, snippet library, versioned JSON import/export, atomic file
   store with safety copies. Not wired into the keyboard; no UI. See `SNIPPETS.md`.

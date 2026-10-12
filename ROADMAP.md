@@ -99,8 +99,8 @@ encrypted export, device validation.
 
 ## Mapping to the "VictorKeys master brief"
 
-A longer brief (repository `Victorious93/VictorKeys`, a separate public fork not part of this repository or session)
-uses different phase numbers. Where its topics land in this repository's plan:
+A longer brief (written for "VictorKeys"; the owner confirmed Victorious Keyboard is the correct project) uses different
+phase numbers. Where its topics land in this repository's plan:
 
 | Master brief phase | Here |
 |---|---|
@@ -111,5 +111,5 @@ uses different phase numbers. Where its topics land in this repository's plan:
 | 9 Clipboard and workflows | clipboard = Phase 3 (done, unrun); workflows not started |
 | 10 Knowledge / token efficiency, 11 UI, 12–14 tests, docs, CI | partly covered by existing docs/CI; the rest not started |
 
-Nothing from the brief beyond what is listed in `FEATURES.md` exists in this repository. Which repository the brief
-should be applied to is an open question for the owner.
+Nothing from the brief beyond what is listed in `FEATURES.md` exists in this repository. The owner confirmed that this
+repository (Victorious Keyboard) is the target; the "VictorKeys" name in the brief is not a rename.

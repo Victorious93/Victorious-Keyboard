@@ -78,5 +78,6 @@ Dependency order is the order that avoids rework, not the brief's numbering.
    from package metadata and link to official docs.
 5. **Upstream drift:** the base is an alpha tag; upstream's input engine is being rewritten, so merging upstream later
    will be costly.
-6. **Product name:** the brief says "VictorKeys"; the app, applicationId and docs say "Victorious Keyboard". No rename
-   has been done; it needs an owner decision.
+6. **Product name (decided):** the owner confirmed the product and repository are **Victorious Keyboard**. The brief's
+   "VictorKeys" name is not a rename request; app name, applicationId and docs stay as they are. (`Victorious93/VictorKeys`
+   is a separate public fork and is not part of this project.)

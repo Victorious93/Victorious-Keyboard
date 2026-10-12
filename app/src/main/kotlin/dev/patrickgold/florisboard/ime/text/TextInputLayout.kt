@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowBar
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
@@ -59,6 +60,10 @@ fun TextInputLayout(
             .wrapContentHeight(),
     ) {
         Smartbar()
+        val developerRowEnabled by prefs.devrow.enabled.observeAsState()
+        if (developerRowEnabled && !state.isActionsOverflowVisible) {
+            DeveloperRowBar()
+        }
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()
         } else {

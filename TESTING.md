@@ -4,7 +4,7 @@
 
 | Layer | Tooling | Status |
 |---|---|---|
-| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 394 tests, 0 failures, 0 errors, 0 skipped (`:app` 288 + `:lib:snygg` 106; counted from `**/build/test-results/testDebugUnitTest/TEST-*.xml`). 176 were measured on the unmodified baseline (`AUDIT.md` §6), so 218 are ours: clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core (37) |
+| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 406 tests, 0 failures, 0 errors, 0 skipped (`:app` 300 + `:lib:snygg` 106; counted from `**/build/test-results/testDebugUnitTest/TEST-*.xml`). 176 were measured on the unmodified baseline (`AUDIT.md` §6), so 230 are ours: clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49) |
 | Compile / package | `./gradlew assembleDebug` | **Run**, success |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
 | Lint | `./gradlew lintDebug` | **Run, fails on pre-existing upstream code** (52 errors, none in new code at time of writing; `AUDIT.md` §8). Not yet a CI gate |
@@ -46,6 +46,10 @@ Install the debug APK → enable in *Settings → System → Keyboard* → selec
 - [ ] Password field: no suggestions, nothing enters clipboard history, no expansion.
 - [ ] Rotate to landscape and back mid-typing; switch apps; lock/unlock.
 - [ ] Shift / caps lock, long-press alternates, key repeat, haptics, number row.
-- [ ] Termux: Esc, Tab, Ctrl+C / D / L / Z / A / E / R / W / U / K, arrows (Phase 4; needs the Phase 4 UI to expose a Ctrl key, see `TERMINAL.md`).
+- [ ] Developer row (enable in Settings → Keyboard → Developer mode): it appears above the keyboard, the keyboard is not
+  clipped, rotate and switch fields; scroll the row (must not type); Ctrl/Alt tap → pressed look, double tap → locked
+  (CAPITALS), tap → off; hold an arrow (repeats); switch profile and check the symbols; turn the pref off (row gone).
+- [ ] Termux: Esc, Tab, Ctrl+C / D / L / Z / A / E / R / W / U / K, Ctrl+\\, Alt+key, arrows with Ctrl, Home/End, a locked
+  Ctrl across several keys, a lock must not survive an app switch (`TERMINAL.md`).
 - [ ] Clipboard: copy 3 items elsewhere → they appear; pin, search, delete; restart process → still there (Phase 3).
 - [ ] Low-memory device and Android 8 / 12 / 14 / 15+ samples.

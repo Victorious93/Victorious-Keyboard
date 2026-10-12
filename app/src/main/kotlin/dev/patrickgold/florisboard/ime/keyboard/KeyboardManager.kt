@@ -65,6 +65,10 @@ import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
+import dev.patrickgold.florisboard.ime.developer.DevKeyAction
+import dev.patrickgold.florisboard.ime.developer.DevStep
+import dev.patrickgold.florisboard.ime.developer.DeveloperKeyResolver
+import dev.patrickgold.florisboard.ime.terminal.ModifierSnapshot
 import dev.patrickgold.florisboard.ime.terminal.ModifierStateMachine
 import dev.patrickgold.florisboard.ime.terminal.SpecialKey
 import dev.patrickgold.florisboard.ime.terminal.TerminalAction
@@ -107,6 +111,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     /** Sticky / locked / held Ctrl and Alt for terminal use. Inert unless a Ctrl/Alt key is on the active layout. */
     val terminalModifiers = ModifierStateMachine()
+
+    /** Armed/locked state of Ctrl and Alt for the developer row's indicators. */
+    val terminalModifierState: StateFlow<ModifierSnapshot>
+        field = MutableStateFlow(ModifierSnapshot())
+
+    init {
+        terminalModifiers.onChange = { terminalModifierState.value = it }
+    }
     var smartbarVisibleDynamicActionsCount by mutableIntStateOf(0)
     private var lastToastReference = WeakReference<Toast>(null)
 
@@ -329,6 +341,21 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Handles [KeyCode] arrow and move events, behaves differently depending on text selection.
      */
     fun handleArrow(code: Int, count: Int = 1) = editorInstance.apply {
+        if (terminalModifiers.anyActive) {
+            val special = when (code) {
+                KeyCode.ARROW_LEFT -> SpecialKey.LEFT
+                KeyCode.ARROW_RIGHT -> SpecialKey.RIGHT
+                KeyCode.ARROW_UP -> SpecialKey.UP
+                KeyCode.ARROW_DOWN -> SpecialKey.DOWN
+                KeyCode.MOVE_START_OF_LINE -> SpecialKey.HOME
+                KeyCode.MOVE_END_OF_LINE -> SpecialKey.END
+                else -> null
+            }
+            if (special != null) {
+                sendTerminalSpecial(special, count)
+                return@apply
+            }
+        }
         val isShiftPressed = activeState.isManualSelectionMode || inputEventDispatcher.isPressed(KeyCode.SHIFT)
         val content = activeContent
         val selection = content.selection
@@ -688,11 +715,33 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Sends [key] as a real key event, with Ctrl/Alt from [terminalModifiers] (and shift from the keyboard). Spends
      * one-shot modifiers. Never logs or stores anything about the key.
      */
-    private fun sendTerminalSpecial(key: SpecialKey) {
+    private fun sendTerminalSpecial(key: SpecialKey, count: Int = 1) {
         val mods = terminalModifiers.current(shift = inputEventDispatcher.isPressed(KeyCode.SHIFT))
         val action = TerminalKeyMapper.mapSpecial(key, mods) as TerminalAction.Key
-        editorInstance.sendDownUpKeyEvent(action.keyCode, action.metaState)
+        editorInstance.sendDownUpKeyEvent(action.keyCode, action.metaState, count)
         terminalModifiers.consume()
+    }
+
+    /** Developer-row modifier key gestures (down / up / cancel), see [ModifierStateMachine]. */
+    fun terminalModifierDown(modifier: TerminalModifier) = terminalModifiers.press(modifier)
+    fun terminalModifierUp(modifier: TerminalModifier) =
+        terminalModifiers.release(modifier, SystemClock.uptimeMillis())
+    fun terminalModifierCancel(modifier: TerminalModifier) = terminalModifiers.cancel(modifier)
+
+    /** A tap on a developer-row key (not a modifier key). Never logs or stores what is sent. */
+    fun performDeveloperKey(action: DevKeyAction) {
+        if (action is DevKeyAction.Modifier) return
+        val mods = terminalModifiers.current(shift = inputEventDispatcher.isPressed(KeyCode.SHIFT))
+        val resolution = DeveloperKeyResolver.resolve(action, mods)
+        for (step in resolution.steps) {
+            when (step) {
+                is DevStep.Key -> editorInstance.sendDownUpKeyEvent(step.keyCode, step.metaState)
+                is DevStep.Text -> editorInstance.commitText(step.text)
+                is DevStep.CursorLeft ->
+                    editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), step.count)
+            }
+        }
+        if (resolution.consumesModifiers) terminalModifiers.consume()
     }
 
     /**

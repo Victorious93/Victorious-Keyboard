@@ -15,6 +15,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Developer row (Settings → Keyboard → Developer mode, off by default): Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn plus
+  per-language symbol rows, sticky/locked Ctrl and Alt with an indicator, arrow key repeat, Ctrl/Alt on the keyboard's
+  arrow keys. Compiled and logic-tested; never rendered on a device.
 - Logo: hooded-figure mark with neon face and red laptop "V", as adaptive-icon vectors (stable cyan, debug amber,
   monochrome), master SVGs and a generator in `docs/branding/`.
 - Phase 4 core: terminal key mapper (Ctrl/Alt/Shift + key → real `KeyEvent`), Ctrl/Alt sticky/lock/hold state machine,

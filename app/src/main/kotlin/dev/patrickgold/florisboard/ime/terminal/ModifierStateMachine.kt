@@ -33,6 +33,20 @@ data class Modifiers(val ctrl: Boolean = false, val alt: Boolean = false, val sh
     val any: Boolean get() = ctrl || alt
 }
 
+/** What the UI shows for one modifier. A modifier that is physically held counts as [ARMED]. */
+enum class ModifierDisplay { OFF, ARMED, LOCKED }
+
+/** Immutable view of the machine for rendering (e.g. in a `StateFlow`). */
+data class ModifierSnapshot(
+    val ctrl: ModifierDisplay = ModifierDisplay.OFF,
+    val alt: ModifierDisplay = ModifierDisplay.OFF,
+) {
+    fun of(modifier: TerminalModifier): ModifierDisplay = when (modifier) {
+        TerminalModifier.CTRL -> ctrl
+        TerminalModifier.ALT -> alt
+    }
+}
+
 /**
  * Sticky / locked / held Ctrl and Alt.
  *
@@ -56,6 +70,33 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
 
     private val slots = TerminalModifier.entries.associateWith { Slot() }
 
+    /** Called (under the machine's lock) after every call that may have changed what [snapshot] returns. Keep it cheap. */
+    @Volatile
+    var onChange: ((ModifierSnapshot) -> Unit)? = null
+
+    @Synchronized
+    fun snapshot(): ModifierSnapshot {
+        fun display(m: TerminalModifier): ModifierDisplay {
+            val s = slots.getValue(m)
+            return when {
+                s.mode == ModifierMode.LOCKED -> ModifierDisplay.LOCKED
+                s.held || s.mode == ModifierMode.ARMED -> ModifierDisplay.ARMED
+                else -> ModifierDisplay.OFF
+            }
+        }
+        return ModifierSnapshot(display(TerminalModifier.CTRL), display(TerminalModifier.ALT))
+    }
+
+    private var lastNotified: ModifierSnapshot? = null
+
+    private fun notifyIfChanged() {
+        val snap = snapshot()
+        if (snap != lastNotified) {
+            lastNotified = snap
+            onChange?.invoke(snap)
+        }
+    }
+
     @Synchronized fun mode(modifier: TerminalModifier): ModifierMode = slots.getValue(modifier).mode
 
     @Synchronized fun isHeld(modifier: TerminalModifier): Boolean = slots.getValue(modifier).held
@@ -78,6 +119,7 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
         val s = slots.getValue(modifier)
         s.held = true
         s.usedWhileHeld = false
+        notifyIfChanged()
     }
 
     @Synchronized fun release(modifier: TerminalModifier, nowMs: Long) {
@@ -86,6 +128,7 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
         s.held = false
         if (!s.usedWhileHeld) tap(s, nowMs)
         s.usedWhileHeld = false
+        notifyIfChanged()
     }
 
     /** The press was cancelled (finger slid away): no tap, no change. */
@@ -93,11 +136,13 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
         val s = slots.getValue(modifier)
         s.held = false
         s.usedWhileHeld = false
+        notifyIfChanged()
     }
 
     @Synchronized fun toggleLock(modifier: TerminalModifier) {
         val s = slots.getValue(modifier)
         s.mode = if (s.mode == ModifierMode.LOCKED) ModifierMode.OFF else ModifierMode.LOCKED
+        notifyIfChanged()
     }
 
     /** Call after a key has been sent with [current]: one-shot modifiers are spent, locked ones stay. */
@@ -106,6 +151,7 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
             if (s.held) s.usedWhileHeld = true
             if (s.mode == ModifierMode.ARMED) s.mode = ModifierMode.OFF
         }
+        notifyIfChanged()
     }
 
     /** E.g. when the focused field changes: nothing may stay armed or locked into another app. */
@@ -116,6 +162,7 @@ class ModifierStateMachine(private val doubleTapWindowMs: Long = 400L) {
             s.usedWhileHeld = false
             s.lastTapMs = Long.MIN_VALUE / 2
         }
+        notifyIfChanged()
     }
 
     private fun tap(s: Slot, nowMs: Long) {

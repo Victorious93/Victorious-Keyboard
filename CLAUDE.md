@@ -5,7 +5,7 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core done (JVM-tested), wired, no UI.**
+**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run.**
 Status table: `ROADMAP.md`. Update it with every phase. Phase 4 details/limits: `TERMINAL.md`.
 
 ## Verified environment
@@ -57,8 +57,7 @@ honest status in `ROADMAP.md` (device validation "not run" unless actually run).
 
 ## Next milestone
 Needs a device first: validate Phase 3 and the Phase 4 wiring on hardware (checklist in `TESTING.md`). Without a
-device the next JVM-testable work is the Phase 4 UI shell (developer row + armed/locked indicator; needs observable
-modifier state) and Phase 5 (snippet template engine, expansion rules) as pure Kotlin.
+device the next JVM-testable work is Phase 5 (snippet template engine, expansion rules) as pure Kotlin.
 
 Gotcha: run the whole unit-test suite; kotest breaks under Gradle's `--tests` filter (see `TESTING.md`).
 

@@ -147,4 +147,42 @@ class ModifierStateMachineTest : FunSpec({
         sm.tap(CTRL, 20)
         sm.mode(CTRL) shouldBe ModifierMode.ARMED
     }
+
+    test("snapshot: off, armed, held counts as armed, locked") {
+        val sm = ModifierStateMachine()
+        sm.snapshot() shouldBe ModifierSnapshot()
+        sm.press(CTRL)
+        sm.snapshot().ctrl shouldBe ModifierDisplay.ARMED
+        sm.release(CTRL, 0)
+        sm.snapshot().ctrl shouldBe ModifierDisplay.ARMED
+        sm.tap(CTRL, 100)
+        sm.snapshot().ctrl shouldBe ModifierDisplay.LOCKED
+        sm.snapshot().alt shouldBe ModifierDisplay.OFF
+        sm.snapshot().of(TerminalModifier.CTRL) shouldBe ModifierDisplay.LOCKED
+    }
+
+    test("onChange fires exactly when the snapshot changes") {
+        val sm = ModifierStateMachine()
+        val seen = mutableListOf<ModifierSnapshot>()
+        sm.onChange = { seen += it }
+        sm.press(CTRL)            // OFF -> ARMED (held)
+        sm.release(CTRL, 0)       // still ARMED (now one-shot): no change
+        sm.consume()              // ARMED -> OFF
+        sm.consume()              // already OFF: no change
+        sm.toggleLock(ALT)        // OFF -> LOCKED
+        sm.reset()                // LOCKED -> OFF
+        sm.reset()                // no change
+        seen shouldBe listOf(
+            ModifierSnapshot(ctrl = ModifierDisplay.ARMED),
+            ModifierSnapshot(),
+            ModifierSnapshot(alt = ModifierDisplay.LOCKED),
+            ModifierSnapshot(),
+        )
+    }
+
+    test("a cancelled press clears the held display") {
+        val sm = ModifierStateMachine()
+        sm.press(CTRL); sm.cancel(CTRL)
+        sm.snapshot() shouldBe ModifierSnapshot()
+    }
 })

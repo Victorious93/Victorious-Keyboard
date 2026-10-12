@@ -112,4 +112,8 @@ object DeveloperRows {
             pair("(", ")", "Parentheses"), ins("```\n\n```", 4, "Code block"), ins("!"), ins("|"),
         )
     }
+
+    /** The full row as shown: terminal keys first (if enabled), then the profile's symbols. */
+    fun row(profile: LanguageProfile, includeTerminalKeys: Boolean): List<DevKey> =
+        (if (includeTerminalKeys) terminalRow else emptyList()) + symbolRow(profile)
 }

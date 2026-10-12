@@ -81,4 +81,12 @@ class DeveloperRowsTest : FunSpec({
         LanguageProfile.fromId(null) shouldBe null
         LanguageProfile.fromId("shell") shouldNotBe null
     }
+
+    test("the shown row is the terminal keys followed by the profile symbols, or just the symbols") {
+        for (profile in LanguageProfile.entries) {
+            val withTerminal = DeveloperRows.row(profile, includeTerminalKeys = true)
+            withTerminal shouldBe DeveloperRows.terminalRow + DeveloperRows.symbolRow(profile)
+            DeveloperRows.row(profile, includeTerminalKeys = false) shouldBe DeveloperRows.symbolRow(profile)
+        }
+    }
 })

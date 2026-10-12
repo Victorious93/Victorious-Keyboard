@@ -34,9 +34,8 @@ possible as specified (reason given).
 
 ## Developer / terminal / productivity (Phases 4–5)
 
-Details, mapping table and limits: `TERMINAL.md`. **None of this is visible to a user yet**: no layout contains a
-Ctrl/Alt/Esc/Tab key and no UI shows the developer rows, so the keyboard behaves exactly like upstream until the
-Phase 4 UI exists.
+Details, mapping table and limits: `TERMINAL.md`. The developer row is **off by default** (Settings → Keyboard →
+Developer mode); with it off the keyboard behaves like upstream. The UI has not been seen on a screen.
 
 | Feature | Status |
 |---|---|
@@ -44,8 +43,9 @@ Phase 4 UI exists.
 | Sticky / double-tap-locked / held Ctrl and Alt state machine | ✅ pure core, JVM-tested |
 | Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
 | `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
-| Developer row / terminal mode UI, language-profile picker, per-app auto profile | ⬜ |
-| Ctrl/Alt applied to arrow, Home/End, Delete keys that already exist on layouts | ⬜ (existing arrow handling ignores Ctrl/Alt) |
+| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; off by default |
+| Per-app automatic profile, terminal-mode toggle separate from the row | ⬜ |
+| Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |
 | Bracket pairing as automatic behaviour, indentation helpers | ⬜ (pair *keys* exist as models; nothing auto-closes) |
 | Termux / SSH / vim / tmux behaviour | ⬜ **device-test only; not verified** |
 | Command library, snippets, text expansion | ⬜ Phase 5
@@ -68,7 +68,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 394 JVM unit tests pass | ✅ (`TESTING.md`) |
+| Debug APK builds; 406 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ written; **never run** (needs GitHub Actions) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

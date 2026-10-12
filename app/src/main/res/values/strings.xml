@@ -597,6 +597,16 @@
     <string name="about__project_license__summary" comment="Preference summary">Victorious Keyboard is licensed under {license_name}</string>
     <string name="about__project_license__error_license_text_failed" comment="Error text for license text loading failure">Error: Failed to load license text.\n-&gt; Reason: {error_message}</string>
     <string name="about__project_license__error_reason_asset_manager_null" comment="Error text if asset manager is null">Asset manager reference is null</string>
+    <string name="pref__devrow__group_label" comment="Preference group title">Developer mode</string>
+    <string name="pref__devrow__enabled__label" comment="Preference title">Developer row</string>
+    <string name="pref__devrow__enabled__summary" comment="Preference summary">Show a row with Esc, Tab, Ctrl, Alt, arrows and programming symbols above the keyboard</string>
+    <string name="pref__devrow__profile__label" comment="Preference title">Symbols for</string>
+    <string name="pref__devrow__terminal_keys__label" comment="Preference title">Terminal keys</string>
+    <string name="pref__devrow__terminal_keys__summary" comment="Preference summary">Esc, Tab, Ctrl, Alt, arrows, Home, End, PgUp and PgDn at the start of the row</string>
+    <string name="devrow__ctrl_locked" comment="Accessibility description">Ctrl, locked</string>
+    <string name="devrow__ctrl_armed" comment="Accessibility description">Ctrl, applies to the next key</string>
+    <string name="devrow__alt_locked" comment="Accessibility description">Alt, locked</string>
+    <string name="devrow__alt_armed" comment="Accessibility description">Alt, applies to the next key</string>
     <string name="about__based_on__title" comment="Preference title: credit to the upstream project">Based on FlorisBoard</string>
     <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to open the original project.</string>
     <string name="about__third_party_licenses__title" comment="Preference title">Third-party licenses</string>

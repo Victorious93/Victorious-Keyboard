@@ -1,6 +1,6 @@
 # Terminal and developer input (Phase 4)
 
-Status: **core logic JVM-tested; wiring compiled but never run; no UI; nothing verified in Termux/SSH.** See
+Status: **core logic JVM-tested; wiring and UI compiled but never run on a device; nothing verified in Termux/SSH.** See
 `FEATURES.md` for the row-by-row status.
 
 ## What upstream did before (verified by reading the code)
@@ -19,6 +19,31 @@ So there was no Ctrl+letter path at all; only the editor's own Ctrl+A/Z/Shift+Z 
 | `AndroidKeys` — copy of the `KeyEvent` constants used; `AndroidKeyConstantsTest` compares every value with `android.view.KeyEvent` | `ime.terminal` | yes |
 | `DeveloperRows`, `LanguageProfile`, `DevKey` — terminal row and per-language symbol rows (Shell, Python, JS/TS, Kotlin/Java, JSON, YAML, Markdown) | `ime.developer` | yes |
 | Hook in `KeyboardManager` (`terminalModifiers`, `sendTerminalChar`, `sendTerminalSpecial`) | `ime.keyboard` | no (thin) |
+
+## Developer row (UI)
+
+Settings → Keyboard → **Developer mode**: *Developer row* (off by default: with it off the keyboard is unchanged),
+*Symbols for* (Shell, Python, JS/TS, Kotlin/Java, JSON, YAML, Markdown), *Terminal keys* (on/off).
+
+When on, one horizontally scrollable row sits between the Smartbar and the keyboard:
+`Esc Tab Ctrl Alt ← ↓ ↑ → Home End PgUp PgDn` then the profile's symbols. It reuses the Smartbar action-key theme
+elements, so existing themes style it.
+
+* **Ctrl / Alt:** tap = applies to the next key only (drawn pressed); quick second tap = locked (drawn pressed *and*
+  label in CAPITALS, announced as "locked" by TalkBack); tap again = off; hold + tap another key = chord.
+* **Keys fire on release**, so scrolling the row never types. **Arrows / PgUp / PgDn repeat** while held (350 ms, then
+  every 60 ms). A press that turns into a scroll is cancelled and sends nothing.
+* A symbol key under Ctrl/Alt is sent as a key event when it has one (Ctrl+`\` works from the row); pair keys
+  (`()`, `{}`, `""`, …) insert both halves and move the cursor between them.
+* Ctrl/Alt now also apply to the keyboard's own arrow and line-start/line-end keys.
+* The row is hidden while the Smartbar's actions overflow panel is open.
+
+| Piece | Where |
+|---|---|
+| Decision logic (`DeveloperKeyResolver`), rows, observable `ModifierSnapshot` | `ime.developer`, `ime.terminal` (pure, tested) |
+| `DeveloperRowBar` composable | `ime.developer.ui` (shell) |
+| `performDeveloperKey`, `terminalModifierState` | `KeyboardManager` |
+| Preferences `devrow__enabled`, `devrow__profile`, `devrow__terminal_keys` | `AppPrefs.devrow` |
 
 ## Mapping rules
 
@@ -43,10 +68,12 @@ events, not captured text; the clipboard and capture guards from Phase 3 are una
 
 ## Not done / not verified
 
-* **No UI.** No layout contains a Ctrl/Alt/Esc/Tab key and nothing displays the developer rows, so a user cannot reach
-  any of this yet. The next step is the row UI plus an armed/locked indicator (needs observable state on top of the
-  state machine).
-* Ctrl/Alt do not yet apply to the existing arrow/Home/End/Delete keys (upstream's `handleArrow` only knows Shift).
+* **The UI has never been rendered.** It compiles and its logic is unit-tested, but I have not seen it on a screen:
+  key sizes, the row's height against the keyboard window, scroll-versus-tap behaviour, theming in dark/light and the
+  Ctrl "locked" look are all unverified. The extra row makes the keyboard taller; whether the IME window and insets
+  adapt correctly is untested.
+* Ctrl/Alt do not apply to Delete/Backspace keys (upstream handles those separately).
+* The row is English-only and the profile names are not translated.
 * How Termux, ConnectBot, SSH clients, vim or tmux interpret these events has **not** been tested. Device checklist
   (`TESTING.md`): Esc, Tab, Ctrl+C/D/L/Z/A/E/R/W/U/K, Alt+key, arrows, a locked Ctrl across several keys, a lock
   surviving an app switch (it should not).

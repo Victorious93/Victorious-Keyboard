@@ -9,10 +9,10 @@ Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 394 JVM tests (218 ours), dependency verification proven from a cold Gradle home through a mirror; CI written but never run; lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, 406 JVM tests (230 ours), dependency verification proven from a cold Gradle home through a mirror; CI written but never run; lint not yet a gate) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
-| 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; `KeyboardManager` wiring 🟦 compiled, **not run**; no UI yet (see `TERMINAL.md`) |
+| 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
 | 5 | Snippets and productivity | ⬜ |
 | 6 | Predictive and gesture typing | ⬜ |
 | 7 | AI workspace | ⬜ |
@@ -82,6 +82,8 @@ Done and JVM-tested: key+modifier → `KeyEvent` mapper (US-layout table, consta
 Compiled but **never run**: `KeyboardManager` handling of Ctrl/Alt/Esc/Tab key codes and the key-event path for typed
 characters.
 
-Open: developer row / terminal-mode UI (nothing currently displays the models or offers a Ctrl key), Ctrl/Alt on the
-existing arrow keys, observable modifier state for the UI (armed/locked indicator), all Termux/SSH behaviour on a
-device.
+Also compiled, never run: developer row composable, settings group, observable Ctrl/Alt state, Ctrl/Alt on the
+keyboard's arrow keys.
+
+Open: seeing the row on a real screen (sizing, window height, theming, scroll-vs-tap), all Termux/SSH behaviour on a
+device, per-app automatic profile, translations.

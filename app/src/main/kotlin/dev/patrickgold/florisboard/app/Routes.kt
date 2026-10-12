@@ -59,6 +59,7 @@ import dev.patrickgold.florisboard.app.settings.advanced.PhysicalKeyboardScreen
 import dev.patrickgold.florisboard.app.settings.advanced.RestoreScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardBackupScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardManagerScreen
+import dev.patrickgold.florisboard.app.settings.keyboard.AdvancedDeveloperScreen
 import dev.patrickgold.florisboard.app.settings.snippets.SnippetsScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.DictionaryScreen
@@ -182,6 +183,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/snippets")
         object Snippets
+
+        @Serializable
+        @Deeplink("settings/keyboard/developer-advanced")
+        object AdvancedDeveloper
 
         @Serializable
         @Deeplink("settings/media")
@@ -329,6 +334,7 @@ object Routes {
             composableWithDeepLink(Settings.ClipboardManager::class) { ClipboardManagerScreen() }
             composableWithDeepLink(Settings.ClipboardBackup::class) { ClipboardBackupScreen() }
             composableWithDeepLink(Settings.Snippets::class) { SnippetsScreen() }
+            composableWithDeepLink(Settings.AdvancedDeveloper::class) { AdvancedDeveloperScreen() }
 
             composableWithDeepLink(Settings.Media::class) { MediaScreen() }
 

@@ -26,6 +26,9 @@ data class TemplateContext(
     val now: LocalDateTime,
     val clipboard: String? = null,
     val selection: String? = null,
+    /** What `{{date}}`, `{{time}}` and `{{datetime}}` print when no pattern is given. Must be valid `java.time` patterns. */
+    val datePattern: String = "yyyy-MM-dd",
+    val timePattern: String = "HH:mm",
 )
 
 sealed interface RenderResult {
@@ -109,7 +112,7 @@ object SnippetTemplate {
                     "clipboard" -> out.append(ctx.clipboard.orEmpty())
                     "selection" -> out.append(ctx.selection.orEmpty())
                     "cursor" -> if (cursorAt < 0) cursorAt = out.length
-                    else -> out.append(formatTime(part.name, part.arg, ctx.now))
+                    else -> out.append(formatTime(part.name, part.arg, ctx))
                 }
             }
             if (out.length > SnippetLimits.MAX_RENDERED) return RenderResult.TooLarge
@@ -119,16 +122,23 @@ object SnippetTemplate {
         return RenderResult.Rendered(text, back)
     }
 
-    private fun formatTime(name: String, arg: String?, now: LocalDateTime): String {
-        val default = when (name) { "date" -> "yyyy-MM-dd"; "time" -> "HH:mm"; else -> "yyyy-MM-dd HH:mm" }
+    private fun formatTime(name: String, arg: String?, ctx: TemplateContext): String {
+        val now = ctx.now
+        val default = when (name) {
+            "date" -> ctx.datePattern
+            "time" -> ctx.timePattern
+            else -> ctx.datePattern + " " + ctx.timePattern
+        }
+        // What to print if the pattern cannot be used: exactly the text the user wrote.
+        val literal = if (arg == null) "{{$name}}" else "{{$name:$arg}}"
         val pattern = arg?.takeIf { it.isNotBlank() } ?: default
-        if (pattern.length > MAX_PATTERN) return "{{$name:$arg}}"
+        if (pattern.length > MAX_PATTERN) return literal
         return try {
             now.format(DateTimeFormatter.ofPattern(pattern, Locale.ROOT))
         } catch (_: IllegalArgumentException) {
-            "{{$name:$arg}}"
+            literal
         } catch (_: DateTimeException) {
-            "{{$name:$arg}}" // e.g. a date pattern asking for a zone the value does not have
+            literal // e.g. a date pattern asking for a zone the value does not have
         }
     }
 }

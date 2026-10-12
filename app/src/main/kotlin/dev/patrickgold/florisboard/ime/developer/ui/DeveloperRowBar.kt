@@ -48,7 +48,9 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.developer.DevKey
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
 import dev.patrickgold.florisboard.ime.developer.DeveloperRows
+import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
+import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardManager
@@ -64,8 +66,13 @@ import org.florisboard.lib.snygg.ui.SnyggBox
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
 
-private const val HOLD_MS = 350L
-private const val REPEAT_MS = 60L
+/** How the row looks and behaves, from the user's settings. */
+data class DeveloperRowStyle(
+    val heightScale: Float = 1f,
+    val holdMs: Long = DeveloperRowTiming.HOLD_DEFAULT.toLong(),
+    val repeatMs: Long = DeveloperRowTiming.REPEAT_DEFAULT.toLong(),
+    val haptics: Boolean = true,
+)
 
 private val REPEATABLE = setOf(
     SpecialKey.UP, SpecialKey.DOWN, SpecialKey.LEFT, SpecialKey.RIGHT, SpecialKey.PAGE_UP, SpecialKey.PAGE_DOWN,
@@ -79,30 +86,35 @@ private val REPEATABLE = setOf(
  * ones are pressed *and* upper-case. Keys fire on release (so scrolling the row never types); arrows repeat while held.
  */
 @Composable
-fun DeveloperRowBar(profile: LanguageProfile, terminalKeys: Boolean, modifier: Modifier = Modifier) {
+fun DeveloperRowBar(
+    profile: LanguageProfile,
+    options: RowOptions,
+    style: DeveloperRowStyle,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     val modifierState by keyboardManager.terminalModifierState.collectAsState()
-    val keys = remember(profile, terminalKeys) { DeveloperRows.row(profile, terminalKeys) }
+    val keys = remember(profile, options) { DeveloperRows.row(profile, options) }
 
     SnyggRow(
         elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
         modifier = modifier
             .fillMaxWidth()
-            .height(FlorisImeSizing.smartbarHeight)
+            .height(FlorisImeSizing.smartbarHeight * style.heightScale)
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for (key in keys) {
             val action = key.action
             val display = if (action is DevKeyAction.Modifier) modifierState.of(action.modifier) else ModifierDisplay.OFF
-            DevKeyButton(key = key, display = display, keyboardManager = keyboardManager)
+            DevKeyButton(key = key, display = display, style = style, keyboardManager = keyboardManager)
         }
     }
 }
 
 @Composable
-private fun DevKeyButton(key: DevKey, display: ModifierDisplay, keyboardManager: KeyboardManager) {
+private fun DevKeyButton(key: DevKey, display: ModifierDisplay, style: DeveloperRowStyle, keyboardManager: KeyboardManager) {
     val inputFeedbackController = LocalInputFeedbackController.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -131,20 +143,22 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, keyboardManager:
     SnyggBox(
         elementName = elementName,
         selector = selector,
-        modifier = Modifier.height(FlorisImeSizing.smartbarHeight).widthIn(min = FlorisImeSizing.smartbarHeight),
+        modifier = Modifier
+            .height(FlorisImeSizing.smartbarHeight * style.heightScale)
+            .widthIn(min = FlorisImeSizing.smartbarHeight * style.heightScale),
         clickAndSemanticsModifier = Modifier
             .indication(interactionSource, LocalIndication.current)
             .semantics {
                 role = Role.Button
                 contentDescription = description
             }
-            .pointerInput(key) {
+            .pointerInput(key, style) {
                 awaitEachGesture {
                     // Not consumed, so a horizontal drag still scrolls the row (that arrives here as a cancellation).
                     val down = awaitFirstDown(requireUnconsumed = true)
                     val press = PressInteraction.Press(down.position)
                     interactionSource.tryEmit(press)
-                    inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
+                    if (style.haptics) inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
 
                     var released = false
                     when {
@@ -162,7 +176,7 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, keyboardManager:
                         action is DevKeyAction.Special && action.key in REPEATABLE -> {
                             var tapUp = false
                             // The block always returns Unit, so null can only mean "timed out" (= the key is held).
-                            val held = withTimeoutOrNull(HOLD_MS) {
+                            val held = withTimeoutOrNull(style.holdMs) {
                                 val up = waitForUpOrCancellation()
                                 if (up != null) {
                                     up.consume()
@@ -174,7 +188,7 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, keyboardManager:
                                 keyboardManager.performDeveloperKey(action)
                                 // Same rule: Unit when the finger lifted or the gesture was cancelled, null on timeout.
                                 while (
-                                    withTimeoutOrNull(REPEAT_MS) {
+                                    withTimeoutOrNull(style.repeatMs) {
                                         waitForUpOrCancellation()?.consume()
                                         Unit
                                     } == null

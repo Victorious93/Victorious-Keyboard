@@ -23,13 +23,18 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.developer.CustomSymbols
+import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
+import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowBar
+import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowStyle
 import dev.patrickgold.florisboard.ime.mode.DeveloperRowPrefs
 import dev.patrickgold.florisboard.ime.mode.ModePresets
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
@@ -66,9 +71,36 @@ fun TextInputLayout(
         val devEnabled by prefs.devrow.enabled.observeAsState()
         val devProfile by prefs.devrow.profile.observeAsState()
         val devTerminalKeys by prefs.devrow.terminalKeys.observeAsState()
-        val developerRow = ModePresets.developerRow(operatingMode, DeveloperRowPrefs(devEnabled, devProfile, devTerminalKeys))
+        val devNavigationKeys by prefs.devrow.navigationKeys.observeAsState()
+        val devSymbols by prefs.devrow.symbols.observeAsState()
+        val developerRow = ModePresets.developerRow(
+            operatingMode,
+            DeveloperRowPrefs(devEnabled, devProfile, devTerminalKeys, devNavigationKeys, devSymbols),
+        )
         if (developerRow.visible && !state.isActionsOverflowVisible) {
-            DeveloperRowBar(profile = developerRow.profile, terminalKeys = developerRow.terminalKeys)
+            val customText by prefs.devrow.customSymbols.observeAsState()
+            val customMode by prefs.devrow.customSymbolsMode.observeAsState()
+            val size by prefs.devrow.size.observeAsState()
+            val holdMs by prefs.devrow.holdDelayMs.observeAsState()
+            val repeatMs by prefs.devrow.repeatIntervalMs.observeAsState()
+            val haptics by prefs.devrow.haptics.observeAsState()
+            val custom = remember(customText) { CustomSymbols.parse(customText).keys }
+            DeveloperRowBar(
+                profile = developerRow.profile,
+                options = RowOptions(
+                    terminalKeys = developerRow.terminalKeys,
+                    navigationKeys = developerRow.navigationKeys,
+                    symbols = developerRow.symbols,
+                    custom = custom,
+                    customMode = customMode,
+                ),
+                style = DeveloperRowStyle(
+                    heightScale = size.scale,
+                    holdMs = DeveloperRowTiming.hold(holdMs),
+                    repeatMs = DeveloperRowTiming.repeat(repeatMs),
+                    haptics = haptics,
+                ),
+            )
         }
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()

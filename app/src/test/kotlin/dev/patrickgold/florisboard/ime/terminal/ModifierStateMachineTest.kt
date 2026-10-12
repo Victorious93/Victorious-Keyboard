@@ -185,4 +185,17 @@ class ModifierStateMachineTest : FunSpec({
         sm.press(CTRL); sm.cancel(CTRL)
         sm.snapshot() shouldBe ModifierSnapshot()
     }
+
+    test("the double-tap window can be changed at runtime") {
+        val sm = ModifierStateMachine(doubleTapWindowMs = 400)
+        sm.doubleTapWindowMs shouldBe 400L
+        sm.tap(CTRL, 1000)
+        sm.doubleTapWindowMs = 200
+        sm.tap(CTRL, 1300) // 300 ms apart: too slow for the new 200 ms window
+        sm.mode(CTRL) shouldBe ModifierMode.OFF
+        sm.doubleTapWindowMs = 800
+        sm.tap(CTRL, 5000)
+        sm.tap(CTRL, 5700) // 700 ms apart: within the new 800 ms window
+        sm.mode(CTRL) shouldBe ModifierMode.LOCKED
+    }
 })

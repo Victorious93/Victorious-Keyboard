@@ -129,6 +129,11 @@ fun KeyboardScreen() = FlorisScreen {
                 visibleIf = { prefs.devrow.enabled isEqualTo true },
             )
             Preference(
+                title = stringRes(R.string.devadv__title),
+                summary = stringRes(R.string.devadv__link_summary),
+                onClick = { navController.navigate(Routes.Settings.AdvancedDeveloper) },
+            )
+            Preference(
                 title = stringRes(R.string.snippets__title),
                 summary = stringRes(R.string.snippets__link_summary),
                 onClick = { navController.navigate(Routes.Settings.Snippets) },

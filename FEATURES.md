@@ -73,7 +73,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 476 JVM unit tests pass | ✅ (`TESTING.md`) |
+| Debug APK builds; 512 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests passed on GitHub Actions (run 5, 2026-10-12); ⚠ artifact upload failed with "storage quota has been hit" (account-level, not code) |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |

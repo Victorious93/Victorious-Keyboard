@@ -37,9 +37,13 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
+import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
+import dev.patrickgold.florisboard.ime.developer.DevRowSize
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
+import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.text.gestures.SwipeAction
@@ -354,6 +358,27 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
                 description = stringRes(R.string.enum__key_hint_mode__smart_priority__description),
                 showDescriptionOnlyIfSelected = true,
             )
+        }
+    },
+    DevRowSize::class to DEFAULT to {
+        listPrefEntries {
+            for (s in DevRowSize.entries) entry(key = s, label = s.label)
+        }
+    },
+    CustomSymbolsMode::class to DEFAULT to {
+        listPrefEntries {
+            entry(key = CustomSymbolsMode.APPEND, label = "Add to the language symbols")
+            entry(key = CustomSymbolsMode.REPLACE, label = "Replace the language symbols")
+        }
+    },
+    SnippetDateFormat::class to DEFAULT to {
+        listPrefEntries {
+            for (f in SnippetDateFormat.entries) entry(key = f, label = f.label)
+        }
+    },
+    SnippetTimeFormat::class to DEFAULT to {
+        listPrefEntries {
+            for (f in SnippetTimeFormat.entries) entry(key = f, label = f.label)
         }
     },
     SnippetPrefix::class to DEFAULT to {

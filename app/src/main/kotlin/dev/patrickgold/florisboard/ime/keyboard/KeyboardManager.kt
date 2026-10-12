@@ -71,7 +71,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
 import dev.patrickgold.florisboard.ime.editor.isPasswordLike
+import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.mode.ActiveMode
+import dev.patrickgold.florisboard.ime.mode.ModeOverrides
 import dev.patrickgold.florisboard.ime.snippets.ExpansionMatcher
 import dev.patrickgold.florisboard.ime.snippets.ExpansionSettings
 import dev.patrickgold.florisboard.ime.snippets.RenderResult
@@ -205,8 +207,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 prefs.modes.defaultMode.asFlow(),
                 prefs.modes.autoDetect.asFlow(),
                 editorInstance.activeInfoFlow,
-            ) { default, autoDetect, info -> ActiveMode.resolve(default, autoDetect, info.packageName) }
-                .collectIn(scope) { activeMode.value = it }
+                prefs.modes.appOverrides.asFlow(),
+            ) { default, autoDetect, info, overrides ->
+                ActiveMode.resolve(default, autoDetect, info.packageName, ModeOverrides.parse(overrides).overrides)
+            }.collectIn(scope) { activeMode.value = it }
+            prefs.devrow.lockWindowMs.asFlow().collectIn(scope) {
+                terminalModifiers.doubleTapWindowMs = DeveloperRowTiming.lockWindow(it)
+            }
             editorInstance.activeInfoFlow.collectIn(scope) {
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
             }
@@ -619,6 +626,8 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      */
     private fun tryExpandSnippet(): Boolean {
         if (!prefs.snippets.expansionEnabled.get()) return false
+        // Expansion is off in terminal mode unless the user chose otherwise (a terminal rarely wants it).
+        if (activeMode.value == OperatingMode.TERMUX && !prefs.snippets.expandInTerminalMode.get()) return false
         val settings = ExpansionSettings(true, prefs.snippets.prefix.get().text, prefs.snippets.caseSensitive.get())
         val sensitive = editorInstance.activeInfo.inputAttributes.isPasswordLike()
         if (sensitive || editorInstance.activeContent.selection.isSelectionMode) return false
@@ -626,14 +635,20 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         val match = ExpansionMatcher.match(before, ' ', snippetManager.snapshot().snippets, settings, sensitiveField = false)
             ?: return false
         val clip = clipboardManager.primaryClip?.takeIf { it.type == ItemType.TEXT }?.stringRepresentation()
-        val rendered = SnippetTemplate.render(match.snippet.body, TemplateContext(LocalDateTime.now(), clip, null))
-            as? RenderResult.Rendered ?: return false
+        val context = TemplateContext(
+            now = LocalDateTime.now(),
+            clipboard = clip,
+            selection = null,
+            datePattern = prefs.snippets.dateFormat.get().pattern,
+            timePattern = prefs.snippets.timeFormat.get().pattern,
+        )
+        val rendered = SnippetTemplate.render(match.snippet.body, context) as? RenderResult.Rendered ?: return false
         val token = before.takeLast(match.deleteCount)
         repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
         editorInstance.commitText(rendered.text)
         val back = rendered.cursorBackCodePoints
         if (back == null) {
-            editorInstance.commitText(KeyCode.SPACE.toChar().toString())
+            if (prefs.snippets.keepSpace.get()) editorInstance.commitText(KeyCode.SPACE.toChar().toString())
         } else if (back > 0) {
             editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), back)
         }

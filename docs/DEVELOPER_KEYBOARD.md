@@ -38,6 +38,28 @@ being edited. **No accessibility service, no usage access, no monitoring.** Matc
 packages whose identity is certain are built in. User-defined app-to-mode mappings exist in the core (`overrides`) but
 have no UI yet.
 
+## Advanced settings
+
+Settings → Keyboard → Developer mode → **Advanced developer settings** (compiled, never run or rendered on a device):
+
+| Group | Options |
+|---|---|
+| Developer row | Row size (Compact 80 % / Normal / Large 125 % of the Smartbar height); navigation keys on/off (arrows, Home, End, PgUp, PgDn) separately from Esc/Tab/Ctrl/Alt; language symbols on/off; **your own symbol keys**; whether they are added to or replace the language symbols |
+| Timing and feedback | Hold delay before repeating (150-800 ms, default 350); repeat interval (20-200 ms, default 60); double-tap time to lock Ctrl/Alt (200-800 ms, default 400); vibration on developer keys |
+| Snippets | Date format for `{{date}}` (ISO, DD/MM/YYYY, MM/DD/YYYY, DD.MM.YYYY); time format for `{{time}}` (24 h, 24 h with seconds, 12 h); keep the typed space after expanding; expand in Termux mode (off by default) |
+| Keyboard modes | **Your own app-to-mode mappings** used by automatic mode switching |
+| Reset | Puts everything on this screen back to its default; the basic Developer mode settings are untouched |
+
+Free-text settings are validated live with the same pure parsers the keyboard uses, and are untrusted input:
+
+* **Own symbol keys:** whitespace-separated tokens, 1-8 code points each, at most 40 keys, no control characters,
+  duplicates dropped, anything else listed as "not accepted" instead of being truncated or guessed. `()` `[]` `{}` `<>`
+  and quote pairs place the caret between the halves. Each key only inserts its text.
+* **App-to-mode mappings:** one `package=MODE` per line (`#` comments), MODE one of the selectable modes, package names
+  must look like Android package names, at most 50, bad lines listed and ignored.
+* Stored timing values are clamped on use, so a hand-edited preference cannot make the row unusable.
+* Termux mode stays a fixed preset (row, terminal keys, navigation keys, Shell symbols); your own keys are still added.
+
 ## Not done
 
 * Quick switching between modes from the keyboard itself (today the default mode is changed in Settings).

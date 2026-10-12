@@ -667,6 +667,44 @@
     <string name="pref__snippets__expansion__summary" comment="Preference summary">Typing the prefix and an abbreviation, then space, inserts the snippet. Off by default; never in password fields</string>
     <string name="pref__snippets__prefix__label" comment="Preference title">Expansion prefix</string>
     <string name="pref__snippets__case_sensitive__label" comment="Preference title">Case-sensitive abbreviations</string>
+    <string name="devadv__title" comment="Screen title and settings entry">Advanced developer settings</string>
+    <string name="devadv__link_summary" comment="Settings entry summary">Row size and keys, custom symbols, timing, snippet formats, app mode mappings</string>
+    <string name="devadv__none" comment="Summary when empty">None</string>
+    <string name="devadv__clear" comment="Dialog button">Clear</string>
+    <string name="devadv__group_layout" comment="Group title">Developer row</string>
+    <string name="devadv__group_timing" comment="Group title">Timing and feedback</string>
+    <string name="devadv__group_snippets" comment="Group title">Snippets</string>
+    <string name="devadv__group_modes" comment="Group title">Keyboard modes</string>
+    <string name="devadv__size__label" comment="Preference title">Row size</string>
+    <string name="devadv__navigation_keys__label" comment="Preference title">Navigation keys</string>
+    <string name="devadv__navigation_keys__summary" comment="Preference summary">Arrows, Home, End, PgUp and PgDn</string>
+    <string name="devadv__symbols__label" comment="Preference title">Language symbols</string>
+    <string name="devadv__symbols__summary" comment="Preference summary">The symbols for the chosen language</string>
+    <string name="devadv__custom_symbols__label" comment="Preference title">Your own symbol keys</string>
+    <string name="devadv__custom_symbols__help" comment="Dialog help">Separate keys with spaces. Each key inserts its text, up to 8 characters, 40 keys at most. Pairs such as () [] {} &lt;&gt; and quotes put the cursor between the two halves.</string>
+    <string name="devadv__custom_symbols__count" comment="Live feedback">{n} keys.</string>
+    <string name="devadv__rejected" comment="Live feedback">Not accepted:</string>
+    <string name="devadv__custom_symbols_mode__label" comment="Preference title">Your keys are</string>
+    <string name="devadv__hold_delay__label" comment="Preference title">Hold delay before repeating</string>
+    <string name="devadv__repeat_interval__label" comment="Preference title">Repeat interval</string>
+    <string name="devadv__lock_window__label" comment="Preference title">Double-tap time to lock Ctrl and Alt</string>
+    <string name="devadv__haptics__label" comment="Preference title">Vibrate on developer keys</string>
+    <string name="devadv__haptics__summary" comment="Preference summary">Also follows your global keyboard feedback settings</string>
+    <string name="devadv__date_format__label" comment="Preference title">Date format for {{date}}</string>
+    <string name="devadv__time_format__label" comment="Preference title">Time format for {{time}}</string>
+    <string name="devadv__keep_space__label" comment="Preference title">Keep the typed space after expanding</string>
+    <string name="devadv__keep_space__summary" comment="Preference summary">Snippets that place the cursor with {{cursor}} never keep it</string>
+    <string name="devadv__expand_terminal__label" comment="Preference title">Expand snippets in Termux mode</string>
+    <string name="devadv__expand_terminal__summary" comment="Preference summary">Off by default: terminals rarely want text expansion</string>
+    <string name="devadv__overrides__label" comment="Preference title">Your app to mode mappings</string>
+    <string name="devadv__overrides__help" comment="Dialog help">One per line: package name, then = and DEVELOPER, TERMUX or STANDARD. Example: com.example.ide=DEVELOPER. Used when automatic switching is on. Lines starting with # are comments.</string>
+    <string name="devadv__overrides__count" comment="Summary and live feedback">{n} mappings.</string>
+    <string name="devadv__overrides__invalid" comment="Live feedback">{n} lines are not valid and are ignored.</string>
+    <string name="devadv__reset__label" comment="Preference title">Reset advanced settings</string>
+    <string name="devadv__reset__summary" comment="Preference summary">Back to defaults. The basic Developer mode settings stay as they are</string>
+    <string name="devadv__reset__title" comment="Dialog title">Reset advanced settings?</string>
+    <string name="devadv__reset__text" comment="Dialog text">Everything on this screen returns to its default, including your own symbol keys and app mappings.</string>
+    <string name="devadv__reset__confirm" comment="Dialog button">Reset</string>
     <string name="about__based_on__title" comment="Preference title: credit to the upstream project">Based on FlorisBoard</string>
     <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to open the original project.</string>
     <string name="about__third_party_licenses__title" comment="Preference title">Third-party licenses</string>

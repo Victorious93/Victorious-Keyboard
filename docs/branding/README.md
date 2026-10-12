@@ -31,5 +31,7 @@ it can and should do is carry its own name and not present upstream's identity a
 | Identifiers: Kotlin package `dev.patrickgold.florisboard`, extension ids `org.florisboard.*`, preference keys, `floris_user_dictionary` file, `florisboard://` URI scheme, MIME types | **kept on purpose**: renaming would corrupt stored settings/extensions and make upstream merges unmanageable (`CLAUDE.md`). Not user-visible |
 | Copyright headers, `LICENSE`, About → licences | **kept, required** by Apache-2.0 §4 |
 
-Not yet done: retranslating the removed strings, a visible "Based on FlorisBoard" credit line on the About screen
-(recommended), and a pass over inherited screenshots/docs in `docs/upstream/`.
+Credit: Settings → About now has a "Based on FlorisBoard" entry (names The FlorisBoard Contributors, Apache 2.0,
+baseline `v0.6.0-alpha02`, opens upstream's repository). English only for now.
+
+Not yet done: retranslating the removed strings and a pass over inherited screenshots/docs in `docs/upstream/`.

@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Changed
+- About screen: "Based on FlorisBoard" credit with licence and baseline version, linking to upstream.
 - Removed user-visible upstream branding: theme names, "FlorisBoard" wording in strings (translated copies removed,
   English fallback), the button that opened upstream's add-on store, the upstream feedback link, an Albanian app-name
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).

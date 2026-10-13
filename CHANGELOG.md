@@ -35,6 +35,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   and still authenticate); tamper tests are now deterministic.
 
 ### Added
+- Snippet expansion on Enter and Tab. Each key is its own switch, off by default (Settings → Keyboard → Developer mode,
+  under "Expand snippets while typing"). A press that matches no snippet still sends the real Enter or Tab, including in
+  password fields, while text is selected, and while Shift, Ctrl or Alt is held. "Keep Enter after expanding" and
+  "Keep Tab after expanding" (Advanced developer settings, on by default) re-send the key after a successful expansion;
+  a snippet with `{{cursor}}` does not. Pure decision JVM-tested; keyboard wiring compiled, never run on a device
+  (`SNIPPETS.md`).
 - Dictionary packs: five bundled word lists (Kali Linux tools, Kali NetHunter, AI/LLM vocabulary, slash commands, Termux
   and shell commands) as small zips, a strict bounded zip reader, non-destructive install/remove and a "Dictionary packs"
   screen under Settings → Typing → Dictionary. Words go to the internal user dictionary and today only affect the system

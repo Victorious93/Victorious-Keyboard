@@ -326,8 +326,24 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "snippets__expand_in_terminal_mode",
             default = false,
         )
+        val expandOnEnter = boolean(
+            key = "snippets__expand_on_enter",
+            default = false,
+        )
+        val expandOnTab = boolean(
+            key = "snippets__expand_on_tab",
+            default = false,
+        )
         val keepSpace = boolean(
             key = "snippets__keep_space",
+            default = true,
+        )
+        val keepEnter = boolean(
+            key = "snippets__keep_enter",
+            default = true,
+        )
+        val keepTab = boolean(
+            key = "snippets__keep_tab",
             default = true,
         )
         val dateFormat = enum(

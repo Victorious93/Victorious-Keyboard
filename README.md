@@ -48,7 +48,7 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 * **Developer row and operating modes**: Esc, Tab, Ctrl, Alt and arrow keys, with a Termux preset and optional
   auto-detection for Termux and ConnectBot.
 * **Snippets**: reusable text with templates (`{{selection}}`, `{{clipboard}}`, date and time), an in-keyboard picker,
-  and text expansion on the space key.
+  and text expansion on the space key (Enter and Tab can be turned on separately).
 * **Dictionary packs**: five bundled word lists for technical vocabulary, installed and removed on your choice.
 
 It is not affiliated with or endorsed by the FlorisBoard project. The repository contains upstream's full Git history
@@ -104,9 +104,10 @@ Details and limits: [TERMINAL.md](TERMINAL.md) and [docs/DEVELOPER_KEYBOARD.md](
 |---|---|
 | Template language: `{{selection}}`, `{{cursor}}`, `{{clipboard}}`, `{{date}}`, `{{time}}`, `{{datetime}}` with optional formats | ✅ renderer |
 | Expansion on the space key: opt-in, never in password fields | ✅ rules · 🟦 wiring |
+| Expansion on Enter and Tab: each off until you turn it on; a key that matches nothing still does its normal action | ✅ rules · 🟦 wiring |
 | Library of up to 500 snippets with unique abbreviations; versioned JSON import and export (non-destructive importer) | ✅ logic · 🟦 settings screen |
 | In-keyboard picker: quick action, panel, insert at cursor | ✅ insertion rules · 🟦 panel |
-| Expansion on Enter and Tab, typed search in the picker, encrypted export | ⬜ |
+| Typed search in the picker, encrypted export | ⬜ |
 
 Shell and environment templates (`{{shell:…}}`, `{{exec:…}}`, `{{env:…}}`) are not implemented; they stay literal text.
 Details: [SNIPPETS.md](SNIPPETS.md).

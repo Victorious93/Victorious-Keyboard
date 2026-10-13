@@ -13,8 +13,8 @@ pull request per item. Items are listed in the order they should be built; the o
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| 1 | Snippets: expansion on Enter and Tab (the core already supports more boundaries, `ExpansionSettings.boundaries`) | `next` | Per-field opt-in; never in sensitive fields; must not swallow a real Enter/Tab when no snippet matches (test that). |
-| 2 | Snippets: per-mode defaults (e.g. expansion on/off per operating mode) | queued | Builds on `OperatingMode` and the Advanced developer settings. |
+| 1 | Snippets: expansion on Enter and Tab (the core already supports more boundaries, `ExpansionSettings.boundaries`) | done | JVM-tested (`ExpansionAction`). Each key is its own opt-in (both off by default). Never in sensitive fields. A non-match does not swallow Enter/Tab. Keyboard wiring compiled, **not run on a device**. |
+| 2 | Snippets: per-mode defaults (e.g. expansion on/off per operating mode) | `next` | Builds on `OperatingMode` and the Advanced developer settings. |
 | 3 | Snippets: encrypted export, reusing the clipboard backup container | queued | Must follow `BACKUP_FORMAT.md` (JCE primitives only, versioned header, no keys in metadata). |
 | 4 | Dictionary packs: device validation and a decision on the word lists (verify against official sources) | blocked on owner | The lists were written from memory; verification needs network access the sandbox does not have. |
 | 5 | Termux `RUN_COMMAND` integration | blocked on owner | Not started. Do not begin unless the owner explicitly asks (see `CLAUDE.md`). |
@@ -28,7 +28,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
-| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
+| 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | ⬜ (dictionary packs exist as data: `DICTIONARY_PACKS.md`; nothing reads them for suggestions yet) |
 | 7 | AI workspace | ⬜ |
 | 8 | Themes and responsive UI | ⬜ |
@@ -109,9 +109,10 @@ Done and JVM-tested: template language and renderer, expansion matcher (opt-in, 
 recursion), snippet library with validation and unique abbreviations, versioned JSON import/export with a
 non-destructive importer, atomic file store with `.bak`/`.corrupt` safety copies. Details and limits: `SNIPPETS.md`.
 
-Android shell compiled, never run: `SnippetManager` (store under `noBackupFilesDir`), expansion on the space key, Snippets settings
-screen with import/export, in-keyboard picker (quick action, panel, `{{selection}}`). Open: expansion on Enter/Tab,
-per-mode defaults, encrypted export, typed search in the picker, device validation.
+Android shell compiled, never run: `SnippetManager` (store under `noBackupFilesDir`), expansion on the space key and, each
+opt-in, on Enter and Tab, Snippets settings screen with import/export, in-keyboard picker (quick action, panel,
+`{{selection}}`). Open: per-mode defaults, encrypted export, typed search in the picker, device validation (including
+Enter/Tab expansion, which is compiled and JVM-tested but not run on a device).
 
 ## Mapping to the "VictorKeys master brief"
 

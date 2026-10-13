@@ -69,6 +69,12 @@ Install the debug APK → enable in *Settings → System → Keyboard* → selec
   right place also before an emoji; a very long clipboard in `{{clipboard}}` is refused with a message; password field:
   `{{clipboard}}`/`{{selection}}` come out empty; panel shows "Locked" on the lock screen; after a reboot, before the
   first unlock, nothing is read; in Termux the text arrives and the caret lands correctly; rotate with the panel open.
+- [ ] Snippet expansion on Enter and Tab (turn on "Expand snippets while typing", then "Also expand on Enter" and
+  "Also expand on Tab"): `;sig` then Enter inserts the snippet and still sends Enter (newline, or Search/Send); `;sig`
+  then Tab inserts and still sends Tab; Enter or Tab with no matching abbreviation does the normal action and leaves
+  the typed text; the same in a password field (no expansion); Shift+Enter, Ctrl+Tab and a text selection are not
+  expanded; a snippet with `{{cursor}}` does not also send Enter/Tab; turn "Keep Enter after expanding" off and Enter
+  expands without sending.
 - [ ] Dictionary packs (Settings → Typing → Dictionary, internal user dictionary on): the "Dictionary packs" screen lists 5
   packs with word counts; add one → toast with the number, the words appear in *Manage internal user dictionary*; add it
   again → 0 added; edit one word's frequency, then Remove → that word stays, the others go; with the internal dictionary

@@ -47,7 +47,10 @@ jobs:
           if-no-files-found: ignore
 
       # DEBUG build for testing only. It is signed with the debug key and must never be published as a release.
+      # Upload is best-effort. assembleDebug above is what fails the job when the APK was not produced.
+      # GitHub's artifact storage quota ("Artifact storage quota has been hit") must not turn that good build red.
       - name: Upload debug APK
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: victorious-keyboard-debug-${{ github.sha }}

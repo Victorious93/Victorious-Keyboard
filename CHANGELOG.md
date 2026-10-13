@@ -11,7 +11,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 - README rewritten as the project homepage: feature status per item, phase status, APK facts, build and install steps, and a
   documentation index. It no longer describes Phase 3–5 features as planned.
 - CI: dependency-verification checksums for five Gradle plugin marker POMs now match what the Gradle Plugin Portal serves
-  (Central's copy kept as `also-trust`); CI run 5 passed build + unit tests on GitHub. Test-report upload is non-fatal.
+  (Central's copy kept as `also-trust`); CI run 5 passed build + unit tests on GitHub. Test-report upload and debug APK
+  upload are both non-fatal, so a full GitHub artifact-storage quota no longer fails the job after a good build.
 - About screen: "Based on FlorisBoard" credit with licence and baseline version, linking to upstream.
 - Removed user-visible upstream branding: theme names, "FlorisBoard" wording in strings (translated copies removed,
   English fallback), the button that opened upstream's add-on store, the upstream feedback link, an Albanian app-name

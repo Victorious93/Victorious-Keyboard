@@ -127,9 +127,9 @@ error (`LocalContextGetResourceValueCall`). Those errors are fixed:
 | 1 | `LocalContextConfigurationRead` | Physical keyboard screen reads `LocalConfiguration.current` |
 | 1 | `LocalContextGetResourceValueCall` | Snippet editor stores the error string resource id and resolves it during composition |
 
-`lintDebug` is part of CI. Warnings (including `MissingQuantity`, `DefaultLocale`, and newer-dependency notices) are
-not errors and do not fail the build. Phase 9 still owns the security review; it does not have to re-triage these
-errors.
+`lintDebug` is part of CI. A local run after these fixes reported **0 errors, 212 warnings, 2 hints**.
+Warnings (including `MissingQuantity`, `DefaultLocale`, and newer-dependency notices) are not errors and do not
+fail the build. Phase 9 still owns the security review; it does not have to re-triage these errors.
 
 ## 9. Additional risks found in Phase 1
 

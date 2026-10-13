@@ -32,7 +32,9 @@ jobs:
 
       - name: Build debug APK and run unit tests
         # Dependency checksums are enforced via gradle/verification-metadata.xml.
-        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest
+        # lintDebug is a gate now that the inherited errors are fixed. :lib:kotlin:test is not
+        # part of testDebugUnitTest (plain JVM module) and is the home of curlyFormat.
+        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest :lib:kotlin:test lintDebug
 
       - name: Upload unit test reports
         # Diagnostic only: a GitHub artifact-storage quota problem must not turn a good build red.

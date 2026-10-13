@@ -111,7 +111,10 @@ object FlorisEmojiCompat {
             registerInitCallback(initCallback)
         }
 
-        // Despite its name, `EmojiCompat.reset()` actually creates a new instance, exactly what we need
+        // Despite its name, `EmojiCompat.reset()` actually creates a new instance, exactly what we need.
+        // Public `EmojiCompat.init` refuses a second instance, and this helper keeps one per replaceAll mode.
+        // `reset` is @RestrictTo(LIBRARY); the other call site in getAsFlow is suppressed the same way.
+        @SuppressLint("RestrictedApi")
         private val instance: EmojiCompat? = if (config != null) EmojiCompat.reset(config) else null
         val publishedInstanceFlow = MutableStateFlow<EmojiCompat?>(null)
 

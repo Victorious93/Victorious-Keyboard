@@ -549,15 +549,15 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="other">{v}시간</item>
+        <item quantity="other">%d시간</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="other">{v}분</item>
+        <item quantity="other">%d분</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="other">{v}초</item>
+        <item quantity="other">%d초</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="other">{v} 항목</item>
+        <item quantity="other">%d 항목</item>
     </plurals>
 </resources>

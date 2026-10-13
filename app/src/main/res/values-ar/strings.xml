@@ -856,51 +856,51 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="zero">{v} صفر ساعة</item>
-        <item quantity="one">{v} ساعة واحدة</item>
-        <item quantity="two">{v} ساعتان</item>
-        <item quantity="few">{v} ساعات</item>
-        <item quantity="many">{v} ساعات</item>
-        <item quantity="other">{v} ساعات</item>
+        <item quantity="zero">%d صفر ساعة</item>
+        <item quantity="one">%d ساعة واحدة</item>
+        <item quantity="two">%d ساعتان</item>
+        <item quantity="few">%d ساعات</item>
+        <item quantity="many">%d ساعات</item>
+        <item quantity="other">%d ساعات</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="zero">{v} دقيقة</item>
-        <item quantity="one">{v} دقيقة واحدة</item>
-        <item quantity="two">{v} دقيقتان</item>
-        <item quantity="few">{v} دقائق</item>
-        <item quantity="many">{v} دقائق</item>
-        <item quantity="other">{v} دقائق</item>
+        <item quantity="zero">%d دقيقة</item>
+        <item quantity="one">%d دقيقة واحدة</item>
+        <item quantity="two">%d دقيقتان</item>
+        <item quantity="few">%d دقائق</item>
+        <item quantity="many">%d دقائق</item>
+        <item quantity="other">%d دقائق</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="zero">{v} ثوان</item>
-        <item quantity="one">{v} ثانية</item>
-        <item quantity="two">{v} ثانيتان</item>
-        <item quantity="few">{v} ثوان</item>
-        <item quantity="many">{v} ثوان</item>
-        <item quantity="other">{v} ثوان</item>
+        <item quantity="zero">%d ثوان</item>
+        <item quantity="one">%d ثانية</item>
+        <item quantity="two">%d ثانيتان</item>
+        <item quantity="few">%d ثوان</item>
+        <item quantity="many">%d ثوان</item>
+        <item quantity="other">%d ثوان</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="zero">{v} صفر عنصر</item>
-        <item quantity="one">{v} عنصر واحد</item>
-        <item quantity="two">{v} عنصران</item>
-        <item quantity="few">{v} عناصر</item>
-        <item quantity="many">{v} عناصر</item>
-        <item quantity="other">{v} عناصر</item>
+        <item quantity="zero">%d صفر عنصر</item>
+        <item quantity="one">%d عنصر واحد</item>
+        <item quantity="two">%d عنصران</item>
+        <item quantity="few">%d عناصر</item>
+        <item quantity="many">%d عناصر</item>
+        <item quantity="other">%d عناصر</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="zero">{v} حرف</item>
-        <item quantity="one">{v} حرف</item>
-        <item quantity="two">{v} حرفان</item>
-        <item quantity="few">{v} أحرف</item>
-        <item quantity="many">{v} احرف</item>
-        <item quantity="other">{v} احرف</item>
+        <item quantity="zero">%d حرف</item>
+        <item quantity="one">%d حرف</item>
+        <item quantity="two">%d حرفان</item>
+        <item quantity="few">%d أحرف</item>
+        <item quantity="many">%d احرف</item>
+        <item quantity="other">%d احرف</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="zero">{v} مرشح</item>
-        <item quantity="one">{v} مرشح</item>
-        <item quantity="two">{v} مرشحان</item>
-        <item quantity="few">{v} مرشحات</item>
-        <item quantity="many">{v} مرشحات</item>
-        <item quantity="other">{v} مرشحون</item>
+        <item quantity="zero">%d مرشح</item>
+        <item quantity="one">%d مرشح</item>
+        <item quantity="two">%d مرشحان</item>
+        <item quantity="few">%d مرشحات</item>
+        <item quantity="many">%d مرشحات</item>
+        <item quantity="other">%d مرشحون</item>
     </plurals>
 </resources>

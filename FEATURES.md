@@ -80,6 +80,6 @@ Prompt library, templates, local transformations, optional provider adapters: �
 | Debug APK builds; 714 JVM unit tests pass | ✅ (`TESTING.md`) |
 | CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests are the gate. Artifact upload is non-fatal: a full GitHub storage quota no longer fails the job. The APK is still not stored while that quota is exhausted |
 | Dependency checksum verification | ✅ |
-| Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |
+| Lint | ✅ the errors in `AUDIT.md` §8 are fixed and `lintDebug` is a CI gate. Warnings do not fail the build |
 | Instrumented / device tests, performance numbers | ⬜ |
 | Signed release, release notes, store listing | ⬜ (no signing material exists; none is committed) |

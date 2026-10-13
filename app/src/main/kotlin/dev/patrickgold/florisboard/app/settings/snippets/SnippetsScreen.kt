@@ -137,7 +137,9 @@ fun SnippetsScreen() = FlorisScreen {
     var creating by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<Snippet?>(null) }
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
-    var editorError by remember { mutableStateOf<String?>(null) }
+    // Resource id, resolved during composition. Reading it with LocalContext.current.getString
+    // from the save callback is a Compose lint error (LocalContextGetResourceValueCall).
+    var editorError by remember { mutableStateOf<Int?>(null) }
 
     // Search scans up to 500 bodies, so it runs off the main thread and is debounced.
     val results by produceState(initialValue = emptyList<Snippet>(), state.library) {
@@ -266,14 +268,14 @@ fun SnippetsScreen() = FlorisScreen {
         SnippetEditorDialog(
             initial = initial,
             prefixText = prefixText,
-            serverError = editorError,
+            serverError = editorError?.let { stringRes(it) },
             onDismiss = { creating = false; editing = null },
             onSave = { s ->
                 scope.launch {
                     val r = if (initial == null) manager.add(s) else manager.update(s)
                     when (r) {
                         is LibraryResult.Ok -> { creating = false; editing = null }
-                        is LibraryResult.Rejected -> editorError = context.getString(r.error.messageRes())
+                        is LibraryResult.Rejected -> editorError = r.error.messageRes()
                     }
                 }
             },

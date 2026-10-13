@@ -109,8 +109,12 @@ fun pluralsRes(
     quantity: Int,
     vararg args: CurlyArg,
 ): String {
+    // Plural items use %d for the quantity. Lint's ImpliedQuantity check does not recognise
+    // the {v} formatter, and in French/Portuguese/Russian/Ukrainian/Latvian "one" (and Latvian
+    // "zero") covers more than one number, so a placeholder is required. Callers may still pass
+    // a "v" argument; curlyFormat fills a leftover {v} and ignores the argument when it is absent.
     val string = LocalResourcesContext.current.resources
-        .getQuantityString(id, quantity)
+        .getQuantityString(id, quantity, quantity)
     return formatString(string, args)
 }
 

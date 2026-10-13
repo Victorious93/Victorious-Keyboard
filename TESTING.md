@@ -6,9 +6,10 @@
 |---|---|
 | 1-4 (PR and push, 2026-10-12) | failed at dependency verification (plugin-marker checksums, see `BUILD.md`), nothing compiled |
 | 5 (`workflow_dispatch`, branch `ccr-08db99f8-cdmjq6`, commit `c92c878`) | **build + unit tests passed**; job red only at "Upload unit test reports": artifact storage quota hit; APK artifact skipped |
-| PR #10 (`38353170157`) and its merge to `main` (`38357539442`) | **build + unit tests passed**; job red only at "Upload debug APK": "Artifact storage quota has been hit". No review comments. Lint is not part of this workflow |
+| PR #10 (`38353170157`) and its merge to `main` (`38357539442`) | **build + unit tests passed**; job red only at "Upload debug APK": "Artifact storage quota has been hit". No review comments |
+| Merge of PR #11 to `main` (`38368541837`) | **fully green**, including both artifact uploads |
 
-Not yet seen: a fully green run including the APK artifact, lint (not a gate), instrumented tests (none run anywhere).
+Not yet seen on GitHub: a run of the workflow that also executes `lintDebug` and `:lib:kotlin:test` (added after the inherited lint errors were fixed). Instrumented tests are still not run anywhere.
 
 ## What exists and has been run
 
@@ -17,7 +18,7 @@ Not yet seen: a fully green run including the APK artifact, lint (not a gate), i
 | JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 728 tests, 0 failures, 0 errors (`:app` 511 + `:lib:snygg` 106 via `testDebugUnitTest`, plus `:lib:kotlin` 111 via `:lib:kotlin:test`, which `testDebugUnitTest` does not run; counted from the `TEST-*.xml` result files). 176 were measured on the unmodified baseline (`AUDIT.md` §6, `:app` + `:lib:snygg` only), so 450 are ours (336 below + 9 `curlyFormat` regression tests + 57 snippet picker/insertion/preview/caret/quick-action/UI-mode tests + 34 dictionary pack reader/parser/planner/asset tests + 14 Enter/Tab expansion tests): clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55), operating modes (12), advanced developer settings (36), Enter/Tab expansion decision (14) |
 | Compile / package | `./gradlew assembleDebug` | **Run**, success |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
-| Lint | `./gradlew lintDebug` | **Run, fails on pre-existing upstream code** (52 errors, none in new code at time of writing; `AUDIT.md` §8). Not yet a CI gate |
+| Lint | `./gradlew lintDebug` | **Errors fixed** (`AUDIT.md` §8) and the task is a CI gate. Warnings remain and do not fail the build |
 | Instrumented tests (`androidTest`) | one upstream example test | **Not run** (no device/emulator) |
 | Manual device matrix | below | **Not run** |
 

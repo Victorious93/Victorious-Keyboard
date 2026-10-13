@@ -22,10 +22,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.ui.Preference
@@ -36,10 +33,9 @@ import org.florisboard.lib.compose.stringRes
 fun PhysicalKeyboardScreen() = FlorisScreen {
     title = stringRes(R.string.physical_keyboard__title)
 
-    val context = LocalContext.current
-    val physicalKeyboardAttached by remember {
-        mutableStateOf(context.resources.configuration.keyboard != Configuration.KEYBOARD_NOKEYS)
-    }
+    // LocalConfiguration, not LocalContext.current.resources.configuration: the latter is a stale
+    // snapshot (and a Compose lint error). This value updates when a keyboard is attached.
+    val physicalKeyboardAttached = LocalConfiguration.current.keyboard != Configuration.KEYBOARD_NOKEYS
 
     val activityForResult = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()

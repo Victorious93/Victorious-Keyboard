@@ -467,19 +467,19 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} tunti</item>
-        <item quantity="other">{v} tuntia</item>
+        <item quantity="one">%d tunti</item>
+        <item quantity="other">%d tuntia</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} minuutti</item>
-        <item quantity="other">{v} minuuttia</item>
+        <item quantity="one">%d minuutti</item>
+        <item quantity="other">%d minuuttia</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} sekunti</item>
-        <item quantity="other">{v} sekuntia</item>
+        <item quantity="one">%d sekunti</item>
+        <item quantity="other">%d sekuntia</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} kohde</item>
-        <item quantity="other">{v} kohdetta</item>
+        <item quantity="one">%d kohde</item>
+        <item quantity="other">%d kohdetta</item>
     </plurals>
 </resources>

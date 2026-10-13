@@ -64,6 +64,23 @@ private val PROJECTIONS_LANGUAGE: Array<String> = arrayOf(
     UserDictionary.Words.LOCALE,
 )
 
+/**
+ * One distinct locale tag stored in the words table.
+ *
+ * Room refuses to put nulls into `List<T?>`, so a missing locale (the "all languages" bucket)
+ * has to be a nullable column on a row rather than a null list element.
+ */
+data class UserDictionaryLocaleRow(
+    @ColumnInfo(name = "locale")
+    val locale: String?,
+)
+
+/** Same null tags as [FlorisUserDictionaryDatabase.Converters.stringToLocale]. */
+internal fun storedLocaleTagToFloris(tag: String?): FlorisLocale? = when (tag) {
+    null, "", "all", "null" -> null
+    else -> FlorisLocale.fromTag(tag)
+}
+
 @Entity(tableName = WORDS_TABLE)
 data class UserDictionaryEntry(
     @PrimaryKey(autoGenerate = true)
@@ -115,8 +132,12 @@ interface UserDictionaryDao {
     @Query("$SELECT_ALL_FROM_WORDS WHERE ${UserDictionary.Words.WORD} = :word AND $LOCALE_MATCHES")
     fun queryExactFuzzyLocale(word: String, locale: FlorisLocale?): List<UserDictionaryEntry>
 
-    @Query("SELECT DISTINCT ${UserDictionary.Words.LOCALE} FROM $WORDS_TABLE")
-    fun queryLanguageList(): List<FlorisLocale?>
+    @Query("SELECT DISTINCT ${UserDictionary.Words.LOCALE} AS locale FROM $WORDS_TABLE")
+    fun queryLocaleRows(): List<UserDictionaryLocaleRow>
+
+    fun queryLanguageList(): List<FlorisLocale?> {
+        return queryLocaleRows().map { storedLocaleTagToFloris(it.locale) }
+    }
 
     @Insert
     fun insert(entry: UserDictionaryEntry)
@@ -376,6 +397,7 @@ class SystemUserDictionaryDatabase(context: Context) : UserDictionaryDatabase {
                 null
             ) ?: return listOf()
             if (cursor.count <= 0) {
+                cursor.close()
                 return listOf()
             }
             val localeIndex = cursor.getColumnIndex(UserDictionary.Words.LOCALE)
@@ -390,6 +412,10 @@ class SystemUserDictionaryDatabase(context: Context) : UserDictionaryDatabase {
             }
             cursor.close()
             return retList.toList()
+        }
+
+        override fun queryLocaleRows(): List<UserDictionaryLocaleRow> {
+            return queryLanguageList().map { locale -> UserDictionaryLocaleRow(locale?.localeTag()) }
         }
 
         private fun queryResolver(selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): List<UserDictionaryEntry> {

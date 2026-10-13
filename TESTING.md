@@ -6,6 +6,7 @@
 |---|---|
 | 1-4 (PR and push, 2026-10-12) | failed at dependency verification (plugin-marker checksums, see `BUILD.md`), nothing compiled |
 | 5 (`workflow_dispatch`, branch `ccr-08db99f8-cdmjq6`, commit `c92c878`) | **build + unit tests passed**; job red only at "Upload unit test reports": artifact storage quota hit; APK artifact skipped |
+| PR #10 (`38353170157`) and its merge to `main` (`38357539442`) | **build + unit tests passed**; job red only at "Upload debug APK": "Artifact storage quota has been hit". No review comments. Lint is not part of this workflow |
 
 Not yet seen: a fully green run including the APK artifact, lint (not a gate), instrumented tests (none run anywhere).
 

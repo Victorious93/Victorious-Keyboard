@@ -78,7 +78,7 @@ Prompt library, templates, local transformations, optional provider adapters: �
 | Item | Status |
 |---|---|
 | Debug APK builds; 714 JVM unit tests pass | ✅ (`TESTING.md`) |
-| CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests passed on GitHub Actions (run 5, 2026-10-12); ⚠ artifact upload failed with "storage quota has been hit" (account-level, not code) |
+| CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests are the gate. Artifact upload is non-fatal: a full GitHub storage quota no longer fails the job. The APK is still not stored while that quota is exhausted |
 | Dependency checksum verification | ✅ |
 | Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |
 | Instrumented / device tests, performance numbers | ⬜ |

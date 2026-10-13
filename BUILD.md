@@ -49,8 +49,10 @@ Portal's checksum and list Central's as `also-trust`. The remaining six markers 
 debug build and the unit tests on a GitHub runner with direct downloads** (`BUILD SUCCESSFUL in 10m 10s`, 178 tasks).
 The run was still red because the following artifact-upload step failed with "Artifact storage quota has been hit"
 (GitHub account storage; it recalculates every 6-12 hours, and old artifacts in any repository of the account count).
-The test-report upload is now non-fatal; the APK upload still fails loudly, so no debug APK artifact exists from CI
-until the quota is freed.
+Both uploads are now non-fatal. The job stays red only when the debug build or the unit tests fail. While the quota
+is exhausted, CI still produces the APK and still does not store it: the "Upload debug APK" step warns and continues.
+PR #10 and its merge to `main` (runs `38353170157` and `38357539442`, 2026-10-13) were red for that reason only;
+`assembleDebug` and `testDebugUnitTest` succeeded on the runner.
 
 Regenerate after adding/updating a dependency (one task at a time if memory is tight; a combined run was OOM-killed in a
 16 GB sandbox). **Do not use `docs/build-env-mirror.gradle.kts` for this** (see its warning), or compare the result

@@ -155,6 +155,18 @@ fun KeyboardScreen() = FlorisScreen {
                 visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
             )
             SwitchPreference(
+                prefs.snippets.expandOnEnter,
+                title = stringRes(R.string.pref__snippets__expand_on_enter__label),
+                summary = stringRes(R.string.pref__snippets__expand_on_enter__summary),
+                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.snippets.expandOnTab,
+                title = stringRes(R.string.pref__snippets__expand_on_tab__label),
+                summary = stringRes(R.string.pref__snippets__expand_on_tab__summary),
+                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
+            )
+            SwitchPreference(
                 prefs.devrow.terminalKeys,
                 title = stringRes(R.string.pref__devrow__terminal_keys__label),
                 summary = stringRes(R.string.pref__devrow__terminal_keys__summary),

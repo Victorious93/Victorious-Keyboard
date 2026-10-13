@@ -74,9 +74,12 @@ import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.mode.ActiveMode
 import dev.patrickgold.florisboard.ime.mode.ModeOverrides
-import dev.patrickgold.florisboard.ime.snippets.ExpansionMatcher
 import dev.patrickgold.florisboard.ime.snippets.CaretPlacement
-import dev.patrickgold.florisboard.ime.snippets.ExpansionSettings
+import dev.patrickgold.florisboard.ime.snippets.ExpansionAction
+import dev.patrickgold.florisboard.ime.snippets.ExpansionAttempt
+import dev.patrickgold.florisboard.ime.snippets.ExpansionOutcome
+import dev.patrickgold.florisboard.ime.snippets.ExpansionTrigger
+import dev.patrickgold.florisboard.ime.snippets.ExpansionTriggers
 import dev.patrickgold.florisboard.ime.snippets.InsertionPlan
 import dev.patrickgold.florisboard.ime.snippets.InsertionRequest
 import dev.patrickgold.florisboard.ime.snippets.Snippet
@@ -517,6 +520,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Handles a [KeyCode.ENTER] event.
      */
     private fun handleEnter() {
+        if (tryExpandSnippet(ExpansionTrigger.ENTER)) return
+        performEnterNow()
+    }
+
+    /** The Enter key's own action, with no snippet expansion. Also used to re-send Enter after a snippet expanded. */
+    private fun performEnterNow() {
         val info = editorInstance.activeInfo
         val isShiftPressed = inputEventDispatcher.isPressed(KeyCode.SHIFT)
         if (editorInstance.tryPerformEnterCommitRaw()) {
@@ -623,42 +632,93 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * enabled by the user.
      */
     /**
-     * Snippet expansion for the space key (opt-in, never in password-like fields). Replaces the typed
-     * `<prefix><abbreviation>` with the rendered snippet and returns true if it did, in which case the caller must not
-     * process the space itself: the space is re-inserted here unless the snippet places the caret with `{{cursor}}`.
-     * Never logs anything about the snippet or the text.
+     * Snippet expansion for space, and (each opt-in) Enter and Tab. Returns true only when a snippet was actually
+     * inserted, in which case the caller must not also perform the key: this function re-sends it when the user asked
+     * to keep it, unless the snippet places the caret with `{{cursor}}`.
+     *
+     * A miss returns false and changes nothing, so a real Enter still sends and a real Tab still tabs. Never reads a
+     * sensitive field, and never logs the snippet or the text. A failure before the editor is changed returns false.
      */
-    private fun tryExpandSnippet(): Boolean {
+    private fun tryExpandSnippet(trigger: ExpansionTrigger): Boolean {
         if (!prefs.snippets.expansionEnabled.get()) return false
         // Expansion is off in terminal mode unless the user chose otherwise (a terminal rarely wants it).
         if (activeMode.value == OperatingMode.TERMUX && !prefs.snippets.expandInTerminalMode.get()) return false
-        val settings = ExpansionSettings(true, prefs.snippets.prefix.get().text, prefs.snippets.caseSensitive.get())
-        val sensitive = editorInstance.activeInfo.inputAttributes.isPasswordLike()
-        if (sensitive || editorInstance.activeContent.selection.isSelectionMode) return false
-        val before = editorInstance.run { activeContent.getTextBeforeCursor(SnippetLimits.MAX_ABBREVIATION + 8) }
-        val match = ExpansionMatcher.match(before, ' ', snippetManager.snapshot().snippets, settings, sensitiveField = false)
-            ?: return false
-        val plan = SnippetInsertion.plan(
-            InsertionRequest(
-                snippet = match.snippet,
-                now = LocalDateTime.now(),
-                clipboardText = if (SnippetTemplate.usesPlaceholder(match.snippet.body, "clipboard")) currentClipboardText() else null,
-                selectionText = null, // expansion never runs with a selection
-                sensitiveField = sensitive,
-                datePattern = prefs.snippets.dateFormat.get().pattern,
-                timePattern = prefs.snippets.timeFormat.get().pattern,
-            )
-        )
-        val insert = plan as? InsertionPlan.Insert ?: return false // too large / empty: leave what the user typed
-        val token = before.takeLast(match.deleteCount)
-        repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
-        editorInstance.commitText(insert.text)
-        if (insert.cursorBackCodePoints == null) {
-            if (prefs.snippets.keepSpace.get()) editorInstance.commitText(KeyCode.SPACE.toChar().toString())
-        } else {
-            moveCaretLeft(insert)
+        when (trigger) {
+            ExpansionTrigger.ENTER -> if (!prefs.snippets.expandOnEnter.get()) return false
+            ExpansionTrigger.TAB -> if (!prefs.snippets.expandOnTab.get()) return false
+            ExpansionTrigger.SPACE -> { /* space is included whenever expansion is on */ }
         }
-        return true
+        // A modified Enter or Tab is a real key (Shift+Enter newline, Ctrl+Tab). Do not read the field for it.
+        if (trigger != ExpansionTrigger.SPACE &&
+            (inputEventDispatcher.isPressed(KeyCode.SHIFT) || terminalModifiers.anyActive)
+        ) return false
+        val sensitive = editorInstance.activeInfo.inputAttributes.isPasswordLike()
+        val keep = when (trigger) {
+            ExpansionTrigger.SPACE -> prefs.snippets.keepSpace.get()
+            ExpansionTrigger.ENTER -> prefs.snippets.keepEnter.get()
+            ExpansionTrigger.TAB -> prefs.snippets.keepTab.get()
+        }
+        val attempt = ExpansionAttempt(
+            enabled = true,
+            triggers = ExpansionTriggers(
+                space = true,
+                enter = prefs.snippets.expandOnEnter.get(),
+                tab = prefs.snippets.expandOnTab.get(),
+            ),
+            prefix = prefs.snippets.prefix.get().text,
+            caseSensitive = prefs.snippets.caseSensitive.get(),
+            trigger = trigger,
+            sensitiveField = sensitive,
+            selectionActive = editorInstance.activeContent.selection.isSelectionMode,
+            modifierHeld = inputEventDispatcher.isPressed(KeyCode.SHIFT) || terminalModifiers.anyActive,
+            blockedInTerminalMode = false,
+            keepTrigger = keep,
+        )
+        if (!ExpansionAction.shouldConsider(attempt)) return false
+        var changedEditor = false
+        return try {
+            val before = editorInstance.run { activeContent.getTextBeforeCursor(SnippetLimits.MAX_ABBREVIATION + 8) }
+            val outcome = ExpansionAction.decide(attempt.copy(textBeforeCursor = before)) { match ->
+                SnippetInsertion.plan(
+                    InsertionRequest(
+                        snippet = match.snippet,
+                        now = LocalDateTime.now(),
+                        clipboardText = if (SnippetTemplate.usesPlaceholder(match.snippet.body, "clipboard")) currentClipboardText() else null,
+                        selectionText = null, // expansion never runs with a selection
+                        sensitiveField = false,
+                        datePattern = prefs.snippets.dateFormat.get().pattern,
+                        timePattern = prefs.snippets.timeFormat.get().pattern,
+                    )
+                )
+            }
+            when (outcome) {
+                ExpansionOutcome.PassThrough -> false
+                is ExpansionOutcome.Replace -> {
+                    changedEditor = true
+                    val token = before.takeLast(outcome.deleteCount)
+                    repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
+                    editorInstance.commitText(outcome.text)
+                    if (outcome.cursorBackCodePoints == null) {
+                        if (outcome.followWithTrigger) followExpansionTrigger(trigger)
+                    } else {
+                        moveCaretLeft(InsertionPlan.Insert(outcome.text, outcome.cursorBackCodePoints))
+                    }
+                    true
+                }
+            }
+        } catch (_: Exception) {
+            // Nothing about the snippet is logged. If the editor was not touched, the real key still happens.
+            changedEditor
+        }
+    }
+
+    /** Re-sends the key that completed an expansion. Does not consult expansion again. */
+    private fun followExpansionTrigger(trigger: ExpansionTrigger) {
+        when (trigger) {
+            ExpansionTrigger.SPACE -> editorInstance.commitText(KeyCode.SPACE.toChar().toString())
+            ExpansionTrigger.ENTER -> performEnterNow()
+            ExpansionTrigger.TAB -> sendTerminalSpecial(SpecialKey.TAB)
+        }
     }
 
     /** Plain clipboard text for \`{{clipboard}}\`; not for non-text clips and not for clips the platform marked sensitive. */
@@ -738,7 +798,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     private fun handleSpace(data: KeyData) {
-        if (tryExpandSnippet()) return
+        if (tryExpandSnippet(ExpansionTrigger.SPACE)) return
         val candidate = nlpManager.getAutoCommitCandidate()
         candidate?.let { commitCandidate(it) }
         if (prefs.keyboard.spaceBarSwitchesToCharacters.get()) {
@@ -946,7 +1006,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.CTRL_LOCK -> terminalModifiers.toggleLock(TerminalModifier.CTRL)
             KeyCode.ALT_LOCK -> terminalModifiers.toggleLock(TerminalModifier.ALT)
             KeyCode.ESCAPE -> sendTerminalSpecial(SpecialKey.ESCAPE)
-            KeyCode.TAB -> sendTerminalSpecial(SpecialKey.TAB)
+            KeyCode.TAB -> if (!tryExpandSnippet(ExpansionTrigger.TAB)) sendTerminalSpecial(SpecialKey.TAB)
             KeyCode.CAPS_LOCK -> handleCapsLock()
             KeyCode.CHAR_WIDTH_SWITCHER -> handleCharWidthSwitch()
             KeyCode.CHAR_WIDTH_FULL -> handleCharWidthFull()

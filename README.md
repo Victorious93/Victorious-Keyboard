@@ -29,7 +29,7 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 
 * **Clipboard manager** — up to 500 items with search, pinning, filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key).
 * **Developer row and operating modes** — Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
-* **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space.
+* **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
 It is not affiliated with or endorsed by the FlorisBoard project. The repository retains upstream's full Git history so per-file authorship is preserved. Design goal: **nothing leaves the device** — no analytics, no ads, and no `INTERNET` permission.
@@ -64,7 +64,7 @@ Details: [TERMINAL.md](TERMINAL.md), [docs/DEVELOPER_KEYBOARD.md](docs/DEVELOPER
 
 ### Snippets
 
-Template language: `{{selection}}`, `{{cursor}}`, `{{clipboard}}`, `{{date}}`, `{{time}}`, `{{datetime}}` (optional formats). Space expansion is opt-in and never in password fields. Library of up to 500 snippets with abbreviations; versioned JSON import/export. Shell/exec/env templates are **not** implemented (placeholders stay literal).
+Template language: `{{selection}}`, `{{cursor}}`, `{{clipboard}}`, `{{date}}`, `{{time}}`, `{{datetime}}` (optional formats) — ✅ renderer. Space expansion is opt-in and never in password fields (✅ rules · 🟦 wiring). Enter and Tab expansion is each off until you turn it on; a key that matches nothing still does its normal action (✅ rules · 🟦 wiring). Library of up to 500 snippets with unique abbreviations and versioned JSON import/export (✅ logic · 🟦 settings screen). In-keyboard picker: quick action, panel, insert at the cursor (✅ insertion rules · 🟦 panel). Typed search in the picker and encrypted export are ⬜. Shell/exec/env templates are **not** implemented (placeholders stay literal).
 
 Details: [SNIPPETS.md](SNIPPETS.md).
 

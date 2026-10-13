@@ -1,6 +1,6 @@
 # Snippets and text expansion (Phase 5)
 
-Status: **pure-Kotlin core JVM-tested; Android shell (store, expansion on the space key, settings screen with
+Status: **pure-Kotlin core JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen with
 import/export, in-keyboard picker) compiled but never run or rendered on a device.** Expansion is off by default.
 
 ## Using it (as built, unverified on a device)
@@ -11,6 +11,11 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
   **Case-sensitive abbreviations**.
 * With expansion on, typing `;sig` and then **space** replaces `;sig` with the rendered snippet and keeps the space,
   unless the snippet contains `{{cursor}}`: then the space is consumed and the caret is placed at `{{cursor}}`.
+* **Enter** and **Tab** do the same only if you turn on "Also expand on Enter" / "Also expand on Tab" (both off by
+  default, under the expansion switch). If nothing matches, Enter and Tab do their normal action and the typed text
+  stays. The same is true when the snippet would be empty or too large, in a password-like field, while text is
+  selected, or while Shift, Ctrl or Alt is held. "Keep Enter after expanding" and "Keep Tab after expanding" (Advanced
+  developer settings, both on by default) re-send that key after a successful expansion; a `{{cursor}}` snippet never does.
 * Never in password-like fields, never while text is selected, and a rendering that is too large (> 20 000 characters)
   is not inserted (the typed text is left as it is).
 * `{{date}}`, `{{time}}` and `{{datetime}}` follow the date and time format chosen in Advanced developer settings; an
@@ -47,6 +52,7 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
 | `SnippetInsertion`, `InsertionRequest`, `InsertionPlan`, `CaretPlacement` | Turns a snippet into text to insert for **both** expansion and the picker, and applies the sensitive-field rule in one place (clipboard and selection are dropped); counts the left-arrow presses for `{{cursor}}` per grapheme cluster with a cap |
 | `SnippetPickerModel`, `SnippetPreview` | The picker list (enabled only, optional tag, sorted) and the one-line preview (whitespace collapsed, bidi controls dropped, cut on a code point) |
 | `ExpansionSettings`, `ExpansionMatcher` | Opt-in text expansion: decides whether a typed boundary character completes `<prefix><abbreviation>` |
+| `ExpansionTrigger`, `ExpansionTriggers`, `ExpansionAction` | Per-key opt-in for space, Enter and Tab, and the rule that a non-match (or a render that cannot be inserted) leaves the key alone |
 | `SnippetLibrary` | Immutable collection: add/update/remove, unique abbreviations (case-insensitive), search. Never drops anything silently |
 | `SnippetBackup`, `SnippetImporter` | Versioned JSON export/import (`format: "victorious-snippets"`, `version: 1`) and a non-destructive merge |
 | `SnippetFileStore` | One JSON file with atomic save and automatic `.bak` / `.corrupt` safety copies |
@@ -75,7 +81,11 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 ## Expansion rules
 
 * **Off by default** (`ExpansionSettings.enabled = false`). The prefix is user-configurable (1–3 characters, default `;`).
-* `;sig` + space/newline/tab expands; the prefix must start the word, so ordinary words never expand.
+* `;sig` + an opted-in boundary expands. Space is on whenever expansion is on. Newline (Enter) and tab are each off until
+  the user opts in. The prefix must start the word, so ordinary words never expand.
+* A boundary that is not opted in, a sensitive field, a selection, a held Shift/Ctrl/Alt on Enter or Tab, or no matching
+  snippet produces no expansion. The shell then performs the real key. A render that is empty or too large does the same,
+  so the abbreviation is not deleted and Enter/Tab are not swallowed.
 * **Never** in a sensitive (password-like) field; the shell must pass that flag.
 * Disabled snippets and snippets without an abbreviation never expand. Case sensitivity is configurable.
 * No recursion or chaining: the decision uses only the text before the caret, and an inserted body is not matched again.
@@ -105,8 +115,8 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 * Typed search inside the picker; folders; recently used ordering.
 * A password-like field with selected text and a snippet that uses `{{selection}}`: the selection is replaced like any
   commit would, but its text is (deliberately) not read.
-* Expansion on Enter or Tab (only the space key is hooked; the core supports more boundaries).
-* Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode).
+* Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode). When it
+  is on, Enter and Tab follow the same opt-in switches as other modes.
 * Further per-mode defaults, snippet variables beyond the six above, folders.
 * Encrypted export. Translations.
 * Device validation of any of it (expansion timing against the IME's own composing text is the main unknown; for the

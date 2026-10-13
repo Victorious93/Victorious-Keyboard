@@ -163,6 +163,16 @@ fun AdvancedDeveloperScreen() = FlorisScreen {
                 summary = stringRes(R.string.devadv__keep_space__summary),
             )
             SwitchPreference(
+                prefs.snippets.keepEnter,
+                title = stringRes(R.string.devadv__keep_enter__label),
+                summary = stringRes(R.string.devadv__keep_enter__summary),
+            )
+            SwitchPreference(
+                prefs.snippets.keepTab,
+                title = stringRes(R.string.devadv__keep_tab__label),
+                summary = stringRes(R.string.devadv__keep_tab__summary),
+            )
+            SwitchPreference(
                 prefs.snippets.expandInTerminalMode,
                 title = stringRes(R.string.devadv__expand_terminal__label),
                 summary = stringRes(R.string.devadv__expand_terminal__summary),
@@ -222,6 +232,8 @@ private suspend fun resetAdvanced(prefs: FlorisPreferenceModel) {
     prefs.snippets.dateFormat.set(SnippetDateFormat.ISO)
     prefs.snippets.timeFormat.set(SnippetTimeFormat.H24)
     prefs.snippets.keepSpace.set(true)
+    prefs.snippets.keepEnter.set(true)
+    prefs.snippets.keepTab.set(true)
     prefs.snippets.expandInTerminalMode.set(false)
     prefs.modes.appOverrides.set("")
 }

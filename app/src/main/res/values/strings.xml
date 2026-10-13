@@ -695,6 +695,10 @@
     <string name="pref__snippets__expansion__summary" comment="Preference summary">Typing the prefix and an abbreviation, then space, inserts the snippet. Off by default; never in password fields</string>
     <string name="pref__snippets__prefix__label" comment="Preference title">Expansion prefix</string>
     <string name="pref__snippets__case_sensitive__label" comment="Preference title">Case-sensitive abbreviations</string>
+    <string name="pref__snippets__expand_on_enter__label" comment="Preference title">Also expand on Enter</string>
+    <string name="pref__snippets__expand_on_enter__summary" comment="Preference summary">Off unless you turn this on. If nothing matches, Enter still does what it did (newline, Search, Send). Never in password fields, and not while Shift, Ctrl or Alt is held</string>
+    <string name="pref__snippets__expand_on_tab__label" comment="Preference title">Also expand on Tab</string>
+    <string name="pref__snippets__expand_on_tab__summary" comment="Preference summary">Off unless you turn this on. If nothing matches, Tab still does what it did. Never in password fields, and not while Shift, Ctrl or Alt is held</string>
     <string name="devadv__title" comment="Screen title and settings entry">Advanced developer settings</string>
     <string name="devadv__link_summary" comment="Settings entry summary">Row size and keys, custom symbols, timing, snippet formats, app mode mappings</string>
     <string name="devadv__none" comment="Summary when empty">None</string>
@@ -722,6 +726,10 @@
     <string name="devadv__time_format__label" comment="Preference title">Time format for {{time}}</string>
     <string name="devadv__keep_space__label" comment="Preference title">Keep the typed space after expanding</string>
     <string name="devadv__keep_space__summary" comment="Preference summary">Snippets that place the cursor with {{cursor}} never keep it</string>
+    <string name="devadv__keep_enter__label" comment="Preference title">Keep Enter after expanding</string>
+    <string name="devadv__keep_enter__summary" comment="Preference summary">After a snippet expands on Enter, still send Enter. Snippets that place the cursor with {{cursor}} never do</string>
+    <string name="devadv__keep_tab__label" comment="Preference title">Keep Tab after expanding</string>
+    <string name="devadv__keep_tab__summary" comment="Preference summary">After a snippet expands on Tab, still send Tab. Snippets that place the cursor with {{cursor}} never do</string>
     <string name="devadv__expand_terminal__label" comment="Preference title">Expand snippets in Termux mode</string>
     <string name="devadv__expand_terminal__summary" comment="Preference summary">Off by default: terminals rarely want text expansion</string>
     <string name="devadv__overrides__label" comment="Preference title">Your app to mode mappings</string>

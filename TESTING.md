@@ -13,7 +13,7 @@ Not yet seen: a fully green run including the APK artifact, lint (not a gate), i
 
 | Layer | Tooling | Status |
 |---|---|---|
-| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 714 tests, 0 failures, 0 errors (`:app` 497 + `:lib:snygg` 106 via `testDebugUnitTest`, plus `:lib:kotlin` 111 via `:lib:kotlin:test`, which `testDebugUnitTest` does not run; counted from the `TEST-*.xml` result files). 176 were measured on the unmodified baseline (`AUDIT.md` §6, `:app` + `:lib:snygg` only), so 436 are ours (336 below + 9 `curlyFormat` regression tests + 57 snippet picker/insertion/preview/caret/quick-action/UI-mode tests + 34 dictionary pack reader/parser/planner/asset tests): clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55), operating modes (12), advanced developer settings (36) |
+| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 728 tests, 0 failures, 0 errors (`:app` 511 + `:lib:snygg` 106 via `testDebugUnitTest`, plus `:lib:kotlin` 111 via `:lib:kotlin:test`, which `testDebugUnitTest` does not run; counted from the `TEST-*.xml` result files). 176 were measured on the unmodified baseline (`AUDIT.md` §6, `:app` + `:lib:snygg` only), so 450 are ours (336 below + 9 `curlyFormat` regression tests + 57 snippet picker/insertion/preview/caret/quick-action/UI-mode tests + 34 dictionary pack reader/parser/planner/asset tests + 14 Enter/Tab expansion tests): clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55), operating modes (12), advanced developer settings (36), Enter/Tab expansion decision (14) |
 | Compile / package | `./gradlew assembleDebug` | **Run**, success |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
 | Lint | `./gradlew lintDebug` | **Run, fails on pre-existing upstream code** (52 errors, none in new code at time of writing; `AUDIT.md` §8). Not yet a CI gate |
@@ -69,6 +69,12 @@ Install the debug APK → enable in *Settings → System → Keyboard* → selec
   right place also before an emoji; a very long clipboard in `{{clipboard}}` is refused with a message; password field:
   `{{clipboard}}`/`{{selection}}` come out empty; panel shows "Locked" on the lock screen; after a reboot, before the
   first unlock, nothing is read; in Termux the text arrives and the caret lands correctly; rotate with the panel open.
+- [ ] Snippet expansion on Enter and Tab (turn on "Expand snippets while typing", then "Also expand on Enter" and
+  "Also expand on Tab"): `;sig` then Enter inserts the snippet and still sends Enter (newline, or Search/Send); `;sig`
+  then Tab inserts and still sends Tab; Enter or Tab with no matching abbreviation does the normal action and leaves
+  the typed text; the same in a password field (no expansion); Shift+Enter, Ctrl+Tab and a text selection are not
+  expanded; a snippet with `{{cursor}}` does not also send Enter/Tab; turn "Keep Enter after expanding" off and Enter
+  expands without sending.
 - [ ] Dictionary packs (Settings → Typing → Dictionary, internal user dictionary on): the "Dictionary packs" screen lists 5
   packs with word counts; add one → toast with the number, the words appear in *Manage internal user dictionary*; add it
   again → 0 added; edit one word's frequency, then Remove → that word stays, the others go; with the internal dictionary

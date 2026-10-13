@@ -53,8 +53,9 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Claude Code, Kali and NetHunter AI modes | ⬜ planned, deliberately not selectable until their features exist |
 | Snippet template language, opt-in expansion rules, library, JSON import/export, safe file store | ✅ pure core, JVM-tested (`SNIPPETS.md`) |
 | Snippets settings screen (add/edit/delete/search/import/export), expansion on the space key (opt-in), store in `noBackupFilesDir` | 🟦 compiled, **never run or rendered** |
+| Expansion on Enter and Tab, each opt-in and off by default; a non-match still sends the real key; never in password fields | ✅ rules JVM-tested · 🟦 wiring compiled, **never run** |
 | In-keyboard snippet picker (smartbar quick action, panel with tag chips, insert at the caret, `{{selection}}`, `{{cursor}}`) | ✅ pure parts JVM-tested (insertion rules, caret placement, list model, preview, migration of the quick action) · 🟦 panel and wiring compiled, **never run or rendered** |
-| Expansion on Enter/Tab, typed search in the picker, encrypted export | ⬜ |
+| Typed search in the picker, encrypted export | ⬜ |
 | Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; words only reach the system spell checker today (no suggestions exist yet) |
 | Command library | ⬜
 

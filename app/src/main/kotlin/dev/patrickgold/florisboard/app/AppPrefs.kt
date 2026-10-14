@@ -46,6 +46,8 @@ import dev.patrickgold.florisboard.ime.developer.DevRowSize
 import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPaletteCodec
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPalettes
 import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
@@ -872,6 +874,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "theme__accent_color",
             default = Color.Unspecified,
             serializer = ColorPreferenceSerializer,
+        )
+        val keyboardColors = string(
+            key = "theme__keyboard_colors",
+            default = KeyboardPaletteCodec.encode(KeyboardPalettes.Neon),
         )
         val sunriseTime = localTime(
             key = "theme__sunrise_time",

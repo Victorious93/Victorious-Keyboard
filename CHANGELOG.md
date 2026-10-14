@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- Keyboard colors (Settings → Look). Six colors, a hue/saturation wheel and hex field, six presets, a live preview, and reset. Saved in preferences and painted over Victorious Neon and Neon Light, including popups, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Unreadable text is adjusted. Not run on a device.
 - Word prediction in the suggestion bar: current-word completions, a next-word guess, and a one-edit autocorrect from
   the bundled dictionary packs. *Word prediction* is on by default. *Learn from my typing* is off by default; when on,
   words stay in `noBackupFilesDir/prediction/learned-words.json` and are never read from password, incognito, or

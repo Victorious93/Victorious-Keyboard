@@ -172,6 +172,26 @@
     <string name="settings__localization__subtype_delete_confirmation_warning" comment="Warning message in the confirmation dialog to confirm the user's intent to delete">Are you sure you want to delete this subtype?</string>
 
     <string name="settings__theme__title" comment="Title of the Theme screen">Theme</string>
+    <string name="settings__keyboard_colors__title" comment="Title of the keyboard color screen">Keyboard colors</string>
+    <string name="settings__keyboard_colors__home_summary" comment="Home row summary">Background, keys, and accents</string>
+    <string name="settings__keyboard_colors__summary" comment="Intro under the title">Pick colors for Victorious Neon. The preview updates as you choose.</string>
+    <string name="settings__keyboard_colors__presets" comment="Section title">Presets</string>
+    <string name="settings__keyboard_colors__reset" comment="Button">Reset to default</string>
+    <string name="settings__keyboard_colors__hex" comment="Hex field label">Hex</string>
+    <string name="settings__keyboard_colors__contrast_note" comment="Shown when key text was adjusted">Adjusted so the letters stay readable</string>
+    <string name="settings__keyboard_colors__scope" comment="What the colors change">These colors restyle Victorious Neon and Neon Light: keys, the popup, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Another keyboard theme is left as it is.</string>
+    <string name="settings__keyboard_colors__background" comment="Color row">Background</string>
+    <string name="settings__keyboard_colors__key" comment="Color row">Key color</string>
+    <string name="settings__keyboard_colors__key_text" comment="Color row">Key text</string>
+    <string name="settings__keyboard_colors__primary" comment="Color row">Accent and glow</string>
+    <string name="settings__keyboard_colors__secondary" comment="Color row">Highlight</string>
+    <string name="settings__keyboard_colors__suggestion" comment="Color row">Suggestion pills</string>
+    <string name="settings__keyboard_colors__preset_neon" comment="Preset name">Neon</string>
+    <string name="settings__keyboard_colors__preset_cyber" comment="Preset name">Cyber blue</string>
+    <string name="settings__keyboard_colors__preset_matrix" comment="Preset name">Matrix</string>
+    <string name="settings__keyboard_colors__preset_purple" comment="Preset name">Purple</string>
+    <string name="settings__keyboard_colors__preset_red" comment="Preset name">Red</string>
+    <string name="settings__keyboard_colors__preset_mono" comment="Preset name">Mono</string>
     <string name="pref__theme__mode__label" comment="Label of the theme mode preference">Theme mode</string>
     <string name="pref__theme__sunrise_time__label" comment="Label of the sunrise time preference">Sunrise time</string>
     <string name="pref__theme__sunset_time__label" comment="Label of the sunset time preference">Sunset time</string>

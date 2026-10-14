@@ -16,6 +16,7 @@ possible as specified (reason given).
 | Floating keyboard | ⬜ | not in upstream at this version |
 | Split keyboard / tablet layouts | ⬜ | |
 | Victorious Neon keyboard theme (dark default) and Neon Light, older Floris themes still selectable | 🟦 stylesheet + settings scheme compiled, **not rendered on a device** | Navy `#010619`, amber `#FFC107`, hot pink. Settings app uses the same brand (dark default, light variant). AMOLED and Terminal Green are not separate presets |
+| Keyboard colors: background, key, key text, accent, highlight, suggestion pills, presets, reset | 🟡 mapping and persistence JVM-tested · 🟦 screen compiled, **never run** | Overlay on Victorious Neon / Neon Light only. Text contrast is corrected when it would be hard to read |
 
 ## Clipboard (Phase 3) — see `CLIPBOARD.md`
 

@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardColorOverlay
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPaletteCodec
 import dev.patrickgold.florisboard.ime.window.LocalWindowController
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.themeManager
@@ -46,11 +48,19 @@ fun FlorisImeTheme(content: @Composable () -> Unit) {
     val accentColor by prefs.theme.accentColor.observeAsState()
 
     val activeThemeInfo by themeManager.activeThemeInfo.collectAsState()
+    val keyboardColorsRaw by prefs.theme.keyboardColors.observeAsState()
+    val stylesheet = remember(activeThemeInfo, keyboardColorsRaw) {
+        KeyboardColorOverlay.apply(
+            stylesheet = activeThemeInfo.stylesheet,
+            themeId = activeThemeInfo.name.componentId,
+            palette = KeyboardPaletteCodec.decode(keyboardColorsRaw),
+        )
+    }
 
     val assetResolver = remember(activeThemeInfo) {
         FlorisAssetResolver(context, activeThemeInfo)
     }
-    val snyggTheme = rememberSnyggTheme(activeThemeInfo.stylesheet, assetResolver)
+    val snyggTheme = rememberSnyggTheme(stylesheet, assetResolver)
     val windowSpec by windowController.activeWindowSpec.collectAsState()
     val fontScale by remember { derivedStateOf { windowSpec.fontScale } }
 

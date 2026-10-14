@@ -72,6 +72,7 @@ class BrandThemeTest : FunSpec({
             "SubtypeEdit",
             "Theme",
             "ThemeManager",
+            "KeyboardColors",
             "Keyboard",
             "InputFeedback",
             "Smartbar",
@@ -99,6 +100,7 @@ class BrandThemeTest : FunSpec({
         listOf(
             "Routes.Settings.Localization",
             "Routes.Settings.Theme",
+            "Routes.Settings.KeyboardColors",
             "Routes.Settings.Keyboard",
             "Routes.Settings.Smartbar",
             "Routes.Settings.Typing",

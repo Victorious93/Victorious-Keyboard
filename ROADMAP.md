@@ -31,7 +31,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | 🟡 word prediction (current word, next word, one-edit autocorrect) is JVM-tested and wired into the suggestion bar; learning is off by default and the file is not backed up. Gesture typing is still not done. Nothing has been run on a device (`DICTIONARY_PACKS.md`) |
 | 7 | AI workspace | ⬜ |
-| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Neon (light variant too); settings use a navy/amber/pink Material scheme, dark by default. Older themes stay selectable. Not rendered on a device. Responsive/tablet layout not started |
+| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Neon (light variant too); settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay Neon (presets, picker, persistence) and are JVM-tested; the screen is compiled and not run on a device. Older themes stay selectable. Responsive/tablet layout not started |
 | 9 | Security and performance | ⬜ |
 | 10 | Release engineering | ⬜ |
 

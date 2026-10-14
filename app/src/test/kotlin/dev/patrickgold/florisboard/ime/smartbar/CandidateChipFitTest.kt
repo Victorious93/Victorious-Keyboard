@@ -48,9 +48,9 @@ class CandidateChipFitTest : FunSpec({
         for (name in listOf("victorious_neon.json", "victorious_neon_light.json")) {
             val text = dir.resolve(name).readText()
             SnyggStylesheet.fromJson(text).isSuccess shouldBe true
-            text shouldContainChip("smartbar-candidate-word", "\"padding\": \"0dp 10dp\"")
-            text shouldContainChip("smartbar-candidate-word", "\"margin\": \"2dp 3dp\"")
-            text shouldContainChip("smartbar-candidate-clip", "\"clip\": \"no\"")
+            text.shouldContainChip("smartbar-candidate-word", "\"padding\": \"0dp 10dp\"")
+            text.shouldContainChip("smartbar-candidate-word", "\"margin\": \"2dp 3dp\"")
+            text.shouldContainChip("smartbar-candidate-clip", "\"clip\": \"no\"")
         }
     }
 })

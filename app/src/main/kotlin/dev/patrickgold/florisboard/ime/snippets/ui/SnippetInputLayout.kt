@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -170,6 +171,7 @@ fun SnippetInputLayout(modifier: Modifier = Modifier) {
 private fun SnippetListBody(insertLabel: String, onInsert: (Snippet) -> Unit) {
     val context = LocalContext.current
     val prefs by FlorisPreferenceStore
+    val keyboardManager by context.keyboardManager()
     val snippetManager by context.snippetManager()
     val prefix by prefs.snippets.prefix.observeAsState()
     // The library loads asynchronously after app start: observe it, never read a one-off snapshot for drawing.
@@ -220,7 +222,14 @@ private fun SnippetListBody(insertLabel: String, onInsert: (Snippet) -> Unit) {
                 ) {
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                         items(items, key = { it.id }) { snippet ->
-                            SnippetRow(snippet, prefix.text, insertLabel, onInsert)
+                            SnippetRow(snippet, prefix.text, insertLabel, onInsert) {
+                                keyboardManager.openClipEditor(
+                                    dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin.SNIPPET,
+                                    snippet.id,
+                                    snippet.body,
+                                    sensitive = false,
+                                )
+                            }
                         }
                     }
                 }
@@ -230,7 +239,13 @@ private fun SnippetListBody(insertLabel: String, onInsert: (Snippet) -> Unit) {
 }
 
 @Composable
-private fun SnippetRow(snippet: Snippet, prefix: String, insertLabel: String, onInsert: (Snippet) -> Unit) {
+private fun SnippetRow(
+    snippet: Snippet,
+    prefix: String,
+    insertLabel: String,
+    onInsert: (Snippet) -> Unit,
+    onEdit: () -> Unit,
+) {
     val preview = remember(snippet.body) { SnippetPreview.of(snippet.body, PREVIEW_MAX_CODE_POINTS) }
     SnyggBox(
         elementName = FlorisImeUi.ClipboardItem.elementName,
@@ -242,12 +257,17 @@ private fun SnippetRow(snippet: Snippet, prefix: String, insertLabel: String, on
             onInsert(snippet)
         },
     ) {
-        Column {
-            SnyggText(text = snippet.title)
-            snippet.abbreviation?.let {
-                SnyggText(elementName = FlorisImeUi.ClipboardItemDescription.elementName, text = prefix + it)
+        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                SnyggText(text = snippet.title)
+                snippet.abbreviation?.let {
+                    SnyggText(elementName = FlorisImeUi.ClipboardItemDescription.elementName, text = prefix + it)
+                }
+                SnyggText(text = preview)
             }
-            SnyggText(text = preview)
+            SnyggIconButton(onClick = onEdit) {
+                SnyggIcon(imageVector = Icons.Filled.Edit)
+            }
         }
     }
 }

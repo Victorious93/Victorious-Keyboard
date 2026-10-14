@@ -28,10 +28,13 @@ import dev.patrickgold.florisboard.ime.nlp.SpellingResult
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.SuggestionProvider
 import dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate
+import dev.patrickgold.florisboard.ime.dictionary.DictionaryManager
 import dev.patrickgold.florisboard.ime.nlp.prediction.BundledLexicon
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedLexicon
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWordFile
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWords
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
+import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
 import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.keyboardManager
@@ -87,20 +90,14 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // The subtype we get here contains a lot of data, however we are only interested in subtype.primaryLocale and
         // subtype.secondaryLocales.
 
-        wordData.withLock { wordData ->
-            if (wordData.isEmpty()) {
-                // Here we use readText() because the test dictionary is a json dictionary
-                val rawData = appContext.assets.readText("ime/dict/data.json")
-                val jsonData = Json.decodeFromString(wordDataSerializer, rawData)
-                wordData.putAll(jsonData)
-            }
-        }
+        ensureEnglishWords()
         if (lexicon.isEmpty()) {
             val packs = appContext.assets.list("ime/dictionary-packs").orEmpty()
                 .filter { it.endsWith(".zip") }
                 .map { name -> appContext.assets.open("ime/dictionary-packs/$name").use { it.readBytes() } }
             lexicon = BundledLexicon.fromPackZips(packs)
         }
+        RevertCountStore.ensure(File(appContext.noBackupFilesDir, "prediction"))
     }
 
     override suspend fun spell(
@@ -137,11 +134,14 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         } else {
             null
         }
+        val (_, current) = WordPredictor.contextTokens(content.textBeforeSelection)
         return WordPredictor.predict(
             textBeforeCursor = content.textBeforeSelection,
             lexicon = lexicon,
             learned = learned,
             maxCandidates = maxCandidateCount,
+            knownWords = knownWords(current),
+            level = prefs.suggestion.autocorrectLevel.get(),
         ).map { prediction ->
             WordSuggestionCandidate(
                 text = prediction.text,
@@ -178,7 +178,54 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             incognito = keyboardManager.activeState.isIncognitoMode,
             noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
             noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+            vaultHandoff = keyboardManager.vaultLearningHold,
         )
+    }
+
+    /**
+     * Words that must not be replaced: the English frequency list, the user dictionary, and words
+     * the user has undone twice. The check is membership of the token being typed, not a copy of
+     * the whole list. A lookup failure is treated as "not known" and is not logged.
+     */
+    private suspend fun ensureEnglishWords() {
+        wordData.withLock { data ->
+            if (data.isEmpty()) {
+                val rawData = appContext.assets.readText("ime/dict/data.json")
+                val jsonData = Json.decodeFromString(wordDataSerializer, rawData)
+                data.putAll(jsonData)
+            }
+        }
+    }
+
+    private suspend fun knownWords(current: String?): Set<String> {
+        val key = current?.let(LearnedWords::normalize) ?: return emptySet()
+        val out = HashSet<String>(3)
+        val inEnglish = try {
+            ensureEnglishWords()
+            wordData.withLock { data -> key in data }
+        } catch (_: Exception) {
+            false
+        }
+        if (inEnglish) out += key
+        if (inUserDictionary(current, key)) out += key
+        RevertCountStore.ensure(File(appContext.noBackupFilesDir, "prediction"))
+        if (key in RevertCountStore.protectedWords()) out += key
+        return out
+    }
+
+    private fun inUserDictionary(typed: String, key: String): Boolean {
+        val manager = try {
+            DictionaryManager.default()
+        } catch (_: UninitializedPropertyAccessException) {
+            return false
+        }
+        return try {
+            manager.loadUserDictionariesIfNecessary()
+            val daos = listOfNotNull(manager.florisUserDictionaryDao(), manager.systemUserDictionaryDao())
+            daos.any { dao -> dao.queryExact(typed).isNotEmpty() || dao.queryExact(key).isNotEmpty() }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun learnedSnapshot(): LearnedLexicon {

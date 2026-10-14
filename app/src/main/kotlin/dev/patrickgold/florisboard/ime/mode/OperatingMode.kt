@@ -93,6 +93,12 @@ object ModeSuggester {
     val builtIn: Map<String, OperatingMode> = mapOf(
         "com.termux" to OperatingMode.TERMUX,
         "org.connectbot" to OperatingMode.TERMUX,
+        "com.offsec.nhterm" to OperatingMode.TERMUX,
+        "com.offsec.nethunter" to OperatingMode.TERMUX,
+        "com.offsec.nethunter.kex" to OperatingMode.TERMUX,
+        "com.sonelli.juicessh" to OperatingMode.TERMUX,
+        "com.server.auditor.ssh.client" to OperatingMode.TERMUX,
+        "com.termoneplus" to OperatingMode.TERMUX,
     )
 
     fun suggest(packageName: String?, overrides: Map<String, OperatingMode> = emptyMap()): OperatingMode? {

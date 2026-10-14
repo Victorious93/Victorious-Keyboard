@@ -68,6 +68,8 @@ class OperatingModeTest : FunSpec({
     test("known terminal apps are suggested Termux mode; others and null are not") {
         ModeSuggester.suggest("com.termux") shouldBe OperatingMode.TERMUX
         ModeSuggester.suggest("org.connectbot") shouldBe OperatingMode.TERMUX
+        ModeSuggester.suggest("com.sonelli.juicessh") shouldBe OperatingMode.TERMUX
+        ModeSuggester.suggest("com.server.auditor.ssh.client") shouldBe OperatingMode.TERMUX
         ModeSuggester.suggest("com.example.notes") shouldBe null
         ModeSuggester.suggest("") shouldBe null
         ModeSuggester.suggest(null) shouldBe null

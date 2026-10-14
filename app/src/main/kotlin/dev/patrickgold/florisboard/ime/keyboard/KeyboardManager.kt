@@ -46,9 +46,19 @@ import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.input.InputEventDispatcher
 import dev.patrickgold.florisboard.ime.input.InputKeyEventReceiver
 import dev.patrickgold.florisboard.ime.input.InputShiftState
+import dev.patrickgold.florisboard.ime.dictionary.DictionaryManager
+import dev.patrickgold.florisboard.ime.dictionary.FREQUENCY_DEFAULT
+import dev.patrickgold.florisboard.ime.dictionary.UserDictionaryEntry
 import dev.patrickgold.florisboard.ime.nlp.ClipboardSuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.PunctuationRule
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectReplacement
+import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectUndo
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWords
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
+import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
+import dev.patrickgold.florisboard.ime.nlp.prediction.RevertPrivacy
+import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.ime.popup.PopupMappingComponent
 import dev.patrickgold.florisboard.ime.text.composing.Composer
 import dev.patrickgold.florisboard.ime.text.gestures.SwipeAction
@@ -86,6 +96,7 @@ import dev.patrickgold.florisboard.ime.snippets.Snippet
 import dev.patrickgold.florisboard.ime.snippets.SnippetInsertOutcome
 import dev.patrickgold.florisboard.ime.snippets.SnippetInsertion
 import dev.patrickgold.florisboard.ime.snippets.SnippetLimits
+import dev.patrickgold.florisboard.ime.snippets.LibraryResult
 import dev.patrickgold.florisboard.ime.snippets.SnippetTemplate
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.developer.DevStep
@@ -96,6 +107,26 @@ import dev.patrickgold.florisboard.ime.terminal.SpecialKey
 import dev.patrickgold.florisboard.ime.terminal.TerminalAction
 import dev.patrickgold.florisboard.ime.terminal.TerminalKeyMapper
 import dev.patrickgold.florisboard.ime.terminal.TerminalModifier
+import dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin
+import dev.patrickgold.florisboard.ime.clipedit.ClipEditorSave
+import dev.patrickgold.florisboard.ime.clipedit.ClipEditorSession
+import dev.patrickgold.florisboard.ime.clipedit.ClipEditorWrite
+import dev.patrickgold.florisboard.ime.clipedit.EditorBuffer
+import dev.patrickgold.florisboard.ime.clipedit.EditorField
+import dev.patrickgold.florisboard.ime.clipedit.EditorKeyInput
+import dev.patrickgold.florisboard.ime.clipedit.EditorKeyRouter
+import dev.patrickgold.florisboard.ime.clipedit.SelectionRanges
+import dev.patrickgold.florisboard.ime.clipboard.history.ClipCategory
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipLane
+import dev.patrickgold.florisboard.ime.clipboard.vault.parseTagColumn
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPaletteCodec
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPalettes
+import dev.patrickgold.florisboard.ime.toolbar.ShellHistoryPolicy
+import dev.patrickgold.florisboard.ime.toolbar.TextTransform
+import dev.patrickgold.florisboard.ime.toolbar.TextTransforms
+import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
+import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -135,6 +166,24 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     /** Sticky / locked / held Ctrl and Alt for terminal use. Inert unless a Ctrl/Alt key is on the active layout. */
     val terminalModifiers = ModifierStateMachine()
+
+    /** In-keyboard clipboard/snippet editor. Null when typing still goes to the host field. */
+    val clipEditor = MutableStateFlow<ClipEditorSession?>(null)
+
+    /** Which clipboard tab to show the next time the clipboard panel opens. */
+    val clipLaneRequest = MutableStateFlow<ClipLane?>(null)
+
+    /**
+     * Set when vault text is pasted into the host field. Learning and shell history stay off until the
+     * field identity changes. The flag is not the text.
+     */
+    var vaultLearningHold: Boolean = false
+        private set
+
+    private var learningFieldToken: String? = null
+
+    /** Set only for the key that follows an autocorrect. Cleared by any other key. Not logged. */
+    @Volatile private var pendingAutocorrect: AutocorrectReplacement? = null
 
     /** Armed/locked state of Ctrl and Alt for the developer row's indicators. */
     val activeMode: StateFlow<OperatingMode>
@@ -221,8 +270,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             prefs.devrow.lockWindowMs.asFlow().collectIn(scope) {
                 terminalModifiers.doubleTapWindowMs = DeveloperRowTiming.lockWindow(it)
             }
-            editorInstance.activeInfoFlow.collectIn(scope) {
+            editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
+                val token = info.packageName + ":" + info.inputAttributes.raw
+                if (learningFieldToken != null && learningFieldToken != token) {
+                    vaultLearningHold = false
+                    pendingAutocorrect = null
+                }
+                learningFieldToken = token
             }
             editorInstance.activeContentFlow.collectIn(scope) { content ->
                 resetSuggestions(content)
@@ -344,6 +399,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitCandidate(candidate: SuggestionCandidate) {
+        val editing = clipEditor.value
+        if (editing != null) {
+            if (candidate is ClipboardSuggestionCandidate && candidate.clipboardItem.isSensitive) return
+            insertAtTarget(candidate.text.toString())
+            return
+        }
         if (candidate !is ClipboardSuggestionCandidate) {
             nlpManager.noteTypedOrCommitted(candidate.text.toString())
         }
@@ -357,7 +418,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitGesture(word: String) {
-        editorInstance.commitGesture(fixCase(word))
+        val text = fixCase(word)
+        if (clipEditor.value != null) {
+            insertAtTarget(text)
+            return
+        }
+        editorInstance.commitGesture(text)
     }
 
     /**
@@ -495,6 +561,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      */
     private fun handleBackwardDelete(unit: OperationUnit) {
         if (inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
+            pendingAutocorrect = null
             return handleForwardDelete(unit)
         }
         activeState.batchEdit {
@@ -502,8 +569,78 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             it.isManualSelectionModeStart = false
             it.isManualSelectionModeEnd = false
         }
+        if (unit == OperationUnit.CHARACTERS && tryRevertAutocorrect()) return
+        pendingAutocorrect = null
         revertPreviouslyAcceptedCandidate()
         editorInstance.deleteBackwards(unit)
+    }
+
+    /**
+     * Backspace immediately after space-to-correct puts the typed word back, including dropping
+     * the space. The second time the same word is restored it is added to the user dictionary.
+     * Password, incognito, and vault handoff restore the letters and store nothing.
+     */
+    private fun tryRevertAutocorrect(): Boolean {
+        val pending = pendingAutocorrect ?: return false
+        pendingAutocorrect = null
+        val before = editorInstance.activeContent.textBeforeSelection
+        val step = AutocorrectUndo.plan(before, pending) ?: return false
+        var removed = 0
+        repeat(step.deleteCount) {
+            if (editorInstance.deleteBackwards(OperationUnit.CHARACTERS)) removed++
+        }
+        if (removed != step.deleteCount) return true
+        editorInstance.commitText(step.restore)
+        if (mayRememberRevert()) {
+            val dir = java.io.File(appContext.noBackupFilesDir, "prediction")
+            val add = RevertCountStore.note(dir, step.restore)
+            if (add) addRevertedWord(step.restore)
+        }
+        return true
+    }
+
+    private fun mayRememberRevert(): Boolean {
+        val info = editorInstance.activeInfo
+        return RevertPrivacy.mayRemember(
+            LearningGate.Field(
+                passwordLike = info.inputAttributes.isPasswordLike(),
+                incognito = activeState.isIncognitoMode,
+                noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
+                noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+                vaultHandoff = vaultLearningHold,
+            ),
+        )
+    }
+
+    private fun addRevertedWord(word: String) {
+        val key = LearnedWords.normalize(word) ?: return
+        scope.launch(Dispatchers.IO) {
+            try {
+                val manager = DictionaryManager.default()
+                manager.loadUserDictionariesIfNecessary()
+                val dao = manager.florisUserDictionaryDao() ?: return@launch
+                if (dao.queryExact(key).isNotEmpty() || dao.queryExact(word).isNotEmpty()) return@launch
+                dao.insert(
+                    UserDictionaryEntry(
+                        id = 0,
+                        word = key,
+                        freq = FREQUENCY_DEFAULT,
+                        locale = null,
+                        shortcut = null,
+                    ),
+                )
+            } catch (_: Exception) {
+                // The word is not logged. The revert count still keeps it from being replaced.
+            }
+        }
+    }
+
+    private fun armAutocorrectRevert(typed: String?, committed: String, withSpace: Boolean) {
+        if (typed.isNullOrEmpty() || typed == committed) {
+            pendingAutocorrect = null
+            return
+        }
+        pendingAutocorrect = AutocorrectReplacement(typed, committed, withSpace)
     }
 
     /**
@@ -524,6 +661,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      */
     private fun handleEnter() {
         if (tryExpandSnippet(ExpansionTrigger.ENTER)) return
+        rememberShellLine()
         nlpManager.noteTypedOrCommitted(null)
         performEnterNow()
     }
@@ -621,13 +759,20 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * but skips handling changing to characters keyboard and double space periods.
      */
     fun handleHardwareKeyboardSpace() {
+        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
         val candidate = nlpManager.getAutoCommitCandidate()
-        if (candidate == null) nlpManager.noteTypedOrCommitted(null)
+        if (candidate == null) {
+            nlpManager.noteTypedOrCommitted(null)
+            pendingAutocorrect = null
+        }
         candidate?.let { commitCandidate(it) }
         // Skip handling changing to characters keyboard and double space periods
         // TODO: this is whether we commit space after selecting candidate. Should be determined by SuggestionProvider
-        if (!subtypeManager.activeSubtype.primaryLocale.supportsAutoSpace &&
-                candidate != null) { /* Do nothing */ } else {
+        val commitSpace = subtypeManager.activeSubtype.primaryLocale.supportsAutoSpace || candidate == null
+        if (candidate != null) {
+            armAutocorrectRevert(typed, candidate.text.toString(), withSpace = commitSpace)
+        }
+        if (commitSpace) {
             editorInstance.commitText(KeyCode.SPACE.toChar().toString())
         }
     }
@@ -803,10 +948,21 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     private fun handleSpace(data: KeyData) {
-        if (tryExpandSnippet(ExpansionTrigger.SPACE)) return
+        if (tryExpandSnippet(ExpansionTrigger.SPACE)) {
+            pendingAutocorrect = null
+            return
+        }
+        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
         val candidate = nlpManager.getAutoCommitCandidate()
-        if (candidate == null) nlpManager.noteTypedOrCommitted(null)
+        if (candidate == null) {
+            nlpManager.noteTypedOrCommitted(null)
+            pendingAutocorrect = null
+        }
         candidate?.let { commitCandidate(it) }
+        val commitSpace = subtypeManager.activeSubtype.primaryLocale.supportsAutoSpace || candidate == null
+        if (candidate != null) {
+            armAutocorrectRevert(typed, candidate.text.toString(), withSpace = commitSpace)
+        }
         if (prefs.keyboard.spaceBarSwitchesToCharacters.get()) {
             when (activeState.keyboardMode) {
                 KeyboardMode.NUMERIC_ADVANCED,
@@ -821,6 +977,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             if (inputEventDispatcher.isConsecutiveUp(data)) {
                 val text = editorInstance.run { activeContent.getTextBeforeCursor(2) }
                 if (text.length == 2 && DoubleSpacePeriodMatcher.matches(text)) {
+                    pendingAutocorrect = null
                     editorInstance.deleteBackwards(OperationUnit.CHARACTERS)
                     editorInstance.commitText(". ")
                     return
@@ -973,7 +1130,417 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         return true
     }
 
+    fun editClipSession(block: (ClipEditorSession) -> ClipEditorSession) {
+        val current = clipEditor.value ?: return
+        clipEditor.value = block(current)
+    }
+
+    fun openClipEditor(origin: ClipEditorOrigin, sourceId: String?, text: String, sensitive: Boolean) {
+        clipEditor.value = ClipEditorSession(origin, sourceId, sensitive, EditorBuffer.of(text))
+        activeState.imeUiMode = ImeUiMode.TEXT
+    }
+
+    fun closeClipEditor() {
+        clipEditor.value = null
+    }
+
+    fun openLatestClipEditor() {
+        val vaultLocked = clipboardManager.vaultLockedFlow.value
+        val vault = if (vaultLocked) null else clipboardManager.vaultItemsFlow.value.maxByOrNull { it.createdAtMs }
+        val regular = clipboardManager.currentHistory.all
+            .filter { it.type == ItemType.TEXT && !it.text.isNullOrBlank() }
+            .maxByOrNull { it.creationTimestampMs }
+        if (vault != null && (regular == null || vault.createdAtMs >= regular.creationTimestampMs)) {
+            openClipEditor(ClipEditorOrigin.VAULT, vault.id, vault.text, sensitive = true)
+            return
+        }
+        if (regular != null) {
+            openClipEditor(ClipEditorOrigin.REGULAR, regular.uuid, regular.text.orEmpty(), regular.isSensitive)
+            return
+        }
+        val primary = clipboardManager.primaryClip
+        if (primary != null && primary.type == ItemType.TEXT && !primary.isSensitive && !primary.text.isNullOrBlank()) {
+            openClipEditor(ClipEditorOrigin.REGULAR, null, primary.text.orEmpty(), sensitive = false)
+            return
+        }
+        if (vaultLocked && clipboardManager.vaultCountFlow.value > 0) {
+            appContext.showShortToastSync(R.string.clip_editor__vault_locked)
+        } else {
+            appContext.showShortToastSync(R.string.clip_editor__empty)
+        }
+    }
+
+    fun pasteClipEditor() {
+        val session = clipEditor.value ?: return
+        if (session.sensitive) vaultLearningHold = true
+        editorInstance.commitText(session.body.text)
+    }
+
+    fun saveClipEditor(asNew: Boolean) {
+        val session = clipEditor.value ?: return
+        val text = session.body.text
+        if (text.isBlank()) {
+            appContext.showShortToastSync(R.string.clip_editor__empty)
+            return
+        }
+        when (ClipEditorSave.target(session.origin, asNew, !session.sourceId.isNullOrBlank())) {
+            ClipEditorWrite.UPDATE_REGULAR -> {
+                val item = clipboardManager.currentHistory.all.firstOrNull { it.uuid == session.sourceId }
+                if (item == null || item.type != ItemType.TEXT) {
+                    clipboardManager.addNewPlaintext(text)
+                } else {
+                    val category = ClipCategory.entries.firstOrNull { it.name == item.category } ?: ClipCategory.GENERAL
+                    val saved = clipboardManager.updateUserFields(
+                        item,
+                        text,
+                        parseTagColumn(item.tags),
+                        category,
+                        item.isFavorite,
+                        item.isPinned,
+                    )
+                    if (!saved) {
+                        appContext.showShortToastSync(R.string.clip_editor__failed)
+                        return
+                    }
+                }
+            }
+            ClipEditorWrite.ADD_REGULAR -> clipboardManager.addNewPlaintext(text)
+            ClipEditorWrite.UPDATE_VAULT -> clipboardManager.replaceVaultText(session.sourceId.orEmpty(), text)
+            ClipEditorWrite.ADD_VAULT -> clipboardManager.addVaultText(text)
+            ClipEditorWrite.UPDATE_SNIPPET -> {
+                val snippet = snippetManager.state.value.library.snippets.firstOrNull { it.id == session.sourceId }
+                if (snippet == null) {
+                    clipboardManager.addNewPlaintext(text)
+                } else {
+                    scope.launch {
+                        val result = snippetManager.update(
+                            snippet.copy(body = text, updatedAtMillis = System.currentTimeMillis()),
+                        )
+                        if (result !is LibraryResult.Ok) {
+                            appContext.showShortToastSync(R.string.clip_editor__failed)
+                        }
+                    }
+                }
+            }
+        }
+        appContext.showShortToastSync(R.string.clip_editor__saved)
+    }
+
+    fun insertSavedCommand(text: String) {
+        insertAtTarget(text, cursorBackFor(text))
+    }
+
+    fun performToolbarAction(id: ToolbarActionId) {
+        ToolbarCatalog.symbol(id)?.let { symbol ->
+            insertAtTarget(symbol, cursorBackFor(symbol))
+            return
+        }
+        ToolbarCatalog.transform(id)?.let { op ->
+            applyTransform(op)
+            return
+        }
+        ToolbarCatalog.prompt(id)?.let { prompt ->
+            insertPrompt(prompt.body)
+            return
+        }
+        when (id) {
+            ToolbarActionId.CTRL -> if (clipEditor.value == null) terminalModifiers.toggleLock(TerminalModifier.CTRL)
+            ToolbarActionId.ALT -> if (clipEditor.value == null) terminalModifiers.toggleLock(TerminalModifier.ALT)
+            ToolbarActionId.ESC -> sendSpecial(SpecialKey.ESCAPE)
+            ToolbarActionId.TAB -> sendSpecial(SpecialKey.TAB)
+            ToolbarActionId.UP -> sendSpecial(SpecialKey.UP)
+            ToolbarActionId.DOWN -> sendSpecial(SpecialKey.DOWN)
+            ToolbarActionId.LEFT -> sendSpecial(SpecialKey.LEFT)
+            ToolbarActionId.RIGHT -> sendSpecial(SpecialKey.RIGHT)
+            ToolbarActionId.HOME -> sendSpecial(SpecialKey.HOME)
+            ToolbarActionId.END -> sendSpecial(SpecialKey.END)
+            ToolbarActionId.PGUP -> sendSpecial(SpecialKey.PAGE_UP)
+            ToolbarActionId.PGDN -> sendSpecial(SpecialKey.PAGE_DOWN)
+            ToolbarActionId.CTRL_C -> sendCtrlLetter("c")
+            ToolbarActionId.CTRL_D -> sendCtrlLetter("d")
+            ToolbarActionId.CTRL_Z -> sendCtrlLetter("z")
+            ToolbarActionId.CTRL_L -> sendCtrlLetter("l")
+            ToolbarActionId.CTRL_R -> sendCtrlLetter("r")
+            ToolbarActionId.SEL_WORD -> selectTarget("word")
+            ToolbarActionId.SEL_LINE -> selectTarget("line")
+            ToolbarActionId.SEL_ALL -> selectTarget("all")
+            ToolbarActionId.UNDO -> {
+                if (clipEditor.value != null) {
+                    editClipSession { it.copy(body = it.body.undo(), focus = EditorField.BODY, revision = it.revision + 1) }
+                } else {
+                    inputEventDispatcher.sendDownUp(TextKeyData.UNDO)
+                }
+            }
+            ToolbarActionId.REDO -> {
+                if (clipEditor.value != null) {
+                    editClipSession { it.copy(body = it.body.redo(), focus = EditorField.BODY, revision = it.revision + 1) }
+                } else {
+                    inputEventDispatcher.sendDownUp(TextKeyData.REDO)
+                }
+            }
+            ToolbarActionId.CUT, ToolbarActionId.COPY -> {
+                if (clipEditor.value != null) {
+                    appContext.showShortToastSync(R.string.clip_editor__use_actions)
+                } else if (id == ToolbarActionId.CUT) {
+                    inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_CUT)
+                } else {
+                    inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_COPY)
+                }
+            }
+            ToolbarActionId.PASTE -> {
+                if (clipEditor.value != null) {
+                    currentClipboardText()?.let { insertAtTarget(it) }
+                } else {
+                    inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_PASTE)
+                }
+            }
+            ToolbarActionId.OPEN_CLIPBOARD -> {
+                clipLaneRequest.value = ClipLane.REGULAR
+                activeState.imeUiMode = ImeUiMode.CLIPBOARD
+            }
+            ToolbarActionId.OPEN_VAULT -> {
+                clipLaneRequest.value = ClipLane.VAULT
+                activeState.imeUiMode = ImeUiMode.CLIPBOARD
+            }
+            ToolbarActionId.OPEN_SNIPPETS -> activeState.imeUiMode = ImeUiMode.SNIPPETS
+            ToolbarActionId.EDIT_CLIP -> openLatestClipEditor()
+            ToolbarActionId.PINNED -> pastePinned()
+            ToolbarActionId.ZIP -> FlorisImeService.launchSettings()
+            ToolbarActionId.INCOGNITO -> inputEventDispatcher.sendDownUp(TextKeyData.TOGGLE_INCOGNITO_MODE)
+            ToolbarActionId.LEARNING -> scope.launch {
+                val pref = prefs.suggestion.learnFromTyping
+                pref.set(!pref.get())
+            }
+            ToolbarActionId.BOTTOM_GAP -> scope.launch {
+                val pref = prefs.keyboard.bottomGapDp
+                val next = when (pref.get()) {
+                    0 -> 16
+                    16 -> 32
+                    32 -> 48
+                    else -> 0
+                }
+                pref.set(next)
+            }
+            ToolbarActionId.ONE_HAND -> inputEventDispatcher.sendDownUp(TextKeyData.TOGGLE_COMPACT_LAYOUT)
+            ToolbarActionId.THEME -> scope.launch {
+                val current = KeyboardPaletteCodec.decode(prefs.theme.keyboardColors.get())
+                val presets = KeyboardPalettes.presets
+                val index = presets.indexOfFirst { it.palette == current }
+                val next = presets[(if (index < 0) 0 else index + 1) % presets.size]
+                prefs.theme.keyboardColors.set(KeyboardPaletteCodec.encode(next.palette))
+            }
+            ToolbarActionId.VOICE -> FlorisImeService.switchToVoiceInputMethod()
+            ToolbarActionId.EMOJI -> activeState.imeUiMode = ImeUiMode.MEDIA
+            ToolbarActionId.SETTINGS -> FlorisImeService.launchSettings()
+            ToolbarActionId.DEVROW -> scope.launch {
+                val pref = prefs.devrow.enabled
+                pref.set(!pref.get())
+            }
+            ToolbarActionId.COUNT -> showCounts()
+            ToolbarActionId.PASTE_CODE -> {
+                val clip = currentClipboardText() ?: return
+                insertAtTarget(TextTransforms.fence(clip, ""))
+            }
+            ToolbarActionId.PAIR -> ToolbarRuntime.update(appContext) { it.copy(bracketPairing = !it.bracketPairing) }
+            else -> Unit
+        }
+    }
+
+    private fun showCounts() {
+        val counts = TextTransforms.counts(targetText())
+        appContext.showShortToastSync(
+            R.string.clip_editor__counts,
+            "chars" to counts.characters.toString(),
+            "words" to counts.words.toString(),
+            "tokens" to counts.tokens.toString(),
+        )
+    }
+
+    private fun pastePinned() {
+        val item = clipboardManager.currentHistory.all.firstOrNull {
+            it.isPinned && it.type == ItemType.TEXT && !it.isSensitive && !it.text.isNullOrBlank()
+        }
+        if (item == null) {
+            appContext.showShortToastSync(R.string.clip_editor__empty)
+            return
+        }
+        insertAtTarget(item.text.orEmpty())
+    }
+
+    private fun insertPrompt(template: String) {
+        val filled = TextTransforms.fillPrompt(template, mapOf("selection" to targetText()))
+        val session = clipEditor.value
+        if (session != null) {
+            clipEditor.value = session.copy(
+                body = session.body.replaceAllText(filled),
+                focus = EditorField.BODY,
+                revision = session.revision + 1,
+            )
+        } else {
+            editorInstance.commitText(filled)
+        }
+    }
+
+    private fun applyTransform(op: TextTransform) {
+        val generates = op == TextTransform.UUID || op == TextTransform.TIMESTAMP || op == TextTransform.RANDOM_HEX
+        val session = clipEditor.value
+        if (session != null) {
+            val body = session.body
+            val source = if (generates) "" else if (body.hasSelection) body.selectedText else body.text
+            when (val result = TextTransforms.apply(op, source)) {
+                is dev.patrickgold.florisboard.ime.toolbar.TransformResult.Ok -> {
+                    val resolved = if (generates || body.hasSelection) {
+                        body.insert(result.text)
+                    } else {
+                        body.replaceAllText(result.text)
+                    }
+                    clipEditor.value = session.copy(body = resolved, focus = EditorField.BODY, revision = session.revision + 1)
+                }
+                is dev.patrickgold.florisboard.ime.toolbar.TransformResult.Failed ->
+                    appContext.showShortToastSync(R.string.toolbar__transform_failed)
+            }
+            return
+        }
+        if (!generates && hostSelection().isEmpty() && op != TextTransform.CODE_FENCE) {
+            appContext.showShortToastSync(R.string.toolbar__select_text)
+            return
+        }
+        when (val result = TextTransforms.apply(op, if (generates) "" else hostSelection())) {
+            is dev.patrickgold.florisboard.ime.toolbar.TransformResult.Ok -> editorInstance.commitText(result.text)
+            is dev.patrickgold.florisboard.ime.toolbar.TransformResult.Failed ->
+                appContext.showShortToastSync(R.string.toolbar__transform_failed)
+        }
+    }
+
+    private fun targetText(): String {
+        val session = clipEditor.value
+        if (session != null) {
+            return if (session.body.hasSelection) session.body.selectedText else session.body.text
+        }
+        val content = editorInstance.activeContent
+        val visible = content.textBeforeSelection + content.selectedText + content.textAfterSelection
+        return content.selectedText.ifEmpty { visible }
+    }
+
+    private fun hostSelection(): String = editorInstance.activeContent.selectedText
+
+    private fun selectTarget(which: String) {
+        val session = clipEditor.value
+        if (session != null) {
+            val body = when (which) {
+                "word" -> session.body.selectWord()
+                "line" -> session.body.selectLine()
+                else -> session.body.selectAll()
+            }
+            clipEditor.value = session.copy(body = body, focus = EditorField.BODY, revision = session.revision + 1)
+            return
+        }
+        if (which == "all") {
+            editorInstance.performClipboardSelectAll()
+            return
+        }
+        val content = editorInstance.activeContent
+        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
+        val (from, to) = if (which == "word") SelectionRanges.word(content.text, cursor) else SelectionRanges.line(content.text, cursor)
+        val base = if (content.offset > 0) content.offset else 0
+        editorInstance.setSelection(base + from, base + to)
+    }
+
+    private fun sendCtrlLetter(letter: String) {
+        if (clipEditor.value != null) return
+        terminalModifiers.press(TerminalModifier.CTRL)
+        sendTerminalChar(letter)
+        terminalModifiers.cancel(TerminalModifier.CTRL)
+    }
+
+    private fun sendSpecial(key: SpecialKey) {
+        if (clipEditor.value != null) {
+            val code = when (key) {
+                SpecialKey.LEFT -> KeyCode.ARROW_LEFT
+                SpecialKey.RIGHT -> KeyCode.ARROW_RIGHT
+                SpecialKey.UP -> KeyCode.ARROW_UP
+                SpecialKey.DOWN -> KeyCode.ARROW_DOWN
+                SpecialKey.HOME -> KeyCode.MOVE_START_OF_LINE
+                SpecialKey.END -> KeyCode.MOVE_END_OF_LINE
+                SpecialKey.PAGE_UP -> KeyCode.MOVE_START_OF_PAGE
+                SpecialKey.PAGE_DOWN -> KeyCode.MOVE_END_OF_PAGE
+                SpecialKey.TAB -> KeyCode.TAB
+                SpecialKey.ENTER -> KeyCode.ENTER
+                SpecialKey.BACKSPACE -> KeyCode.DELETE
+                SpecialKey.DELETE -> KeyCode.FORWARD_DELETE
+                else -> null
+            }
+            if (code != null) {
+                applyClipEditorKey(TextKeyData(type = KeyType.NAVIGATION, code = code))
+            }
+            return
+        }
+        sendTerminalSpecial(key)
+    }
+
+    private fun insertAtTarget(text: String, cursorBack: Int = 0) {
+        val session = clipEditor.value
+        if (session != null) {
+            var buffer = session.focused().insert(text)
+            if (cursorBack > 0) {
+                val caret = (buffer.end - cursorBack).coerceAtLeast(0)
+                buffer = buffer.copy(start = caret, end = caret)
+            }
+            clipEditor.value = session.withFocused(buffer)
+            return
+        }
+        editorInstance.commitText(text)
+        if (cursorBack > 0) {
+            editorInstance.sendDownUpKeyEvent(android.view.KeyEvent.KEYCODE_DPAD_LEFT, 0, cursorBack)
+        }
+    }
+
+    private fun cursorBackFor(text: String): Int = if (text == "()" || text == "[]" || text == "{}") 1 else 0
+
+    private fun isCharacterKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean =
+        data.type == KeyType.CHARACTER || data.type == KeyType.NUMERIC
+
+    private fun applyClipEditorKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean {
+        val session = clipEditor.value ?: return false
+        if (!EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return false
+        val extend = inputEventDispatcher.isPressed(KeyCode.SHIFT)
+        val text = if (isCharacterKey(data) || data.code == KeyCode.SPACE) {
+            runCatching { data.asString(isForDisplay = false) }.getOrDefault("")
+        } else {
+            ""
+        }
+        val input = EditorKeyInput(
+            code = data.code,
+            character = isCharacterKey(data),
+            text = text,
+            shift = extend,
+            extend = extend,
+            singleLine = session.focus != EditorField.BODY,
+            pairBrackets = session.focus == EditorField.BODY && ToolbarRuntime.config.value.bracketPairing,
+        )
+        val before = session.focused()
+        val applied = EditorKeyRouter.apply(before, input)
+        clipEditor.value = session.withFocused(EditorKeyRouter.caretAfterPair(before, applied, input))
+        return true
+    }
+
+    private fun rememberShellLine() {
+        ToolbarRuntime.ensure(appContext)
+        val record = ShellHistoryPolicy.shouldRecord(
+            enabled = ToolbarRuntime.config.value.shellHistoryEnabled,
+            incognito = activeState.isIncognitoMode,
+            passwordLike = editorInstance.activeInfo.inputAttributes.isPasswordLike(),
+            vaultHold = vaultLearningHold,
+            editorOpen = clipEditor.value != null,
+        )
+        if (!record) return
+        val line = ShellHistoryPolicy.commandFrom(editorInstance.activeContent.textBeforeSelection) ?: return
+        ToolbarRuntime.remember(appContext, line)
+    }
+
+
     override fun onInputKeyDown(data: KeyData) {
+        if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         val windowController = FlorisImeService.windowControllerOrNull()
         windowController?.editor?.disableIfNoGestureInProgress()
         when (data.code) {
@@ -994,6 +1561,16 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyUp(data: KeyData) = activeState.batchEdit {
+        if (applyClipEditorKey(data)) {
+            pendingAutocorrect = null
+            if (activeState.inputShiftState != InputShiftState.CAPS_LOCK && !inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
+                activeState.inputShiftState = InputShiftState.UNSHIFTED
+            }
+            return@batchEdit
+        }
+        if (data.code != KeyCode.SPACE && data.code != KeyCode.DELETE) {
+            pendingAutocorrect = null
+        }
         val windowController = FlorisImeService.windowControllerOrNull() ?: return@batchEdit
         when (data.code) {
             KeyCode.ARROW_DOWN,
@@ -1134,6 +1711,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyCancel(data: KeyData) {
+        if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         when (data.code) {
             KeyCode.ARROW_DOWN,
             KeyCode.ARROW_LEFT,
@@ -1152,6 +1730,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyRepeat(data: KeyData) {
+        if (applyClipEditorKey(data)) {
+            FlorisImeService.inputFeedbackController()?.keyRepeatedAction(data)
+            return
+        }
         FlorisImeService.inputFeedbackController()?.keyRepeatedAction(data)
         when (data.code) {
             KeyCode.ARROW_DOWN,

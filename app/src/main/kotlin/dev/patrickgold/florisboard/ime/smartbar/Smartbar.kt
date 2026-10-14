@@ -61,6 +61,7 @@ import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionButton
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsRow
+import dev.patrickgold.florisboard.ime.toolbar.ui.AdvancedToolbar
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.ToggleOverflowPanelAction
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
@@ -233,10 +234,7 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
                 enter = enterTransition,
                 exit = exitTransition,
             ) {
-                QuickActionsRow(
-                    FlorisImeUi.SmartbarSharedActionsRow.elementName,
-                    modifier = modifier.fillMaxSize(),
-                )
+                AdvancedToolbar(modifier = modifier.fillMaxSize())
             }
         }
     }
@@ -335,7 +333,7 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
                 if (shouldShowInlineSuggestionsUi) {
                     InlineSuggestionsUi(inlineSuggestions)
                 } else {
-                    QuickActionsRow(FlorisImeUi.SmartbarSharedActionsRow.elementName)
+                    AdvancedToolbar()
                 }
             }
 

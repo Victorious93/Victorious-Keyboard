@@ -43,21 +43,27 @@ class BrandThemeTest : FunSpec({
         light shouldContain "\"--primary\": \"#ffc107\""
     }
 
-    test("old FlorisBoard themes stay registered beside the neon defaults") {
+    test("old FlorisBoard themes stay registered beside the black default") {
         val extension = assets.resolve("extension.json").readText()
         listOf(
             "floris_day",
             "floris_night",
             "floris_pure_night",
+            "victorious_black",
             "victorious_neon",
             "victorious_neon_light",
         ).forEach { id ->
             extension shouldContain "\"id\": \"$id\""
         }
         val prefs = File("src/main/kotlin/dev/patrickgold/florisboard/app/AppPrefs.kt").readText()
-        prefs shouldContain "extCoreTheme(\"victorious_neon\")"
-        prefs shouldContain "extCoreTheme(\"victorious_neon_light\")"
+        prefs shouldContain "extCoreTheme(\"victorious_black\")"
         prefs shouldContain "default = AppTheme.DARK"
+        val black = assets.resolve("stylesheets/victorious_black.json").readText()
+        SnyggStylesheet.fromJson(black).isSuccess shouldBe true
+        black shouldContain "\"--background\": \"#050505\""
+        black shouldContain "\"--primary\": \"#3a3a3a\""
+        black shouldContain "rounded-corner(5dp, 5dp, 5dp, 5dp)"
+        black shouldContain "\"margin\": \"1.5dp\""
     }
 
     test("every settings destination is still registered") {

@@ -214,6 +214,7 @@ class NlpManager(context: Context) {
                 incognito = keyboardManager.activeState.isIncognitoMode,
                 noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
                 noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+                vaultHandoff = keyboardManager.vaultLearningHold,
             ),
         )
     }

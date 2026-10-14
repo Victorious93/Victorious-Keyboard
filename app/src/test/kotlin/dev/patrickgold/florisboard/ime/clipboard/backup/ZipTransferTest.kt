@@ -120,8 +120,10 @@ class ZipTransferTest : FunSpec({
             BackupReader.read(exported.bytes, "other horse".toCharArray(), )
         }
         val flipped = exported.bytes.copyOf()
-        flipped[flipped.lastIndex] = (flipped[flipped.lastIndex] + 1).toByte()
+        val at = flipped.size / 2
+        flipped[at] = (flipped[at].toInt() xor 0xFF).toByte()
         shouldThrow<BackupException> { BackupReader.read(flipped, password.copyOf()) }
+        shouldThrow<BackupException> { BackupReader.read(exported.bytes.copyOf(exported.bytes.size / 2), password.copyOf()) }
         shouldThrow<BackupException> { BackupReader.read(byteArrayOf(0x50, 0x4B, 3, 4, 1, 2, 3), null) }
     }
 

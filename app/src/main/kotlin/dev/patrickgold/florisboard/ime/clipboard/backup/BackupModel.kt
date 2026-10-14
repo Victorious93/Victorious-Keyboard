@@ -21,7 +21,11 @@ import kotlinx.serialization.Serializable
 
 /** See BACKUP_FORMAT.md. Bump only with a documented migration in [BackupMigrations]. */
 const val BACKUP_FORMAT_NAME = "victorious-keyboard-clipboard"
-const val BACKUP_FORMAT_VERSION = 1
+const val BACKUP_FORMAT_VERSION = 2
+
+/** Clipboard a backup row came from. Version 1 files have no lane and are read as [LANE_REGULAR]. */
+const val LANE_REGULAR = "regular"
+const val LANE_VAULT = "vault"
 
 @Serializable
 data class AttachmentRef(
@@ -43,8 +47,17 @@ data class BackupManifest(
     val entriesSha256: String? = null,
     val skippedUnsupported: Int = 0,
     val skippedSensitive: Int = 0,
-    /** Reserved: image/URI attachments are not exported in format v1, so this is always empty. */
+    /** Reserved: image/URI attachments are not exported, so this is always empty. */
     val attachments: List<AttachmentRef> = emptyList(),
+    /** Text rows whose [BackupEntry.lane] is [LANE_REGULAR]. Checked when [formatVersion] is 2 or newer. */
+    val regularCount: Int = 0,
+    /** Text rows whose [BackupEntry.lane] is [LANE_VAULT]. Checked when [formatVersion] is 2 or newer. */
+    val vaultCount: Int = 0,
+    /**
+     * True when the ZIP holds `content.vkbk` instead of `entries.json`.
+     * The password itself is never written.
+     */
+    val passwordProtected: Boolean = false,
 )
 
 @Serializable
@@ -60,6 +73,11 @@ data class BackupEntry(
     val category: String = "GENERAL",
     /** SHA-256 (hex) of the UTF-8 [text]; verified on import. */
     val contentHash: String,
+    /**
+     * Which clipboard this row belongs to: [LANE_REGULAR] or [LANE_VAULT].
+     * Absent on format v1 files; those rows are regular.
+     */
+    val lane: String = LANE_REGULAR,
 )
 
 @Serializable
@@ -77,7 +95,13 @@ data class ParsedBackup(
     val entries: List<ClipEntry>,
     /** Entries of types this version cannot restore (counted, not imported). */
     val unsupportedEntries: Int,
-)
+    /** Entry id → [LANE_REGULAR] or [LANE_VAULT]. Missing ids are regular. */
+    val lanes: Map<String, String> = emptyMap(),
+    /** True when the file was a password container (raw `.vkbk` or a ZIP with `content.vkbk`). */
+    val passwordProtected: Boolean = false,
+) {
+    fun laneOf(id: String): String = lanes[id] ?: LANE_REGULAR
+}
 
 /** Descriptive container kind, detected from the first bytes. */
 enum class BackupKind { ENCRYPTED, ZIP, JSON, UNKNOWN }
@@ -106,4 +130,8 @@ sealed class BackupException(message: String) : Exception(message) {
     class WrongPasswordOrTampered :
         BackupException("Wrong password, or the file was modified after it was created.")
     class WeakPassword(val minLength: Int) : BackupException("Use a password of at least $minLength characters.")
+    class EncryptionRequired :
+        BackupException("A backup that includes vault items must be password-encrypted.")
+    class VaultLocked :
+        BackupException("Unlock the vault before exporting or importing vault items.")
 }

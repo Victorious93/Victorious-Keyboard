@@ -49,6 +49,7 @@ import androidx.core.net.toUri
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.settings.advanced.RadioListItem
 import dev.patrickgold.florisboard.clipboardManager
+import dev.patrickgold.florisboard.ime.clipboard.backup.BACKUP_FORMAT_VERSION
 import dev.patrickgold.florisboard.ime.clipboard.backup.BackupCrypto
 import dev.patrickgold.florisboard.ime.clipboard.backup.BackupException
 import dev.patrickgold.florisboard.ime.clipboard.backup.BackupKind
@@ -60,6 +61,7 @@ import dev.patrickgold.florisboard.ime.clipboard.vault.BackupLibrary
 import dev.patrickgold.florisboard.ime.clipboard.vault.BackupLibraryEntry
 import dev.patrickgold.florisboard.ime.clipboard.vault.Confirmation
 import dev.patrickgold.florisboard.ime.clipboard.vault.ConfirmationRequiredException
+import dev.patrickgold.florisboard.ime.clipboard.vault.LaneImport
 import dev.patrickgold.florisboard.ime.clipboard.vault.ExportFormat
 import dev.patrickgold.florisboard.ime.clipboard.vault.ExportOptions
 import dev.patrickgold.florisboard.ime.clipboard.vault.Inspection
@@ -171,7 +173,7 @@ fun ClipboardBackupScreen() = FlorisScreen {
                                     else -> "json"
                                 },
                                 itemCount = result.itemCount,
-                                formatVersion = 1,
+                                formatVersion = BACKUP_FORMAT_VERSION,
                                 createdAtMs = System.currentTimeMillis(),
                             )
                         )
@@ -208,7 +210,7 @@ fun ClipboardBackupScreen() = FlorisScreen {
     var pendingFile by remember { mutableStateOf<PendingFile?>(null) }
     var loaded by remember { mutableStateOf<LoadedBackup?>(null) }
     var mode by remember { mutableStateOf(ImportMode.MERGE) }
-    var confirmPlan by remember { mutableStateOf<ImportPlan?>(null) }
+    var confirmPlan by remember { mutableStateOf<LaneImport?>(null) }
     var deleteTarget by remember { mutableStateOf<BackupLibraryEntry?>(null) }
     var planRefresh by remember { mutableIntStateOf(0) }
 
@@ -283,9 +285,9 @@ fun ClipboardBackupScreen() = FlorisScreen {
         }
     }
 
-    val plan by produceState<ImportPlan?>(initialValue = null, loaded, mode, planRefresh) {
+    val plan by produceState<LaneImport?>(initialValue = null, loaded, mode, planRefresh) {
         val l = loaded
-        value = if (l == null) null else runCatching { service.preview(l.inspection, mode) }.getOrNull()
+        value = if (l == null) null else runCatching { service.previewLanes(l.inspection, mode) }.getOrNull()
     }
 
     fun runRestore(confirmation: Confirmation?) {
@@ -307,7 +309,7 @@ fun ClipboardBackupScreen() = FlorisScreen {
             } catch (e: ConfirmationRequiredException) {
                 // Either consent was never given, or the history changed since it was: show the new numbers.
                 planRefresh++
-                confirmPlan = e.plan
+                confirmPlan = e.lanes ?: LaneImport(e.plan, null)
                 restoreBusy = if (confirmation != null) {
                     Busy.Failed(context.stringRes(R.string.clipboard_backup__confirm_changed))
                 } else Busy.Idle
@@ -480,19 +482,8 @@ fun ClipboardBackupScreen() = FlorisScreen {
                 )
                 val p = plan
                 if (p != null) {
-                    Text(
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        text = stringRes(
-                            R.string.clipboard_backup__plan_summary,
-                            "add" to p.added.size, "merge" to p.mergedExisting.size,
-                            "skip" to p.skippedDuplicates.size, "remove" to p.removedExisting.size,
-                            "pinned" to p.removedPinned,
-                            "drop" to p.droppedIncoming.count { it.reason == DropReason.OVER_CAPACITY },
-                            "cap" to dev.patrickgold.florisboard.ime.clipboard.history.MAX_HISTORY_ENTRIES,
-                            "result" to p.finalEntries.size,
-                        ),
-                    )
+                    PlanSummary(stringRes(R.string.clipboard_zip__store_regular), p.regular)
+                    p.vault?.let { PlanSummary(stringRes(R.string.clipboard_zip__store_vault), it) }
                 }
                 Row(modifier = Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FlorisOutlinedButton(
@@ -602,12 +593,14 @@ fun ClipboardBackupScreen() = FlorisScreen {
             onDismissRequest = { confirmPlan = null },
             title = { Text(stringRes(R.string.clipboard_backup__confirm_title)) },
             text = {
+                val vaultPlan = p.vault
                 Text(
                     stringRes(
                         R.string.clipboard_backup__confirm_message,
-                        "remove" to p.removedExisting.size,
-                        "pinned" to p.removedPinned,
-                        "drop" to p.droppedIncoming.count { it.reason == DropReason.OVER_CAPACITY },
+                        "remove" to p.regular.removedExisting.size + (vaultPlan?.removedExisting?.size ?: 0),
+                        "pinned" to p.regular.removedPinned + (vaultPlan?.removedPinned ?: 0),
+                        "drop" to p.regular.droppedIncoming.count { it.reason == DropReason.OVER_CAPACITY } +
+                            (vaultPlan?.droppedIncoming?.count { it.reason == DropReason.OVER_CAPACITY } ?: 0),
                         "cap" to dev.patrickgold.florisboard.ime.clipboard.history.MAX_HISTORY_ENTRIES,
                     )
                 )
@@ -615,7 +608,7 @@ fun ClipboardBackupScreen() = FlorisScreen {
             confirmButton = {
                 TextButton(onClick = {
                     // Consent is bound to exactly what this dialog showed; if the history changed, the service asks again.
-                    val consent = Confirmation.of(p)
+                    val consent = Confirmation.of(p.regular, p.vault)
                     confirmPlan = null
                     runRestore(consent)
                 }) {
@@ -646,6 +639,23 @@ fun ClipboardBackupScreen() = FlorisScreen {
             dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text(stringRes(R.string.action__cancel)) } },
         )
     }
+}
+
+@Composable
+private fun PlanSummary(title: String, plan: ImportPlan) {
+    Text(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        text = title + " — " + stringRes(
+            R.string.clipboard_backup__plan_summary,
+            "add" to plan.added.size, "merge" to plan.mergedExisting.size,
+            "skip" to plan.skippedDuplicates.size, "remove" to plan.removedExisting.size,
+            "pinned" to plan.removedPinned,
+            "drop" to plan.droppedIncoming.count { it.reason == DropReason.OVER_CAPACITY },
+            "cap" to dev.patrickgold.florisboard.ime.clipboard.history.MAX_HISTORY_ENTRIES,
+            "result" to plan.finalEntries.size,
+        ),
+    )
 }
 
 @Composable

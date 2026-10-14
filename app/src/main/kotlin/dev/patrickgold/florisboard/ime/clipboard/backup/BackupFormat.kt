@@ -441,12 +441,16 @@ object BackupReader {
     }
 
     private fun parseObject(bytes: ByteArray): JsonObject {
+        // Reject non-objects before the parser walks them. A deeply nested array would otherwise
+        // overflow the stack inside the JSON reader.
+        if (firstNonSpace(bytes) != '{'.code.toByte()) throw BackupException.Malformed("invalid JSON structure")
         val element = try {
             json.parseToJsonElement(bytes.toString(Charsets.UTF_8))
         } catch (e: BackupException) {
             throw e
+        } catch (e: StackOverflowError) {
+            throw BackupException.Malformed("invalid JSON structure")
         } catch (e: Exception) {
-            // Deeply nested or otherwise hostile JSON can throw outside SerializationException.
             throw BackupException.Malformed("invalid JSON structure")
         }
         return element as? JsonObject ?: throw BackupException.Malformed("invalid JSON structure")
@@ -462,6 +466,8 @@ object BackupReader {
 
     private fun <T> decode(s: kotlinx.serialization.KSerializer<T>, bytes: ByteArray): T = try {
         json.decodeFromString(s, bytes.toString(Charsets.UTF_8))
+    } catch (e: StackOverflowError) {
+        throw BackupException.Malformed("invalid JSON structure")
     } catch (e: SerializationException) {
         throw BackupException.Malformed("invalid JSON structure")
     } catch (e: IllegalArgumentException) {

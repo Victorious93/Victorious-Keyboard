@@ -683,6 +683,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "keyboard__font_size_multiplier_landscape",
             default = 100,
         )
+        /** Extra dp under the keys. -1 follows gesture navigation (16) or 3-button (4). */
+        val bottomGapDp = int(
+            key = "keyboard__bottom_gap_dp",
+            default = -1,
+        )
         val landscapeInputUiMode = enum(
             key = "keyboard__landscape_input_ui_mode",
             default = LandscapeInputUiMode.DYNAMICALLY_SHOW,

@@ -476,6 +476,11 @@
     <string name="pref__keyboard__space_bar_mode__label" comment="Preference title">Spacebar label</string>
     <string name="pref__keyboard__capitalization_behavior__label" comment="Preference title">Capitalization behavior</string>
     <string name="pref__keyboard__font_size_multiplier__label" comment="Preference title">Font size multiplier</string>
+    <string name="pref__keyboard__bottom_gap__label" comment="Preference title">Bottom gap</string>
+    <string name="pref__keyboard__bottom_gap__summary" comment="Preference summary. {v} is the gap in dp.">Lifts space and enter above the home gesture. The gap uses the keyboard background. Currently {v} dp.</string>
+    <string name="pref__keyboard__bottom_gap__summary_auto" comment="Preference summary when the gap follows the navigation style. {v} is dp.">Lifts space and enter above the home gesture. Recommended for this device: {v} dp. The gap uses the keyboard background.</string>
+    <string name="pref__keyboard__bottom_gap__value" translatable="false">{v} dp</string>
+    <string name="pref__keyboard__bottom_gap__use_recommended">Use recommended ({v} dp)</string>
     <string name="pref__keyboard__group_layout__label" comment="Preference group title">Layout</string>
     <string name="pref__keyboard__landscape_input_ui_mode__label" comment="Preference value">Landscape fullscreen input</string>
     <string name="pref__keyboard__key_spacing__label" comment="Preference title">Key spacing factor</string>

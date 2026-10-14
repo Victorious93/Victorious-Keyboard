@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardColorMath
+import dev.patrickgold.florisboard.ime.window.rememberImeBottomClearance
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardColorRole
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardColorTokens
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPalette
@@ -233,6 +234,10 @@ private fun KeyboardPreview(palette: KeyboardPalette) {
                 Text("English", color = text.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
             }
             KeyCap("↵", accent, onAccent, accent, Modifier.weight(1.2f), filled = true)
+        }
+        val bottomGap = rememberImeBottomClearance(allowFallback = false).effectiveGapDp
+        if (bottomGap > 0) {
+            Spacer(Modifier.height(bottomGap.dp))
         }
     }
 }

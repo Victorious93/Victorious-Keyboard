@@ -33,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Docked keyboard keys no longer sit in the home-gesture strip. The bottom padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets, plus a Bottom gap setting (Settings → Look → Keyboard, 0–48 dp, 16 dp on gesture navigation and 4 dp with buttons). The gap uses the keyboard background and shows in the keyboard preview. Not run on a device.
 - `lintDebug` errors that had failed the build since the Phase 1 baseline (and one added with the snippets screen):
   literal percents in the "above 50%" validation hint are escaped, plural labels use `%d` so locales whose "one"
   form covers more than one number keep the quantity, the physical-keyboard screen reads `LocalConfiguration`,

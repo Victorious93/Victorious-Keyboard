@@ -80,7 +80,7 @@ class FlorisAppActivity : ComponentActivity() {
     private val prefs by FlorisPreferenceStore
     private val appContext by appContext()
     private val cacheManager by cacheManager()
-    private var appTheme by mutableStateOf(AppTheme.AUTO)
+    private var appTheme by mutableStateOf(AppTheme.DARK)
     private var showAppIcon = true
     private var resourcesContext by mutableStateOf(this as Context)
     private var intentToBeHandled by mutableStateOf<Intent?>(null)

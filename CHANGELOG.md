@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Changed
+- Look: Victorious Neon is the default keyboard theme (night) and Victorious Neon Light is the default day theme. Keys are rounded with a gap, an amber edge and a soft shadow; the suggestion bar, key popup, clipboard panel, snippet picker (same elements as clipboard), emoji panel and developer row use the same navy `#010619`, amber `#FFC107` and hot pink. The older FlorisBoard themes stay in the theme list. Settings defaults to the dark Material scheme (light and AMOLED remain); a chosen accent color still recolors the app. Letter keys scale down slightly while pressed.
 - Logo: `docs/branding/logo.png` is the approved 720×720 neon mark (hooded figure at a keyboard). Launcher foregrounds,
   monochrome layers and `docs/branding/play_store_icon_512.png` are regenerated from it. The adaptive-icon background is
   the logo's navy, `#010619`. The neon stays inside the 33dp safe zone. The README header shows the 720px file at 240px,

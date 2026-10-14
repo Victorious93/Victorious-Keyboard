@@ -31,7 +31,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | ⬜ (dictionary packs exist as data: `DICTIONARY_PACKS.md`; nothing reads them for suggestions yet) |
 | 7 | AI workspace | ⬜ |
-| 8 | Themes and responsive UI | ⬜ |
+| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Neon (light variant too); settings use a navy/amber/pink Material scheme, dark by default. Older themes stay selectable. Not rendered on a device. Responsive/tablet layout not started |
 | 9 | Security and performance | ⬜ |
 | 10 | Release engineering | ⬜ |
 

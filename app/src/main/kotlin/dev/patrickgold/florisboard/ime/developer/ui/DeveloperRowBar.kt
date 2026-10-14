@@ -16,6 +16,9 @@
 
 package dev.patrickgold.florisboard.ime.developer.ui
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -37,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -118,6 +122,14 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, style: Developer
     val inputFeedbackController = LocalInputFeedbackController.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val pressedScale by animateFloatAsState(
+        targetValue = if (isPressed || display != ModifierDisplay.OFF) 0.94f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "devKeyPress",
+    )
     val elementName = FlorisImeUi.SmartbarActionKey.elementName
     val selector = if (isPressed || display != ModifierDisplay.OFF) SnyggSelector.PRESSED else null
     val action = key.action
@@ -145,7 +157,11 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, style: Developer
         selector = selector,
         modifier = Modifier
             .height(FlorisImeSizing.smartbarHeight * style.heightScale)
-            .widthIn(min = FlorisImeSizing.smartbarHeight * style.heightScale),
+            .widthIn(min = FlorisImeSizing.smartbarHeight * style.heightScale)
+            .graphicsLayer {
+                scaleX = pressedScale
+                scaleY = pressedScale
+            },
         clickAndSemanticsModifier = Modifier
             .indication(interactionSource, LocalIndication.current)
             .semantics {

@@ -25,7 +25,7 @@
 ## Overview
 
 Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.com/florisboard/florisboard)
-(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine, layouts and themes and adds:
+(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine and layouts. The default keyboard theme is Victorious Neon (a light variant is the day theme; the older themes stay selectable). It adds:
 
 * **Clipboard manager** — up to 500 items with search, pinning, filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key).
 * **Developer row and operating modes** — Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
@@ -77,7 +77,7 @@ Details: [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md).
 ### Planned (not started or incomplete)
 
 * Word suggestions, autocorrect, next-word prediction, personal dictionary
-* Victorious theme presets and responsive layout (Phase 8)
+* Further theme presets (AMOLED keyboard, Terminal Green) and a responsive/tablet layout (Phase 8). Victorious Neon and Neon Light are already the defaults.
 * AI workspace: prompt library, local transforms, optional provider adapters (Phase 7; network only after you enable a provider)
 * Voice typing via Android's recogniser
 
@@ -101,7 +101,8 @@ Suggested captures once a device build is available: default QWERTY; developer r
 | 3 | Advanced clipboard | 🟡 core tested; storage/UI compiled, not run |
 | 4 | Developer and terminal modes | 🟡 core tested; wiring/row UI compiled, not run |
 | 5 | Snippets and productivity | 🟡 core tested; Android shell compiled, not run |
-| 6–10 | Prediction, AI workspace, themes, security/perf, release | ⬜ |
+| 6–7, 9–10 | Prediction, AI workspace, security/perf, release | ⬜ |
+| 8 | Themes | 🟡 Neon default shipped (not run on a device); responsive layout not started |
 
 Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 

@@ -15,7 +15,7 @@ possible as specified (reason given).
 | Physical keyboard support | 🔹 | upstream lists it as incomplete |
 | Floating keyboard | ⬜ | not in upstream at this version |
 | Split keyboard / tablet layouts | ⬜ | |
-| Required theme presets (Victorious Dark, AMOLED, Terminal Green, …) | ⬜ | Phase 8 |
+| Victorious Neon keyboard theme (dark default) and Neon Light, older Floris themes still selectable | 🟦 stylesheet + settings scheme compiled, **not rendered on a device** | Navy `#010619`, amber `#FFC107`, hot pink. Settings app uses the same brand (dark default, light variant). AMOLED and Terminal Green are not separate presets |
 
 ## Clipboard (Phase 3) — see `CLIPBOARD.md`
 

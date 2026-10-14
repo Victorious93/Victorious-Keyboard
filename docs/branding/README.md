@@ -38,7 +38,7 @@ it can and should do is carry its own name and not present upstream's identity a
 | Item | State |
 |---|---|
 | App label, IME name, settings title, About screen | "Victorious Keyboard" (was already; a stray Albanian override "TastieraFloris" removed) |
-| Theme names | now "Victorious Day / Night / Pure Night …"; theme *ids* (`org.florisboard.themes`, `floris_day`) unchanged |
+| Theme names | "Victorious Neon" and "Victorious Neon Light" are the defaults. Older entries stay selectable as "Victorious Day / Night / Pure Night …". Theme *ids* `org.florisboard.themes` and `floris_day` are unchanged |
 | "FlorisBoard App Assets" label, extension-store sentence, crash titles in 20+ locales | English text rebranded; the translated copies that said FlorisBoard were deleted so those locales fall back to English until retranslated |
 | "Visit Addons Store" button (opened upstream's `beta.addons.florisboard.org`) | **removed**; Extensions screen now only offers import |
 | Typing-screen feedback link (upstream discussion thread) | now points to this repository's issue tracker |

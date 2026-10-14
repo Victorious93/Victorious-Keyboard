@@ -44,6 +44,18 @@
       "label": "Victorious Pure Night (Borderless)",
       "authors": [ "serebit" ],
       "isNight": true
+    },
+    {
+      "id": "victorious_neon",
+      "label": "Victorious Neon",
+      "authors": [ "Victorious Keyboard Contributors" ],
+      "isNight": true
+    },
+    {
+      "id": "victorious_neon_light",
+      "label": "Victorious Neon Light",
+      "authors": [ "Victorious Keyboard Contributors" ],
+      "isNight": false
     }
   ]
 }

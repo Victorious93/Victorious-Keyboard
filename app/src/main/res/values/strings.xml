@@ -126,6 +126,10 @@
     <string name="settings__system_default" comment="General string which is used when a preference has the system default value set">System default</string>
 
     <string name="settings__home__title" comment="Title of the Home screen">Welcome to {app_name}</string>
+    <string name="settings__home__section_look" comment="Home screen section">Look</string>
+    <string name="settings__home__section_typing" comment="Home screen section">Typing</string>
+    <string name="settings__home__section_tools" comment="Home screen section">Tools</string>
+    <string name="settings__home__section_about" comment="Home screen section">About</string>
     <string name="settings__home__ime_not_enabled" comment="Error message shown in Home fragment when Victorious Keyboard is not enabled in the system">Victorious Keyboard is not enabled in the system and thus won\'t be available as an input method in the input picker. Click here to resolve this issue.</string>
     <string name="settings__home__ime_not_selected" comment="Warning message shown in Home fragment when Victorious Keyboard is not selected as the default keyboard">Victorious Keyboard is not selected as the default input method. Click here to resolve this issue.</string>
 

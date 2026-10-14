@@ -24,13 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import dev.patrickgold.florisboard.app.AppTheme
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.color.neutralDynamicColorScheme
-import org.florisboard.lib.color.systemAccentOrDefault
 
 
 @Composable
@@ -39,26 +39,22 @@ fun getColorScheme(
 ): ColorScheme {
     val prefs by FlorisPreferenceStore
     val accentColor by prefs.other.accentColor.observeAsState()
-
-    val seedColor = systemAccentOrDefault(accentColor)
-
-    return when (theme) {
-        AppTheme.AUTO, AppTheme.AUTO_AMOLED -> {
-            neutralDynamicColorScheme(
-                primary = seedColor,
-                isDark = isSystemInDarkTheme(),
-                isAmoled = theme == AppTheme.AUTO_AMOLED,
-            )
-        }
-
-        AppTheme.DARK, AppTheme.LIGHT -> {
-            neutralDynamicColorScheme(primary = seedColor, isDark = theme == AppTheme.DARK)
-        }
-
-        AppTheme.AMOLED_DARK -> {
-            neutralDynamicColorScheme(primary = seedColor, isDark = true, isAmoled = true)
-        }
+    val dark = when (theme) {
+        AppTheme.DARK, AppTheme.AMOLED_DARK -> true
+        AppTheme.LIGHT -> false
+        AppTheme.AUTO, AppTheme.AUTO_AMOLED -> isSystemInDarkTheme()
     }
+    val amoled = theme == AppTheme.AMOLED_DARK || (theme == AppTheme.AUTO_AMOLED && dark)
+    // A chosen accent still recolors the app. With no accent, the brand schemes are used
+    // so the default is navy/amber/pink rather than the system or Material green.
+    val scheme = if (accentColor.isSpecified) {
+        neutralDynamicColorScheme(primary = accentColor, isDark = dark, isAmoled = amoled)
+    } else if (dark) {
+        brandDarkScheme
+    } else {
+        brandLightScheme
+    }
+    return if (amoled) scheme.amoled() else scheme
 }
 
 fun ColorScheme.amoled(): ColorScheme {

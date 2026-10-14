@@ -56,7 +56,7 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Expansion on Enter and Tab, each opt-in and off by default; a non-match still sends the real key; never in password fields | ✅ rules JVM-tested · 🟦 wiring compiled, **never run** |
 | In-keyboard snippet picker (smartbar quick action, panel with tag chips, insert at the caret, `{{selection}}`, `{{cursor}}`) | ✅ pure parts JVM-tested (insertion rules, caret placement, list model, preview, migration of the quick action) · 🟦 panel and wiring compiled, **never run or rendered** |
 | Typed search in the picker, encrypted export | ⬜ |
-| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; words only reach the system spell checker today (no suggestions exist yet) |
+| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; prediction reads the bundled zips, and installing a pack still only feeds the system spell checker |
 | Command library | ⬜
 
 ## Prediction and voice (Phase 6)
@@ -64,7 +64,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Feature | Status |
 |---|---|
 | Glide typing | 🔹 upstream classifier exists; needs a dictionary; unverified |
-| Word suggestions, autocorrect, next-word prediction, personal dictionary | ⬜ upstream `suggest()` returns nothing and `spell()` is a test stub |
+| Word suggestions, autocorrect, next-word prediction | 🟡 pure predictor JVM-tested; suggestion-bar wiring and Typing settings compiled, **never run**. `spell()` is still a test stub. Next-word without learning is a frequency ranking (`DICTIONARY_PACKS.md`) |
+| Learn from my typing (off by default) and Clear learned words | 🟡 store and gate JVM-tested; file under `noBackupFilesDir/prediction/`; **never run** on a device |
 | Voice typing | ⬜ |
 | GIF integration | ⬜ |
 

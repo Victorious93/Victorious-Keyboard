@@ -20,22 +20,30 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
+import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.keyboard.IncognitoMode
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
@@ -48,7 +56,6 @@ import dev.patrickgold.jetpref.datastore.ui.Preference
 import dev.patrickgold.jetpref.datastore.ui.PreferenceGroup
 import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.android.AndroidVersion
-import org.florisboard.lib.compose.FlorisErrorCard
 import org.florisboard.lib.compose.stringRes
 
 @OptIn(ExperimentalJetPrefDatastoreUi::class)
@@ -58,18 +65,30 @@ fun TypingScreen() = FlorisScreen {
     previewFieldVisible = true
 
     val navController = LocalNavController.current
+    val context = LocalContext.current
+    var confirmClearLearned by remember { mutableStateOf(false) }
 
     content {
-        // This card is temporary and is therefore not using a string resource (not so temporary as we thought...)
-        FlorisErrorCard(
-            modifier = Modifier.padding(8.dp),
-            text = """
-                Suggestions (except system autofill) and spell checking are not available in this release. All
-                preferences in the "Corrections" group are properly implemented though.
-            """.trimIndent().replace('\n', ' '),
-        )
-
         PreferenceGroup(title = stringRes(R.string.pref__suggestion__title)) {
+            SwitchPreference(
+                prefs.suggestion.predictionEnabled,
+                icon = Icons.Default.AutoAwesome,
+                title = stringRes(R.string.pref__suggestion__prediction_enabled__label),
+                summary = stringRes(R.string.pref__suggestion__prediction_enabled__summary),
+            )
+            SwitchPreference(
+                prefs.suggestion.learnFromTyping,
+                icon = Icons.Default.School,
+                title = stringRes(R.string.pref__suggestion__learn_from_typing__label),
+                summary = stringRes(R.string.pref__suggestion__learn_from_typing__summary),
+                enabledIf = { prefs.suggestion.predictionEnabled isEqualTo true },
+            )
+            Preference(
+                icon = Icons.Default.DeleteForever,
+                title = stringRes(R.string.pref__suggestion__clear_learned__label),
+                summary = stringRes(R.string.pref__suggestion__clear_learned__summary),
+                onClick = { confirmClearLearned = true },
+            )
             SwitchPreference(
                 prefs.suggestion.enabled,
                 title = stringRes(R.string.pref__suggestion__enabled__label),
@@ -170,6 +189,25 @@ fun TypingScreen() = FlorisScreen {
                 icon = Icons.AutoMirrored.Filled.LibraryBooks,
                 title = stringRes(R.string.settings__dictionary__title),
                 onClick = { navController.navigate(Routes.Settings.Dictionary) },
+            )
+        }
+
+        if (confirmClearLearned) {
+            AlertDialog(
+                onDismissRequest = { confirmClearLearned = false },
+                title = { Text(stringRes(R.string.pref__suggestion__clear_learned__confirm_title)) },
+                text = { Text(stringRes(R.string.pref__suggestion__clear_learned__confirm_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        context.nlpManager().value.clearLearnedWords()
+                        confirmClearLearned = false
+                    }) { Text(stringRes(R.string.action__delete)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmClearLearned = false }) {
+                        Text(stringRes(R.string.action__cancel))
+                    }
+                },
             )
         }
     }

@@ -18,12 +18,24 @@ package dev.patrickgold.florisboard.ime.nlp.latin
 
 import android.content.Context
 import dev.patrickgold.florisboard.appContext
+import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.core.Subtype
 import dev.patrickgold.florisboard.ime.editor.EditorContent
+import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.nlp.SpellingProvider
 import dev.patrickgold.florisboard.ime.nlp.SpellingResult
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.SuggestionProvider
+import dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.prediction.BundledLexicon
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedLexicon
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWordFile
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
+import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
+import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
+import dev.patrickgold.florisboard.keyboardManager
+import java.io.File
 import dev.patrickgold.florisboard.lib.devtools.flogDebug
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,7 +45,7 @@ import kotlinx.serialization.json.Json
 import org.florisboard.lib.android.readText
 import org.florisboard.lib.kotlin.guardedByLock
 
-class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProvider {
+class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProvider, TypingLearner {
     companion object {
         // Default user ID used for all subtypes, unless otherwise specified.
         // See `ime/core/Subtype.kt` Line 210 and 211 for the default usage
@@ -41,6 +53,13 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     }
 
     private val appContext by context.appContext()
+    private val prefs by FlorisPreferenceStore
+    private val editorInstance by context.editorInstance()
+    private val keyboardManager by context.keyboardManager()
+    private val learnedFile = LearnedWordFile(File(appContext.noBackupFilesDir, "prediction"))
+    private var learnedCache = LearnedLexicon()
+    private var learnedLoaded = false
+    @Volatile private var lexicon: Map<String, Int> = emptyMap()
 
     private val wordData = guardedByLock { mutableMapOf<String, Int>() }
     private val wordDataSerializer = MapSerializer(String.serializer(), Int.serializer())
@@ -76,6 +95,12 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 wordData.putAll(jsonData)
             }
         }
+        if (lexicon.isEmpty()) {
+            val packs = appContext.assets.list("ime/dictionary-packs").orEmpty()
+                .filter { it.endsWith(".zip") }
+                .map { name -> appContext.assets.open("ime/dictionary-packs/$name").use { it.readBytes() } }
+            lexicon = BundledLexicon.fromPackZips(packs)
+        }
     }
 
     override suspend fun spell(
@@ -105,34 +130,80 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         allowPossiblyOffensive: Boolean,
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
-        return emptyList()
-        /*val word = content.composingText.ifBlank { "next" }
-        val suggestions = buildList {
-            for (n in 0 until maxCandidateCount) {
-                add(WordSuggestionCandidate(
-                    text = "$word$n",
-                    secondaryText = if (n % 2 == 1) "secondary" else null,
-                    confidence = 0.5,
-                    isEligibleForAutoCommit = false,//n == 0 && word.startsWith("auto"),
-                    // We set ourselves as the source provider so we can get notify events for our candidate
-                    sourceProvider = this@LatinLanguageProvider,
-                ))
-            }
+        val field = currentField()
+        if (!LearningGate.allowsPrediction(prefs.suggestion.predictionEnabled.get(), field)) return emptyList()
+        val learned = if (LearningGate.allowsLearning(prefs.suggestion.learnFromTyping.get(), field)) {
+            learnedSnapshot()
+        } else {
+            null
         }
-        return suggestions*/
+        return WordPredictor.predict(
+            textBeforeCursor = content.textBeforeSelection,
+            lexicon = lexicon,
+            learned = learned,
+            maxCandidates = maxCandidateCount,
+        ).map { prediction ->
+            WordSuggestionCandidate(
+                text = prediction.text,
+                confidence = prediction.confidence,
+                isEligibleForAutoCommit = prediction.autoCommit,
+                isEligibleForUserRemoval = false,
+                sourceProvider = this,
+            )
+        }
+    }
+
+    override suspend fun recordCommitted(word: String, previous: String?) {
+        val field = currentField()
+        if (!LearningGate.allowsLearning(prefs.suggestion.learnFromTyping.get(), field)) return
+        val next = learnedSnapshot().record(word, previous)
+        learnedCache = next
+        try {
+            learnedFile.save(next)
+        } catch (_: java.io.IOException) {
+            // A failed write must not crash the keyboard. The in-memory copy is kept for this session.
+        }
+    }
+
+    override suspend fun clearLearned() {
+        learnedCache = LearnedLexicon()
+        learnedLoaded = true
+        learnedFile.clear()
+    }
+
+    private fun currentField(): LearningGate.Field {
+        val info = editorInstance.activeInfo
+        return LearningGate.Field(
+            passwordLike = info.inputAttributes.isPasswordLike(),
+            incognito = keyboardManager.activeState.isIncognitoMode,
+            noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
+            noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+        )
+    }
+
+    private fun learnedSnapshot(): LearnedLexicon {
+        if (!learnedLoaded) {
+            learnedCache = try {
+                learnedFile.load()
+            } catch (_: java.io.IOException) {
+                LearnedLexicon()
+            }
+            learnedLoaded = true
+        }
+        return learnedCache
     }
 
     override suspend fun notifySuggestionAccepted(subtype: Subtype, candidate: SuggestionCandidate) {
-        // We can use flogDebug, flogInfo, flogWarning and flogError for debug logging, which is a wrapper for Logcat
-        flogDebug { candidate.toString() }
+        // Do not log the word. Typed and suggested text stays off logcat, including debug.
+        flogDebug { "suggestion accepted" }
     }
 
     override suspend fun notifySuggestionReverted(subtype: Subtype, candidate: SuggestionCandidate) {
-        flogDebug { candidate.toString() }
+        flogDebug { "suggestion reverted" }
     }
 
     override suspend fun removeSuggestion(subtype: Subtype, candidate: SuggestionCandidate): Boolean {
-        flogDebug { candidate.toString() }
+        flogDebug { "suggestion remove requested" }
         return false
     }
 

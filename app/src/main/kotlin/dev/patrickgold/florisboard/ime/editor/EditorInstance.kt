@@ -114,7 +114,7 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
             KeyboardMode.PHONE2,
             -> false
             else -> activeState.keyVariation != KeyVariation.PASSWORD &&
-                prefs.suggestion.enabled.get()// &&
+                (prefs.suggestion.enabled.get() || prefs.suggestion.predictionEnabled.get())// &&
             //!instance.inputAttributes.flagTextAutoComplete &&
             //!instance.inputAttributes.flagTextNoSuggestions
         }

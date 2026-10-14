@@ -344,6 +344,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitCandidate(candidate: SuggestionCandidate) {
+        if (candidate !is ClipboardSuggestionCandidate) {
+            nlpManager.noteTypedOrCommitted(candidate.text.toString())
+        }
         scope.launch {
             candidate.sourceProvider?.notifySuggestionAccepted(subtypeManager.activeSubtype, candidate)
         }
@@ -521,6 +524,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      */
     private fun handleEnter() {
         if (tryExpandSnippet(ExpansionTrigger.ENTER)) return
+        nlpManager.noteTypedOrCommitted(null)
         performEnterNow()
     }
 
@@ -618,6 +622,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      */
     fun handleHardwareKeyboardSpace() {
         val candidate = nlpManager.getAutoCommitCandidate()
+        if (candidate == null) nlpManager.noteTypedOrCommitted(null)
         candidate?.let { commitCandidate(it) }
         // Skip handling changing to characters keyboard and double space periods
         // TODO: this is whether we commit space after selecting candidate. Should be determined by SuggestionProvider
@@ -800,6 +805,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private fun handleSpace(data: KeyData) {
         if (tryExpandSnippet(ExpansionTrigger.SPACE)) return
         val candidate = nlpManager.getAutoCommitCandidate()
+        if (candidate == null) nlpManager.noteTypedOrCommitted(null)
         candidate?.let { commitCandidate(it) }
         if (prefs.keyboard.spaceBarSwitchesToCharacters.get()) {
             when (activeState.keyboardMode) {
@@ -1108,7 +1114,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                             // With Ctrl/Alt active the character is sent as a key event instead of text.
                             if (!(terminalModifiers.anyActive && sendTerminalChar(text))) {
                                 if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
-                                    nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                                    val candidate = nlpManager.getAutoCommitCandidate()
+                                    if (candidate == null) nlpManager.noteTypedOrCommitted(null)
+                                    candidate?.let { commitCandidate(it) }
                                 }
                                 editorInstance.commitChar(text)
                             }

@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Added
+- Word prediction in the suggestion bar: current-word completions, a next-word guess, and a one-edit autocorrect from
+  the bundled dictionary packs. *Word prediction* is on by default. *Learn from my typing* is off by default; when on,
+  words stay in `noBackupFilesDir/prediction/learned-words.json` and are never read from password, incognito, or
+  no-personalized-learning fields. *Clear learned words* asks before deleting them. Not run on a device. `spell()` is
+  still a stub, and next-word without learning ranks dictionary frequency only.
+
 ### Changed
 - Look: Victorious Neon is the default keyboard theme (night) and Victorious Neon Light is the default day theme. Keys are rounded with a gap, an amber edge and a soft shadow; the suggestion bar, key popup, clipboard panel, snippet picker (same elements as clipboard), emoji panel and developer row use the same navy `#010619`, amber `#FFC107` and hot pink. The older FlorisBoard themes stay in the theme list. Settings defaults to the dark Material scheme (light and AMOLED remain); a chosen accent color still recolors the app. Letter keys scale down slightly while pressed.
 - Logo: `docs/branding/logo.png` is the approved 720×720 neon mark (hooded figure at a keyboard). Launcher foregrounds,

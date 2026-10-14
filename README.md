@@ -70,13 +70,13 @@ Details: [SNIPPETS.md](SNIPPETS.md).
 
 ### Dictionary packs
 
-Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources. Words reach the system spell checker only — **word suggestions are not implemented yet.**
+Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources. Word prediction (on by default) reads those lists for the suggestion bar. *Learn from my typing* is off until you turn it on, and then stays on this device. Gesture typing is not done. The suggestion wiring has not been run on a device.
 
 Details: [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md).
 
 ### Planned (not started or incomplete)
 
-* Word suggestions, autocorrect, next-word prediction, personal dictionary
+* Gesture typing (word prediction itself is in: current word, next word, and a close correction; learning is opt-in)
 * Further theme presets (AMOLED keyboard, Terminal Green) and a responsive/tablet layout (Phase 8). Victorious Neon and Neon Light are already the defaults.
 * AI workspace: prompt library, local transforms, optional provider adapters (Phase 7; network only after you enable a provider)
 * Voice typing via Android's recogniser
@@ -101,7 +101,8 @@ Suggested captures once a device build is available: default QWERTY; developer r
 | 3 | Advanced clipboard | 🟡 core tested; storage/UI compiled, not run |
 | 4 | Developer and terminal modes | 🟡 core tested; wiring/row UI compiled, not run |
 | 5 | Snippets and productivity | 🟡 core tested; Android shell compiled, not run |
-| 6–7, 9–10 | Prediction, AI workspace, security/perf, release | ⬜ |
+| 6 | Word prediction | 🟡 predictor tested; suggestion wiring compiled, not run. Gesture typing not started |
+| 7, 9–10 | AI workspace, security/perf, release | ⬜ |
 | 8 | Themes | 🟡 Neon default shipped (not run on a device); responsive layout not started |
 
 Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
@@ -116,7 +117,7 @@ Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 | Permissions | `VIBRATE`, `POST_NOTIFICATIONS` (setup flow) |
 | Internet | **None** — no `INTERNET` permission |
 | Analytics / ads / telemetry | None |
-| Data | On-device only; clipboard and snippets excluded from Android auto-backup |
+| Data | On-device only; clipboard, snippets, and learned words stay out of Android auto-backup |
 | Distribution | No signed release yet — build from source |
 
 Privacy: [PRIVACY.md](PRIVACY.md).

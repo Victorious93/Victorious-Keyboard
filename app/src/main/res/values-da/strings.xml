@@ -466,19 +466,19 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} time</item>
-        <item quantity="other">{v} timer</item>
+        <item quantity="one">%d time</item>
+        <item quantity="other">%d timer</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} minut</item>
-        <item quantity="other">{v} minutter</item>
+        <item quantity="one">%d minut</item>
+        <item quantity="other">%d minutter</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} sekund</item>
-        <item quantity="other">{v} sekunder</item>
+        <item quantity="one">%d sekund</item>
+        <item quantity="other">%d sekunder</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} emne</item>
-        <item quantity="other">{v} emner</item>
+        <item quantity="one">%d emne</item>
+        <item quantity="other">%d emner</item>
     </plurals>
 </resources>

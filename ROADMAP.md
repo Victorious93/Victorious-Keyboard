@@ -24,7 +24,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
-| 1 | Project foundation | ✅ (builds, 714 JVM tests (436 ours), dependency verification proven from a cold Gradle home through a mirror; CI run 5 green through build + unit tests on GitHub (runs 1-4 failed on a checksum problem, fixed; artifact upload blocked by a GitHub storage quota); lint not yet a gate) |
+| 1 | Project foundation | ✅ (builds, JVM tests, dependency verification proven from a cold Gradle home through a mirror; CI green through build + unit tests on GitHub, including a run that stored the APK; artifact upload stays non-fatal if the storage quota is full; `lintDebug` is a gate after the inherited lint errors were fixed — see `AUDIT.md` §8) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
 | 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |

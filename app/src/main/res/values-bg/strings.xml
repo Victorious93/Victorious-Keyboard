@@ -798,7 +798,7 @@
     <string name="ext__validation__enter_positive_number">Въведете положително число (&gt;=0)</string>
     <string name="ext__validation__enter_percent_size">Въведете размер в проценти</string>
     <string name="ext__validation__enter_number_between_0_100">Въведете положително число между 0 и 100</string>
-    <string name="ext__validation__hint_value_above_50_percent">Стойности над 50% ще бъдат приравнени на 50%, така че намалете стойността</string>
+    <string name="ext__validation__hint_value_above_50_percent">Стойности над 50%% ще бъдат приравнени на 50%%, така че намалете стойността</string>
     <string name="ext__update_box__internet_permission_hint">Понеже приложението няма достъп до интернет, проверката за обновяване на инсталираните разширения се извършва ръчно.</string>
     <string name="ext__update_box__search_for_updates">Проверка за обновяване</string>
     <string name="ext__addon_management_box__managing_placeholder">Управление на {extensions}</string>
@@ -1025,27 +1025,27 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} час</item>
-        <item quantity="other">{v} часа</item>
+        <item quantity="one">%d час</item>
+        <item quantity="other">%d часа</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} минута</item>
-        <item quantity="other">{v} минути</item>
+        <item quantity="one">%d минута</item>
+        <item quantity="other">%d минути</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} секунда</item>
-        <item quantity="other">{v} секунди</item>
+        <item quantity="one">%d секунда</item>
+        <item quantity="other">%d секунди</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} елемент</item>
-        <item quantity="other">{v} елемента</item>
+        <item quantity="one">%d елемент</item>
+        <item quantity="other">%d елемента</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="one">{v} знак</item>
-        <item quantity="other">{v} знака</item>
+        <item quantity="one">%d знак</item>
+        <item quantity="other">%d знака</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="one">{v} кандидат</item>
-        <item quantity="other">{v} кандидата</item>
+        <item quantity="one">%d кандидат</item>
+        <item quantity="other">%d кандидата</item>
     </plurals>
 </resources>

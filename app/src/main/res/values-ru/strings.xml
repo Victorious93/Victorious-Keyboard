@@ -788,7 +788,7 @@
     <string name="ext__validation__enter_positive_number">Укажите положительное число (&gt;=0)</string>
     <string name="ext__validation__enter_percent_size">Укажите размер в процентах</string>
     <string name="ext__validation__enter_number_between_0_100">Укажите положительное число от 0 до 100</string>
-    <string name="ext__validation__hint_value_above_50_percent">Любое значение выше 50% будет работать так же, как и 50%, попробуйте уменьшить размер в процентах</string>
+    <string name="ext__validation__hint_value_above_50_percent">Любое значение выше 50%% будет работать так же, как и 50%%, попробуйте уменьшить размер в процентах</string>
     <string name="ext__update_box__internet_permission_hint">Так как это приложение не имеет доступа к Интернету, обновления для установленных расширений придётся проверять вручную.</string>
     <string name="ext__update_box__search_for_updates">Проверить обновления</string>
     <string name="ext__addon_management_box__managing_placeholder">Управление {extensions}</string>
@@ -1017,39 +1017,39 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} час</item>
-        <item quantity="few">{v} часа</item>
-        <item quantity="many">{v} часов</item>
-        <item quantity="other">{v} часов</item>
+        <item quantity="one">%d час</item>
+        <item quantity="few">%d часа</item>
+        <item quantity="many">%d часов</item>
+        <item quantity="other">%d часов</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} минута</item>
-        <item quantity="few">{v} минуты</item>
-        <item quantity="many">{v} минут</item>
-        <item quantity="other">{v} минут</item>
+        <item quantity="one">%d минута</item>
+        <item quantity="few">%d минуты</item>
+        <item quantity="many">%d минут</item>
+        <item quantity="other">%d минут</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} секунда</item>
-        <item quantity="few">{v} секунды</item>
-        <item quantity="many">{v} секунд</item>
-        <item quantity="other">{v} секунд</item>
+        <item quantity="one">%d секунда</item>
+        <item quantity="few">%d секунды</item>
+        <item quantity="many">%d секунд</item>
+        <item quantity="other">%d секунд</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} элемент</item>
-        <item quantity="few">{v} элемента</item>
-        <item quantity="many">{v} элементов</item>
-        <item quantity="other">{v} элементов</item>
+        <item quantity="one">%d элемент</item>
+        <item quantity="few">%d элемента</item>
+        <item quantity="many">%d элементов</item>
+        <item quantity="other">%d элементов</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="one">{v} символ</item>
-        <item quantity="few">{v} символа</item>
-        <item quantity="many">{v} символов</item>
-        <item quantity="other">{v} символов</item>
+        <item quantity="one">%d символ</item>
+        <item quantity="few">%d символа</item>
+        <item quantity="many">%d символов</item>
+        <item quantity="other">%d символов</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="one">{v} предложение</item>
-        <item quantity="few">{v} предложения</item>
-        <item quantity="many">{v} предложений</item>
-        <item quantity="other">{v} предложений</item>
+        <item quantity="one">%d предложение</item>
+        <item quantity="few">%d предложения</item>
+        <item quantity="many">%d предложений</item>
+        <item quantity="other">%d предложений</item>
     </plurals>
 </resources>

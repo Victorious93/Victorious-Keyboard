@@ -19,6 +19,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- `lintDebug` errors that had failed the build since the Phase 1 baseline (and one added with the snippets screen):
+  literal percents in the "above 50%" validation hint are escaped, plural labels use `%d` so locales whose "one"
+  form covers more than one number keep the quantity, the physical-keyboard screen reads `LocalConfiguration`,
+  the snippet editor resolves errors during composition, and the second `EmojiCompat.reset` is suppressed the same
+  way as the first. `lintDebug` now runs in CI. Warnings are unchanged and do not fail the build.
+- User-dictionary language list: Room drops null elements of `List<T?>`, so words stored for all languages never
+  appeared as their own language. The query now returns a row with a nullable tag. The system dictionary cursor is
+  closed when it is empty.
+- Benchmark build type no longer warns that it is replacing `floris_app_name` copied from release.
 - Snippet store in Direct Boot: before the first unlock after a reboot the storage is unavailable and a missing file
   looked like "no snippets"; opening a snippet screen/panel then latched an empty library, and a later save would have
   replaced the real file (a `.bak` copy remained). `SnippetManager` now loads nothing until the user is unlocked and

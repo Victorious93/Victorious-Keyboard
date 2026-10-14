@@ -145,6 +145,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
 
+            // initWith copies release's name. Drop that entry first: resValue() warns when a key
+            // already exists ("BuildType(benchmark): resValue 'string/floris_app_name' value is being replaced").
+            (this as com.android.build.gradle.internal.dsl.BuildType)
+                .resValues
+                .remove("string/floris_app_name")
             resValue("string", "floris_app_name", "Victorious Keyboard Bench")
         }
     }
@@ -155,9 +160,9 @@ android {
         }
     }
 
-    lint {
-        baseline = file("lint.xml")
-    }
+    // app/lint.xml is the lint config (severity overrides). It is not a baseline: pointing
+    // `baseline` at it made lint treat ExtraTranslation as an already-recorded finding.
+
 
     testOptions {
         unitTests {

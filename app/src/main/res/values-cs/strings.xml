@@ -800,7 +800,7 @@
     <string name="ext__validation__enter_positive_number">Zadejte prosím kladné číslo (&gt;=0)</string>
     <string name="ext__validation__enter_percent_size">Zadejte prosím velikost v procentech</string>
     <string name="ext__validation__enter_number_between_0_100">Zadejte prosím kladné číslo mezi 0 a 100</string>
-    <string name="ext__validation__hint_value_above_50_percent">Jakákoli hodnota nad 50 % se bude chovat, jako kdybyste nastavili 50 %, zvažte snížení velikosti v procentech</string>
+    <string name="ext__validation__hint_value_above_50_percent">Jakákoli hodnota nad 50 %% se bude chovat, jako kdybyste nastavili 50 %%, zvažte snížení velikosti v procentech</string>
     <string name="ext__update_box__internet_permission_hint">Jelikož tato aplikace nemá přístup k internetu, musíte aktualizace nainstalovaných rozšíření kontrolovat ručně.</string>
     <string name="ext__update_box__search_for_updates">Vyhledat aktualizace</string>
     <string name="ext__addon_management_box__managing_placeholder">Správa {extensions}</string>
@@ -1027,39 +1027,39 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} hodina</item>
-        <item quantity="few">{v} hodiny</item>
-        <item quantity="many">{v} hodin</item>
-        <item quantity="other">{v} hodin</item>
+        <item quantity="one">%d hodina</item>
+        <item quantity="few">%d hodiny</item>
+        <item quantity="many">%d hodin</item>
+        <item quantity="other">%d hodin</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} minuta</item>
-        <item quantity="few">{v} minuty</item>
-        <item quantity="many">{v} minut</item>
-        <item quantity="other">{v} minut</item>
+        <item quantity="one">%d minuta</item>
+        <item quantity="few">%d minuty</item>
+        <item quantity="many">%d minut</item>
+        <item quantity="other">%d minut</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} sekunda</item>
-        <item quantity="few">{v} sekundy</item>
-        <item quantity="many">{v} sekund</item>
-        <item quantity="other">{v} sekund</item>
+        <item quantity="one">%d sekunda</item>
+        <item quantity="few">%d sekundy</item>
+        <item quantity="many">%d sekund</item>
+        <item quantity="other">%d sekund</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} položka</item>
-        <item quantity="few">{v} položky</item>
-        <item quantity="many">{v} položek</item>
-        <item quantity="other">{v} položek</item>
+        <item quantity="one">%d položka</item>
+        <item quantity="few">%d položky</item>
+        <item quantity="many">%d položek</item>
+        <item quantity="other">%d položek</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="one">{v} znak</item>
-        <item quantity="few">{v} znaky</item>
-        <item quantity="many">{v} znaků</item>
-        <item quantity="other">{v} znaků</item>
+        <item quantity="one">%d znak</item>
+        <item quantity="few">%d znaky</item>
+        <item quantity="many">%d znaků</item>
+        <item quantity="other">%d znaků</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="one">{v} návrh</item>
-        <item quantity="few">{v} návrhy</item>
-        <item quantity="many">{v} návrhů</item>
-        <item quantity="other">{v} návrhů</item>
+        <item quantity="one">%d návrh</item>
+        <item quantity="few">%d návrhy</item>
+        <item quantity="many">%d návrhů</item>
+        <item quantity="other">%d návrhů</item>
     </plurals>
 </resources>

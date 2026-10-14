@@ -82,6 +82,7 @@ import dev.patrickgold.florisboard.app.settings.theme.KeyboardColorsScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreenAction
 import dev.patrickgold.florisboard.app.settings.theme.ThemeScreen
+import dev.patrickgold.florisboard.app.settings.localai.LocalAiScreen
 import dev.patrickgold.florisboard.app.settings.typing.TypingScreen
 import dev.patrickgold.florisboard.app.setup.SetupScreen
 import kotlinx.serialization.SerialName
@@ -167,6 +168,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/typing")
         object Typing
+
+        @Serializable
+        @Deeplink("settings/local-ai")
+        object LocalAi
 
         @Serializable
         @Deeplink("settings/dictionary")
@@ -343,6 +348,7 @@ object Routes {
             composableWithDeepLink(Settings.Toolbar::class) { ToolbarSettingsScreen() }
 
             composableWithDeepLink(Settings.Typing::class) { TypingScreen() }
+            composableWithDeepLink(Settings.LocalAi::class) { LocalAiScreen() }
 
             composableWithDeepLink(Settings.Dictionary::class) { DictionaryScreen() }
             composableWithDeepLink(Settings.DictionaryPacks::class) { DictionaryPacksScreen() }

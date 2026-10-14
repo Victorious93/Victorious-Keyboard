@@ -80,6 +80,11 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
+import dev.patrickgold.florisboard.ime.ai.AiFieldSnapshot
+import dev.patrickgold.florisboard.ime.ai.AiRefusal
+import dev.patrickgold.florisboard.ime.ai.AiSource
+import dev.patrickgold.florisboard.ime.ai.AiTask
+import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.mode.ActiveMode
@@ -154,6 +159,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val editorInstance by context.editorInstance()
     private val extensionManager by context.extensionManager()
     private val nlpManager by context.nlpManager()
+    private val localAi by context.localAiManager()
     private val subtypeManager by context.subtypeManager()
     private val snippetManager by context.snippetManager()
 
@@ -1342,6 +1348,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 insertAtTarget(TextTransforms.fence(clip, ""))
             }
             ToolbarActionId.PAIR -> ToolbarRuntime.update(appContext) { it.copy(bracketPairing = !it.bracketPairing) }
+            ToolbarActionId.AI_REWRITE -> startLocalAi(AiTask.REWRITE)
+            ToolbarActionId.AI_GRAMMAR -> startLocalAi(AiTask.GRAMMAR)
+            ToolbarActionId.AI_CONTINUE -> startLocalAi(AiTask.CONTINUE)
+            ToolbarActionId.AI_SUMMARIZE -> startLocalAi(AiTask.SUMMARIZE)
+            ToolbarActionId.AI_TRANSLATE -> startLocalAi(AiTask.TRANSLATE)
+            ToolbarActionId.AI_SHELL -> startLocalAi(AiTask.SHELL)
+            ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
             else -> Unit
         }
     }
@@ -1500,6 +1513,76 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private fun isCharacterKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean =
         data.type == KeyType.CHARACTER || data.type == KeyType.NUMERIC
 
+    private fun applyAskKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean {
+        if (!localAi.askConsumes(data.code, isCharacterKey(data))) return false
+        val text = if (isCharacterKey(data) || data.code == KeyCode.SPACE) {
+            runCatching { data.asString(isForDisplay = false) }.getOrDefault("")
+        } else {
+            ""
+        }
+        val extend = inputEventDispatcher.isPressed(KeyCode.SHIFT)
+        return localAi.applyAskKey(
+            EditorKeyInput(
+                code = data.code,
+                character = isCharacterKey(data),
+                text = text,
+                shift = extend,
+                extend = extend,
+            ),
+        )
+    }
+
+    private fun aiSnapshot(): AiFieldSnapshot {
+        val session = clipEditor.value
+        val content = editorInstance.activeContent
+        return AiFieldSnapshot(
+            passwordLike = editorInstance.activeInfo.inputAttributes.isPasswordLike(),
+            editorOpen = session != null,
+            editorIsVault = session?.origin == ClipEditorOrigin.VAULT || session?.sensitive == true,
+            selection = content.selectedText,
+            fieldText = content.textBeforeSelection + content.selectedText + content.textAfterSelection,
+            clipboard = currentClipboardText().orEmpty(),
+            editorText = session?.body?.text.orEmpty(),
+        )
+    }
+
+    private fun startLocalAi(task: AiTask) {
+        when (localAi.open(task, aiSnapshot())) {
+            AiRefusal.NO_MODEL, AiRefusal.NATIVE_MISSING ->
+                appContext.showShortToastSync(R.string.local_ai__unavailable)
+            AiRefusal.PASSWORD -> appContext.showShortToastSync(R.string.local_ai__password)
+            else -> Unit
+        }
+    }
+
+    fun localAiSnapshot(): AiFieldSnapshot = aiSnapshot()
+
+    fun chooseLocalAiSource(source: AiSource) {
+        localAi.chooseSource(source, aiSnapshot())
+    }
+
+    fun submitLocalAiAsk() {
+        localAi.submitAsk(aiSnapshot())
+    }
+
+    fun insertLocalAiResult() {
+        val panel = localAi.panel.value ?: return
+        if (panel.output.isBlank()) return
+        if (panel.fromVault) vaultLearningHold = true
+        insertAtTarget(panel.output)
+        localAi.close()
+    }
+
+    fun copyLocalAiResult() {
+        val panel = localAi.panel.value ?: return
+        if (panel.fromVault || panel.output.isBlank()) {
+            appContext.showShortToastSync(R.string.local_ai__vault_copy)
+            return
+        }
+        clipboardManager.addNewPlaintext(panel.output)
+        appContext.showShortToastSync(R.string.local_ai__copied)
+    }
+
     private fun applyClipEditorKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean {
         val session = clipEditor.value ?: return false
         if (!EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return false
@@ -1540,6 +1623,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
 
     override fun onInputKeyDown(data: KeyData) {
+        if (localAi.askConsumes(data.code, isCharacterKey(data))) return
         if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         val windowController = FlorisImeService.windowControllerOrNull()
         windowController?.editor?.disableIfNoGestureInProgress()
@@ -1561,6 +1645,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyUp(data: KeyData) = activeState.batchEdit {
+        if (applyAskKey(data)) {
+            pendingAutocorrect = null
+            if (activeState.inputShiftState != InputShiftState.CAPS_LOCK && !inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
+                activeState.inputShiftState = InputShiftState.UNSHIFTED
+            }
+            return@batchEdit
+        }
         if (applyClipEditorKey(data)) {
             pendingAutocorrect = null
             if (activeState.inputShiftState != InputShiftState.CAPS_LOCK && !inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
@@ -1711,6 +1802,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyCancel(data: KeyData) {
+        if (localAi.askConsumes(data.code, isCharacterKey(data))) return
         if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         when (data.code) {
             KeyCode.ARROW_DOWN,

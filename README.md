@@ -44,7 +44,7 @@ Status key: ✅ **tested** (JVM unit tests) · 🟦 **built, not run** on a devi
 
 Settings → Look holds Languages, Theme, Keyboard colors, and Keyboard.
 
-Victorious Neon is the default night theme and Neon Light is the day theme. Keys are rounded, spaced, and edged in the accent color. The suggestion bar, key popup, clipboard strip, developer row, and emoji panel use the same palette. Letter keys scale down slightly while held. This has been compiled and drawn from the stylesheet. It has not been shown on a device.
+Victorious Black is the default day and night theme. Victorious Neon and Neon Light stay selectable. Keys are rounded and spaced. This has been compiled and drawn from the stylesheet. It has not been shown on a device.
 
 Bottom gap (Settings → Look → Keyboard) lifts the docked keyboard above the navigation bar and the home-gesture strip. The padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets. A slider from 0 to 48 dp adds more space; it starts at 16 dp on gesture navigation and 4 dp with 3-button navigation, and the strip is the keyboard background. The keyboard preview on that screen is the real keyboard, so the gap shows there. A touch that starts on a key and slides into the system strip does not insert the character. This is compiled and unit-tested. It has not been run on a device.
 
@@ -92,11 +92,21 @@ Word prediction is on by default and reads those lists in the suggestion bar: th
 
 Details: [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md).
 
+### Local AI
+
+Settings → Local AI imports a `.gguf` file with the system file picker and copies it into app-private storage. Files of 512 MB or more, and files whose size cannot be read, ask before the copy. The cap is 4 GB and 20 models. Nothing is bundled, and the app does not request the Internet permission.
+
+The model loads the first time you use it, on a background thread, and unloads after two idle minutes or when Android reports memory pressure. Tokens stream into a panel with Cancel. With no model, or on a device without the native library, the keyboard still works and the action explains how to import one.
+
+The AI toolbar page can rewrite, fix grammar, continue, summarize, translate, or draft one shell command from the selection, the current field, a clipboard item, or the clip editor. Clipboard and vault text are used only after you tap that source. A vault result can be inserted, not copied. The shell reply is text; it is not executed, and the prompt forbids exploit steps, wordlists, and attack procedures. Ask is a free-form box in the keyboard itself. AI suggestions in the strip are off until you turn them on, and they also require *Learn from my typing*. They stay off for passwords, incognito, no-personalized-learning, and a vault paste, and they never auto-commit.
+
+The engine is llama.cpp `b11624` (MIT), built for `arm64-v8a` and `x86_64` with the CPU backend only. The rules are unit-tested. Loading a real model and drawing this panel have not been run on a device.
+
 ### Planned (not started or incomplete)
 
 * Gesture typing (word prediction itself is in: current word, next word, and a close correction; learning is opt-in)
-* Further theme presets beyond the color-picker set (a separate AMOLED keyboard theme, Terminal Green) and a responsive/tablet layout (Phase 8). Victorious Neon, Neon Light, and Keyboard colors are already in.
-* AI workspace: prompt library, local transforms, optional provider adapters (Phase 7; network only after you enable a provider)
+* Further theme presets beyond the color-picker set (a separate AMOLED keyboard theme, Terminal Green) and a responsive/tablet layout (Phase 8). Victorious Black is the default; Neon, Neon Light, and Keyboard colors stay selectable.
+* AI workspace: on-device GGUF is in (Settings → Local AI). A prompt library and network providers are still not started. No Internet permission is added.
 * Voice typing via Android's recogniser
 
 ## Screenshots
@@ -106,6 +116,12 @@ These pictures are drawn from the shipped theme colors and the keyboard-colors s
 | Floris Night and Victorious Neon | Neon | Neon Light |
 |---|---|---|
 | <img src="docs/screenshots/keyboard-before-after.png" alt="Floris Night beside Victorious Neon" width="420"> | <img src="docs/screenshots/keyboard-neon.png" alt="Victorious Neon keyboard" width="280"> | <img src="docs/screenshots/keyboard-neon-light.png" alt="Victorious Neon light keyboard" width="280"> |
+
+| Local AI settings | AI toolbar panel |
+|---|---|
+| <img src="docs/screenshots/local-ai-settings.png" alt="Layout render of Settings, Local AI" width="280"> | <img src="docs/screenshots/local-ai-panel.png" alt="Layout render of the on-keyboard AI panel" width="420"> |
+
+These two Local AI pictures are layout renders of the screen structure. They are not photographs of a device.
 
 | Settings, before and after | Keyboard colors | Color wheel |
 |---|---|---|

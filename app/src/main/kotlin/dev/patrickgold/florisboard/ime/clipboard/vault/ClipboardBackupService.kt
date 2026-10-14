@@ -28,6 +28,7 @@ import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
 import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlanner
 import dev.patrickgold.florisboard.ime.clipboard.backup.ParsedBackup
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipEntry
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultExportPolicy
 import dev.patrickgold.florisboard.ime.clipboard.history.HistoryPolicy
 import dev.patrickgold.florisboard.ime.clipboard.history.SensitiveDetector
 import kotlinx.coroutines.Dispatchers
@@ -68,6 +69,12 @@ class ExportOptions(
     val includeSensitive: Boolean = false,
     /** Restrict the export to these entry ids (the "export selected items" action). Null = everything. */
     val onlyIds: Set<String>? = null,
+    /**
+     * Sensitive-vault rows. Included only for an encrypted export when this is true.
+     * Other formats drop them and count them as skipped.
+     */
+    val includeVault: Boolean = false,
+    val vaultEntries: List<ClipEntry> = emptyList(),
 )
 
 class ExportResult(
@@ -139,8 +146,15 @@ class ClipboardBackupService(
         options.onlyIds?.let { ids -> candidates = candidates.filter { it.id in ids } }
 
         val (sensitive, plain) = candidates.partition { it.sensitive || SensitiveDetector.check(it.text) != null }
-        val chosen = if (options.includeSensitive) candidates else plain
+        val regular = if (options.includeSensitive) candidates else plain
         val skippedSensitive = if (options.includeSensitive) 0 else sensitive.size
+        val includeVault = VaultExportPolicy.include(
+            encryptedContainer = options.format == ExportFormat.ENCRYPTED_ZIP,
+            explicitOptIn = options.includeVault,
+        )
+        val vault = if (includeVault) options.vaultEntries else emptyList()
+        val skippedVault = if (!includeVault && options.includeVault) options.vaultEntries.size else 0
+        val chosen = regular + vault
 
         val now = clock()
         val meta = ExportMeta(now, appVersion, skippedUnsupported = unsupported, skippedSensitive = skippedSensitive)
@@ -159,7 +173,7 @@ class ClipboardBackupService(
             suggestedName = "victorious-clipboard-${FILE_STAMP.format(Instant.ofEpochMilli(now))}.${options.format.extension}",
             mime = options.format.mime,
             itemCount = chosen.size,
-            skippedSensitive = skippedSensitive,
+            skippedSensitive = skippedSensitive + skippedVault,
             skippedUnsupported = unsupported,
         )
     }

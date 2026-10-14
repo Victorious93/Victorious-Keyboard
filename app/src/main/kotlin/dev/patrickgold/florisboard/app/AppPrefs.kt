@@ -26,6 +26,7 @@ import dev.patrickgold.florisboard.app.setup.NotificationPermissionState
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
 import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultLifetime
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.core.Subtype
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
@@ -166,6 +167,26 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val storeDetectedSecrets = boolean(
             key = "clipboard__store_detected_secrets",
             default = false,
+        )
+        /** When true, detected cards, IBANs, keys, tokens and OTP codes are stored in the sensitive vault. */
+        val detectSecretsToVault = boolean(
+            key = "clipboard__detect_secrets_to_vault",
+            default = false,
+        )
+        /** When true (default), the vault list stays masked until the device credential is confirmed. */
+        val vaultRequireUnlock = boolean(
+            key = "clipboard__vault_require_unlock",
+            default = true,
+        )
+        /** Minutes of inactivity after an unlock before the vault locks again. */
+        val vaultLockAfterMinutes = int(
+            key = "clipboard__vault_lock_after_minutes",
+            default = 5,
+        )
+        /** How long unpinned vault items are kept. [VaultLifetime.NEVER] disables expiry. Pins are kept. */
+        val vaultLifetime = enum(
+            key = "clipboard__vault_lifetime",
+            default = VaultLifetime.DEFAULT,
         )
         val historyHideOnPaste = boolean(
             key = "clipboard__history_hide_on_paste",

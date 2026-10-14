@@ -27,7 +27,9 @@ possible as specified (reason given).
 | Search (in the Clipboard manager screen), filters, tags, favourites, categories, editing, multi-select, share | ✅ logic · 🟦 UI |
 | Search typed inside the keyboard panel | ⬜ (see CLIPBOARD.md) |
 | Credential detection (not saved by default) | ✅ |
-| Password-field guard on Copy/Cut | ✅ detection · 🟦 call site |
+| Password-field copies and Android sensitive clips route to the vault | ✅ routing · 🟦 call site |
+| Sensitive vault: own Keystore key and file, masked list, biometric/device-credential lock (default on), timeout, expiry (default 24h, Never allowed), pins kept | ✅ rules and file codec · 🟦 screen, Keystore, and credential prompt **never run** |
+| Vault excluded from backups and exports unless an encrypted export is explicitly opted into | ✅ |
 | Export JSON / ZIP / encrypted / Markdown / text; import with preview, merge/replace/skip, consent, atomic apply | ✅ logic · 🟦 SAF screens |
 | Backup library (user-chosen files, minimal metadata, availability check, delete) | ✅ model · 🟦 UI |
 | Images / URI clips in backups | ⛔ not safely restorable; skipped and counted |

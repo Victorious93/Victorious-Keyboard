@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.clipboard.vault
 
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultTextCipher
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.util.Base64
@@ -49,8 +50,8 @@ interface DataKeyProvider {
 class PayloadCipher(
     private val keyProvider: DataKeyProvider,
     private val random: SecureRandom = SecureRandom(),
-) {
-    fun encrypt(plain: String, context: String): String {
+) : VaultTextCipher {
+    override fun encrypt(plain: String, context: String): String {
         val key = keyProvider.dataKey()
         try {
             val nonce = ByteArray(NONCE_LEN).also { random.nextBytes(it) }
@@ -64,7 +65,7 @@ class PayloadCipher(
         }
     }
 
-    fun decrypt(stored: String, context: String): String {
+    override fun decrypt(stored: String, context: String): String {
         if (!isEncrypted(stored)) throw VaultDecryptionException("value is not in the encrypted format")
         val encoded = stored.substring(PREFIX.length)
         val raw = try {

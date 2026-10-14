@@ -27,6 +27,7 @@ import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
 import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultLifetime
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.ui.DialogSliderPreference
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
@@ -181,10 +182,38 @@ fun ClipboardScreen() = FlorisScreen {
             )
 
             SwitchPreference(
+                prefs.clipboard.detectSecretsToVault,
+                title = stringRes(R.string.pref__clipboard__detect_secrets_to_vault__label),
+                summary = stringRes(R.string.pref__clipboard__detect_secrets_to_vault__summary),
+                enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
+            )
+            SwitchPreference(
                 prefs.clipboard.clearPrimaryClipAffectsHistoryIfUnpinned,
                 title = stringRes(R.string.pref__clipboard__clear_primary_clip_affects_history_if_unpinned__label),
                 summary = stringRes(R.string.pref__clipboard__clear_primary_clip_affects_history_if_unpinned__summary),
                 enabledIf = { prefs.clipboard.historyEnabled isEqualTo true },
+            )
+        }
+
+        PreferenceGroup(title = stringRes(R.string.pref__clipboard__group_vault__label)) {
+            SwitchPreference(
+                prefs.clipboard.vaultRequireUnlock,
+                title = stringRes(R.string.pref__clipboard__vault_require_unlock__label),
+                summary = stringRes(R.string.pref__clipboard__vault_require_unlock__summary),
+            )
+            DialogSliderPreference(
+                prefs.clipboard.vaultLockAfterMinutes,
+                title = stringRes(R.string.pref__clipboard__vault_lock_after__label),
+                valueLabel = { pluralsRes(R.plurals.unit__minutes__written, it, "v" to it) },
+                min = 1,
+                max = 60,
+                stepIncrement = 1,
+                enabledIf = { prefs.clipboard.vaultRequireUnlock isEqualTo true },
+            )
+            ListPreference(
+                prefs.clipboard.vaultLifetime,
+                title = stringRes(R.string.pref__clipboard__vault_lifetime__label),
+                entries = enumDisplayEntriesOf(VaultLifetime::class),
             )
         }
     }

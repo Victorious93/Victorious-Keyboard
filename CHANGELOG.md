@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- Two clipboards. The keyboard panel has Clipboard and Vault tabs. Password-field copies and clips Android marks sensitive go to the Vault. Opt-in detection can also send card numbers, IBANs, API keys, private keys, and one-time codes there. Vault items use a separate Keystore key, stay out of suggestions, stay masked until revealed, lock with the device credential (on by default), expire (default 24 hours; Never is allowed; pins stay), and are left out of backups unless an encrypted export is opted into. Not run on a device.
 - Keyboard colors (Settings → Look). Six colors, a hue/saturation wheel and hex field, six presets, a live preview, and reset. Saved in preferences and painted over Victorious Neon and Neon Light, including popups, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Unreadable text is adjusted. Not run on a device.
 - Word prediction in the suggestion bar: current-word completions, a next-word guess, and a one-edit autocorrect from
   the bundled dictionary packs. *Word prediction* is on by default. *Learn from my typing* is off by default; when on,

@@ -418,11 +418,13 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
      * @return True on success, false if an error occurred or the input connection is invalid.
      */
     fun performClipboardCut(): Boolean {
-        if (activeInfo.inputAttributes.isPasswordLike()) return false // never move password text into the clipboard
         autoSpace.setInactive()
         phantomSpace.setInactive()
         val text = activeContent.selectedText.ifBlank { currentInputConnection()?.getSelectedText(0) }
-        if (text != null) {
+        if (activeInfo.inputAttributes.isPasswordLike()) {
+            // Password text goes to the sensitive vault, not the regular clipboard. History off leaves the field as it is.
+            if (text == null || !clipboardManager.capturePasswordText(text.toString())) return false
+        } else if (text != null) {
             clipboardManager.addNewPlaintext(text.toString())
         } else {
             appContext.showShortToastSync("Failed to retrieve selected text requested to cut: Eiter selection state is invalid or an error occurred within the input connection.")
@@ -437,11 +439,12 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
      * @return True on success, false if an error occurred or the input connection is invalid.
      */
     fun performClipboardCopy(): Boolean {
-        if (activeInfo.inputAttributes.isPasswordLike()) return false // never move password text into the clipboard
         autoSpace.setInactive()
         phantomSpace.setInactive()
         val text = activeContent.selectedText.ifBlank { currentInputConnection()?.getSelectedText(0) }
-        if (text != null) {
+        if (activeInfo.inputAttributes.isPasswordLike()) {
+            if (text == null || !clipboardManager.capturePasswordText(text.toString())) return false
+        } else if (text != null) {
             clipboardManager.addNewPlaintext(text.toString())
         } else {
             appContext.showShortToastSync("Failed to retrieve selected text requested to copy: Eiter selection state is invalid or an error occurred within the input connection.")

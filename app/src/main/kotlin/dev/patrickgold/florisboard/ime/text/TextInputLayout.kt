@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,11 +40,15 @@ import dev.patrickgold.florisboard.ime.mode.DeveloperRowPrefs
 import dev.patrickgold.florisboard.ime.mode.ModePresets
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
+import dev.patrickgold.florisboard.ime.clipedit.ui.ClipEditorPanel
+import dev.patrickgold.florisboard.ime.ai.ui.LocalAiPanel
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
+import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
+import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.snygg.ui.SnyggIcon
 
@@ -53,6 +58,7 @@ fun TextInputLayout(
 ) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
+    val localAi by context.localAiManager()
 
     val prefs by FlorisPreferenceStore
 
@@ -67,6 +73,15 @@ fun TextInputLayout(
             .wrapContentHeight(),
     ) {
         Smartbar()
+        LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
+        val clipEditor by keyboardManager.clipEditor.collectAsState()
+        val aiPanel by localAi.panel.collectAsState()
+        if (aiPanel != null) {
+            LocalAiPanel()
+        }
+        if (clipEditor != null) {
+            ClipEditorPanel()
+        }
         val operatingMode by keyboardManager.activeMode.collectAsState()
         val devEnabled by prefs.devrow.enabled.observeAsState()
         val devProfile by prefs.devrow.profile.observeAsState()

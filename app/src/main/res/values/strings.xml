@@ -179,13 +179,14 @@
     <string name="settings__keyboard_colors__reset" comment="Button">Reset to default</string>
     <string name="settings__keyboard_colors__hex" comment="Hex field label">Hex</string>
     <string name="settings__keyboard_colors__contrast_note" comment="Shown when key text was adjusted">Adjusted so the letters stay readable</string>
-    <string name="settings__keyboard_colors__scope" comment="What the colors change">These colors restyle Victorious Neon and Neon Light: keys, the popup, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Another keyboard theme is left as it is.</string>
+    <string name="settings__keyboard_colors__scope" comment="What the colors change">These colors restyle Victorious Black, Neon, and Neon Light: keys, the popup, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Another keyboard theme is left as it is.</string>
     <string name="settings__keyboard_colors__background" comment="Color row">Background</string>
     <string name="settings__keyboard_colors__key" comment="Color row">Key color</string>
     <string name="settings__keyboard_colors__key_text" comment="Color row">Key text</string>
     <string name="settings__keyboard_colors__primary" comment="Color row">Accent and glow</string>
     <string name="settings__keyboard_colors__secondary" comment="Color row">Highlight</string>
     <string name="settings__keyboard_colors__suggestion" comment="Color row">Suggestion pills</string>
+    <string name="settings__keyboard_colors__preset_black" comment="Preset name">Victorious Black</string>
     <string name="settings__keyboard_colors__preset_neon" comment="Preset name">Neon</string>
     <string name="settings__keyboard_colors__preset_cyber" comment="Preset name">Cyber blue</string>
     <string name="settings__keyboard_colors__preset_matrix" comment="Preset name">Matrix</string>
@@ -512,7 +513,15 @@
     <string name="pref__suggestion__enabled__label" comment="Preference title">Display suggestions</string>
     <string name="pref__suggestion__enabled__summary" comment="Preference summary">Provides suggestions while you type</string>
     <string name="pref__suggestion__prediction_enabled__label" comment="Preference title">Word prediction</string>
-    <string name="pref__suggestion__prediction_enabled__summary" comment="Preference summary">Suggest the current word, the next word, and close corrections from the bundled dictionaries. Off in password fields and fields that ask for no suggestions.</string>
+    <string name="pref__suggestion__prediction_enabled__summary" comment="Preference summary">Suggest the current word, the next word, and close corrections from the bundled dictionaries. A word that is already in the dictionary, your dictionary, or learned words is not replaced. Off in password fields and fields that ask for no suggestions.</string>
+    <string name="pref__suggestion__autocorrect__label" comment="Preference title">Autocorrect</string>
+    <string name="pref__suggestion__autocorrect__summary" comment="Preference summary">How readily space replaces an unknown word. Backspace right after a replacement restores what you typed. Restoring the same word twice adds it to your dictionary.</string>
+    <string name="enum__autocorrect_level__off" comment="Autocorrect aggressiveness">Off</string>
+    <string name="enum__autocorrect_level__off__description" comment="Autocorrect aggressiveness description">Never replace what you type. Suggestions can still be tapped.</string>
+    <string name="enum__autocorrect_level__mild" comment="Autocorrect aggressiveness">Mild</string>
+    <string name="enum__autocorrect_level__mild__description" comment="Autocorrect aggressiveness description">Replace an unknown word only when one neighboring key was pressed.</string>
+    <string name="enum__autocorrect_level__normal" comment="Autocorrect aggressiveness">Normal</string>
+    <string name="enum__autocorrect_level__normal__description" comment="Autocorrect aggressiveness description">Replace an unknown word that is one edit away from a dictionary word.</string>
     <string name="pref__suggestion__learn_from_typing__label" comment="Preference title">Learn from my typing</string>
     <string name="pref__suggestion__learn_from_typing__summary" comment="Preference summary">Off by default. When on, new words and how often they follow each other are stored only on this device. Nothing is stored from passwords, incognito, or fields that disallow personalized learning.</string>
     <string name="pref__suggestion__clear_learned__label" comment="Preference title">Clear learned words</string>
@@ -1506,5 +1515,90 @@
         <item quantity="one">%d candidate</item>
         <item quantity="other">%d candidates</item>
     </plurals>
+
+    <string name="clip_editor__paste">Paste</string>
+    <string name="clip_editor__save">Save</string>
+    <string name="clip_editor__save_new">Save as new</string>
+    <string name="clip_editor__cancel">Cancel</string>
+    <string name="clip_editor__find">Find</string>
+    <string name="clip_editor__next">Next</string>
+    <string name="clip_editor__replace">Replace</string>
+    <string name="clip_editor__replace_one">Replace</string>
+    <string name="clip_editor__replace_all">All</string>
+    <string name="clip_editor__word">Word</string>
+    <string name="clip_editor__line">Line</string>
+    <string name="clip_editor__all">All</string>
+    <string name="clip_editor__undo">Undo</string>
+    <string name="clip_editor__redo">Redo</string>
+    <string name="clip_editor__counts">{chars} ch · {words} w · ~{tokens} tok</string>
+    <string name="clip_editor__saved">Saved</string>
+    <string name="clip_editor__failed">Could not save</string>
+    <string name="clip_editor__empty">Nothing to edit</string>
+    <string name="clip_editor__vault_locked">Unlock the vault to edit it</string>
+    <string name="clip_editor__use_actions">Use Paste or Save in the editor</string>
+    <string name="clip__edit_item">Edit</string>
+    <string name="toolbar__transform_failed">Could not transform that text</string>
+    <string name="toolbar__select_text">Select some text first</string>
+    <string name="settings__toolbar__title">Toolbar</string>
+    <string name="settings__toolbar__summary">Pages on the smartbar: Terminal, Code, AI, Edit, Clipboard, and Privacy. Tap a page name to switch. Long-press a button on the keyboard to hide it. Shell history is off until you turn it on, and it skips incognito, passwords, and the vault.</string>
+    <string name="settings__toolbar__shell_history">Remember recent commands</string>
+    <string name="settings__toolbar__bracket_pairing">Auto-pair brackets in the editor</string>
+    <string name="settings__toolbar__restore">Show every button</string>
+    <string name="settings__toolbar__clear_history">Clear shell history</string>
+    <string name="settings__toolbar__label">Button label</string>
+    <string name="settings__toolbar__command">Command text</string>
+    <string name="settings__toolbar__tag">Tag</string>
+    <string name="settings__toolbar__add">Add command</string>
+    <string name="settings__toolbar__earlier">Earlier</string>
+    <string name="settings__toolbar__hide">Hide</string>
+    <string name="settings__toolbar__show">Show</string>
+    <string name="settings__toolbar__hidden">hidden</string>
+    <string name="settings__smartbar__toolbar">Toolbar pages</string>
+    <string name="settings__local_ai__title">Local AI</string>
+    <string name="settings__local_ai__home_summary">On-device model. No network. You import the .gguf file.</string>
+    <string name="settings__local_ai__summary">Runs on this device. The app does not add an Internet permission and does not ship a model. A .gguf file is copied into private storage. Vault text is sent only when you choose Vault. Suggestions stay off until you turn them on, and they also follow Learn from my typing.</string>
+    <string name="settings__local_ai__engine">Engine llama.cpp</string>
+    <string name="settings__local_ai__import">Import .gguf</string>
+    <string name="settings__local_ai__delete">Delete model</string>
+    <string name="settings__local_ai__delete_body">Delete this model from private storage?</string>
+    <string name="settings__local_ai__context">Context size</string>
+    <string name="settings__local_ai__selected">Selected</string>
+    <string name="settings__local_ai__threads">Threads</string>
+    <string name="settings__local_ai__temperature">Temperature</string>
+    <string name="settings__local_ai__max_tokens">Max tokens</string>
+    <string name="settings__local_ai__system">System prompt</string>
+    <string name="settings__local_ai__language">Translate into</string>
+    <string name="settings__local_ai__suggestions">AI suggestions in the strip</string>
+    <string name="settings__local_ai__on">On</string>
+    <string name="settings__local_ai__off">Off</string>
+    <string name="settings__local_ai__warn_title">Large model</string>
+    <string name="settings__local_ai__warn_body">This file is 512 MB or larger, or its size could not be read. It is copied into private storage and can use a lot of memory when loaded.</string>
+    <string name="settings__local_ai__bad_file">That file is not a GGUF model.</string>
+    <string name="settings__local_ai__too_large">That file is over 4 GB.</string>
+    <string name="settings__local_ai__no_space">Not enough free space to copy that file.</string>
+    <string name="settings__local_ai__too_many">Delete a model before importing another. The limit is 20.</string>
+    <string name="settings__local_ai__empty_file">Could not copy that file.</string>
+    <string name="settings__local_ai__import_failed">Could not import that file.</string>
+    <string name="local_ai__unavailable">Import a .gguf model in Settings, Local AI. The keyboard keeps working without one.</string>
+    <string name="local_ai__native_missing">Native engine unavailable</string>
+    <string name="local_ai__password">Password fields are not sent to the model.</string>
+    <string name="local_ai__empty">Choose text first, or type an Ask prompt.</string>
+    <string name="local_ai__vault">Vault text is sent only if you choose Vault.</string>
+    <string name="local_ai__too_long">That text is too long for the context size.</string>
+    <string name="local_ai__ask_hint">Type a question, then Run.</string>
+    <string name="local_ai__running">Working…</string>
+    <string name="local_ai__cancel">Cancel</string>
+    <string name="local_ai__run">Run</string>
+    <string name="local_ai__insert">Insert</string>
+    <string name="local_ai__copy">Copy</string>
+    <string name="local_ai__models">Models</string>
+    <string name="local_ai__close">Close</string>
+    <string name="local_ai__source_selection">Selection</string>
+    <string name="local_ai__source_field">Field</string>
+    <string name="local_ai__source_clipboard">Clipboard</string>
+    <string name="local_ai__source_editor">Editor</string>
+    <string name="local_ai__source_vault">Vault</string>
+    <string name="local_ai__vault_copy">Vault results can be inserted, not copied.</string>
+    <string name="local_ai__copied">Copied</string>
 
 </resources>

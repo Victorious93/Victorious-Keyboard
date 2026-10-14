@@ -446,6 +446,40 @@ class ClipboardManager(
         }
     }
 
+    /** Replaces one unlocked vault row. A locked vault is left untouched and the text is not logged. */
+    fun replaceVaultText(id: String, text: String) {
+        if (id.isBlank() || text.isBlank()) {
+            notify(R.string.clip_editor__failed)
+            return
+        }
+        mutate {
+            if (vaultIsLocked()) {
+                notify(R.string.clip_editor__vault_locked)
+                return@mutate
+            }
+            val saved = sensitiveVaultReady.await().replaceText(id, text)
+            if (saved) publishVault() else notify(R.string.clip_editor__failed)
+        }
+    }
+
+    /** Adds a new vault row. This does not write the regular history or the system clipboard. */
+    fun addVaultText(text: String) {
+        if (text.isBlank()) {
+            notify(R.string.clip_editor__failed)
+            return
+        }
+        mutate {
+            if (vaultIsLocked()) {
+                notify(R.string.clip_editor__vault_locked)
+                return@mutate
+            }
+            val plan = offerVault(text, VaultReason.USER)
+            val saved = plan is InsertPlan.Add || plan is InsertPlan.MoveToTop || plan is InsertPlan.IgnoreDuplicate
+            if (!saved) notify(R.string.clip_editor__failed)
+            publishVault()
+        }
+    }
+
     fun syncVaultVisibility() {
         ioScope.launch {
             historyMutex.withLock {

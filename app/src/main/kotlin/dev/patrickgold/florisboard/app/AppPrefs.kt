@@ -40,6 +40,7 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiHistory
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSkinTone
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
+import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectLevel
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
@@ -857,6 +858,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "suggestion__prediction_enabled",
             default = true,
         )
+        val autocorrectLevel = enum(
+            key = "suggestion__autocorrect_level",
+            default = AutocorrectLevel.NORMAL,
+        )
         val learnFromTyping = boolean(
             key = "suggestion__learn_from_typing",
             default = false,
@@ -888,12 +893,12 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val dayThemeId = custom(
             key = "theme__day_theme_id",
-            default = extCoreTheme("victorious_neon_light"),
+            default = extCoreTheme("victorious_black"),
             serializer = ExtensionComponentName.Serializer,
         )
         val nightThemeId = custom(
             key = "theme__night_theme_id",
-            default = extCoreTheme("victorious_neon"),
+            default = extCoreTheme("victorious_black"),
             serializer = ExtensionComponentName.Serializer,
         )
         val accentColor = custom(
@@ -903,7 +908,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val keyboardColors = string(
             key = "theme__keyboard_colors",
-            default = KeyboardPaletteCodec.encode(KeyboardPalettes.Neon),
+            default = KeyboardPaletteCodec.encode(KeyboardPalettes.Black),
         )
         val sunriseTime = localTime(
             key = "theme__sunrise_time",

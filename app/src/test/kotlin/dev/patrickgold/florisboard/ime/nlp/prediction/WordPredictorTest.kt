@@ -24,6 +24,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.io.File
 import java.nio.file.Files
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 
 private val LEXICON = mapOf(
     "termux" to 200,
@@ -83,6 +86,8 @@ class WordPredictorTest : FunSpec({
         LearningGate.allowsLearning(true, open.copy(incognito = true)) shouldBe false
         LearningGate.allowsLearning(true, open.copy(noPersonalizedLearning = true)) shouldBe false
         LearningGate.allowsLearning(true, open.copy(noSuggestions = true)) shouldBe false
+        LearningGate.allowsLearning(true, open.copy(vaultHandoff = true)) shouldBe false
+        LearningGate.allowsPrediction(true, open.copy(vaultHandoff = true)) shouldBe false
         LearningGate.allowsLearning(true, open) shouldBe true
         LearningGate.allowsPrediction(true, open.copy(passwordLike = true)) shouldBe false
         LearningGate.allowsPrediction(true, open.copy(noSuggestions = true)) shouldBe false
@@ -114,6 +119,148 @@ class WordPredictorTest : FunSpec({
         store.clear()
         store.load().words.isEmpty() shouldBe true
         File(dir, "learned-words.json").exists() shouldBe false
+    }
+
+    test("hope is not replaced by rope when hope is a dictionary word") {
+        val preds = WordPredictor.predict(
+            "hope",
+            lexicon = mapOf("rope" to 220),
+            learned = null,
+            knownWords = setOf("hope"),
+        )
+        preds.none { it.autoCommit } shouldBe true
+        preds.none { it.kind == Prediction.Kind.CORRECTION } shouldBe true
+        preds.first().text shouldBe "hope"
+    }
+
+    test("home, the, code, some, and with stay when they are dictionary words") {
+        val lexicon = mapOf("tee" to 200, "node" to 200, "codex" to 180, "rope" to 180)
+        for (word in listOf("home", "the", "code", "some", "with", "hope")) {
+            val preds = WordPredictor.predict(word, lexicon, learned = null, knownWords = setOf(word))
+            preds.none { it.autoCommit } shouldBe true
+            preds.none { it.text.equals("rope", ignoreCase = true) && it.kind == Prediction.Kind.CORRECTION } shouldBe true
+        }
+    }
+
+    test("a user-dictionary word and a learned word are not autocorrected") {
+        val lexicon = mapOf("nmap" to 200, "rope" to 200)
+        val user = WordPredictor.predict("namp", lexicon, learned = null, knownWords = setOf("namp"))
+        user.none { it.autoCommit } shouldBe true
+        user.first().text shouldBe "namp"
+        val learned = LearnedLexicon().record("hope", null)
+        val fromTyping = WordPredictor.predict("hope", lexicon, learned)
+        fromTyping.none { it.autoCommit } shouldBe true
+        fromTyping.none { it.kind == Prediction.Kind.CORRECTION } shouldBe true
+    }
+
+    test("an unknown word can still be corrected, and h is not treated as next to r") {
+        KeyProximity.adjacent('h', 'r') shouldBe false
+        KeyProximity.adjacent('h', 'g') shouldBe true
+        KeyProximity.adjacent('u', 'i') shouldBe true
+        val unknown = WordPredictor.predict("hope", mapOf("rope" to 220), learned = null)
+        unknown.first { it.kind == Prediction.Kind.CORRECTION }.text shouldBe "rope"
+        unknown.first().autoCommit shouldBe true
+        val mild = WordPredictor.predict(
+            "hope",
+            mapOf("rope" to 220),
+            learned = null,
+            level = AutocorrectLevel.MILD,
+        )
+        mild.none { it.autoCommit } shouldBe true
+        val neighbor = WordPredictor.predict(
+            "termix",
+            LEXICON,
+            learned = null,
+            level = AutocorrectLevel.MILD,
+        )
+        neighbor.first { it.autoCommit }.text shouldBe "termux"
+    }
+
+    test("a nearer key outranks a more frequent far key") {
+        val preds = WordPredictor.predict(
+            "helo",
+            mapOf("hero" to 255, "help" to 10),
+            learned = null,
+        )
+        preds.first { it.kind == Prediction.Kind.CORRECTION }.text shouldBe "help"
+        preds.first().autoCommit shouldBe true
+    }
+
+    test("off never auto-commits, including a one-edit unknown word") {
+        val preds = WordPredictor.predict(
+            "termx",
+            LEXICON,
+            learned = null,
+            level = AutocorrectLevel.OFF,
+        )
+        preds.any { it.text == "termux" } shouldBe true
+        preds.none { it.autoCommit } shouldBe true
+    }
+
+    test("backspace after an autocorrect restores the typed word") {
+        val armed = AutocorrectReplacement(typed = "hope", committed = "rope", withSpace = true)
+        val step = AutocorrectUndo.plan("say rope ", armed)
+        step shouldNotBe null
+        step!!.deleteCount shouldBe "rope ".length
+        step.restore shouldBe "hope"
+        AutocorrectUndo.plan("say rope", armed) shouldBe null
+        AutocorrectUndo.plan("say rope ", armed.copy(typed = "rope")) shouldBe null
+        val noSpace = AutocorrectUndo.plan("rope", AutocorrectReplacement("termx", "termux", withSpace = false))
+        noSpace shouldBe null
+        val restored = AutocorrectUndo.plan("termux", AutocorrectReplacement("termx", "termux", withSpace = false))
+        restored!!.restore shouldBe "termx"
+        restored.deleteCount shouldBe "termux".length
+    }
+
+    test("reverting the same word twice marks it for the user dictionary") {
+        val once = RevertCounts().note("namp")
+        once.second shouldBe false
+        val twice = once.first.note("Namp")
+        twice.second shouldBe true
+        twice.first.protectedWords() shouldContain "namp"
+        twice.first.note("namp").second shouldBe true
+        RevertCounts().note("a").second shouldBe false
+        RevertPrivacy.mayRemember(LearningGate.Field()) shouldBe true
+        RevertPrivacy.mayRemember(LearningGate.Field(passwordLike = true)) shouldBe false
+        RevertPrivacy.mayRemember(LearningGate.Field(incognito = true)) shouldBe false
+        RevertPrivacy.mayRemember(LearningGate.Field(vaultHandoff = true)) shouldBe false
+        RevertPrivacy.mayRemember(LearningGate.Field(noPersonalizedLearning = true)) shouldBe false
+    }
+
+    test("revert counts round-trip and a corrupt file stores nothing") {
+        val counts = RevertCounts().note("namp").first.note("namp").first
+        val back = RevertCountCodec.decode(RevertCountCodec.encode(counts))
+        back.protectedWords() shouldContain "namp"
+        RevertCountCodec.decode("nope".encodeToByteArray()).counts.isEmpty() shouldBe true
+        RevertCountCodec.decode(ByteArray(RevertCountCodec.MAX_FILE_BYTES + 1)).counts.isEmpty() shouldBe true
+        val dir = Files.createTempDirectory("revert-counts").toFile()
+        val file = RevertCountFile(dir)
+        file.load().counts.isEmpty() shouldBe true
+        file.save(counts)
+        file.load().protectedWords() shouldContain "namp"
+    }
+
+    test("the english word list keeps hope, and the pack still contains rope") {
+        val dir = File("src/main/assets/ime/dictionary-packs")
+        val zips = dir.listFiles { f -> f.extension == "zip" }!!.map { it.readBytes() }
+        val lexicon = BundledLexicon.fromPackZips(zips)
+        lexicon.containsKey("rope") shouldBe true
+        val english = Json.decodeFromString(
+            MapSerializer(String.serializer(), Int.serializer()),
+            File("src/main/assets/ime/dict/data.json").readText(),
+        )
+        english.containsKey("hope") shouldBe true
+        english.containsKey("the") shouldBe true
+        english.containsKey("code") shouldBe true
+        val hope = WordPredictor.predict("hope", lexicon, learned = null, knownWords = english.keys)
+        hope.none { it.autoCommit } shouldBe true
+        hope.none { it.text.equals("rope", ignoreCase = true) } shouldBe true
+        val the = WordPredictor.predict("the", lexicon, learned = null, knownWords = english.keys)
+        the.none { it.autoCommit } shouldBe true
+        val code = WordPredictor.predict("code", lexicon, learned = null, knownWords = english.keys)
+        code.none { it.autoCommit } shouldBe true
+        val termx = WordPredictor.predict("termx", lexicon, learned = null, knownWords = english.keys)
+        termx.first { it.autoCommit }.text shouldBe "termux"
     }
 
     test("bundled packs contribute real words and a bad zip is skipped") {

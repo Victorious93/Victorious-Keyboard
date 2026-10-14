@@ -453,6 +453,7 @@ private fun roleLabel(role: KeyboardColorRole): Int = when (role) {
 }
 
 private fun presetLabel(id: String): Int = when (id) {
+    "black" -> R.string.settings__keyboard_colors__preset_black
     "neon" -> R.string.settings__keyboard_colors__preset_neon
     "cyber" -> R.string.settings__keyboard_colors__preset_cyber
     "matrix" -> R.string.settings__keyboard_colors__preset_matrix

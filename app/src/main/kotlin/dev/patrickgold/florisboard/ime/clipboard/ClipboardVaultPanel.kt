@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.clipboardManager
+import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultMask
 import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultPlain
 import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultSession
@@ -60,6 +62,7 @@ import org.florisboard.lib.snygg.ui.SnyggText
 fun ClipboardVaultPanel(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val clipboardManager by context.clipboardManager()
+    val keyboardManager by context.keyboardManager()
     val prefs by FlorisPreferenceStore
     val minutes by prefs.clipboard.vaultLockAfterMinutes.observeAsState()
     val unlockedUntil by VaultSession.unlockedUntilMs.collectAsState()
@@ -139,6 +142,14 @@ fun ClipboardVaultPanel(modifier: Modifier = Modifier) {
                 onPin = { clipboardManager.setVaultPinned(item.id, !item.pinned) },
                 onMove = { clipboardManager.moveVaultToClipboard(item.id) },
                 onDelete = { clipboardManager.deleteVaultItem(item.id) },
+                onEdit = {
+                    keyboardManager.openClipEditor(
+                        dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin.VAULT,
+                        item.id,
+                        item.text,
+                        sensitive = true,
+                    )
+                },
             )
         }
     }
@@ -152,6 +163,7 @@ private fun VaultRow(
     onPin: () -> Unit,
     onMove: () -> Unit,
     onDelete: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     SnyggColumn(
         FlorisImeUi.ClipboardItem.elementName,
@@ -170,6 +182,9 @@ private fun VaultRow(
             }
             SnyggIconButton(onClick = onMove) {
                 SnyggIcon(imageVector = Icons.AutoMirrored.Filled.ArrowBack)
+            }
+            SnyggIconButton(onClick = onEdit) {
+                SnyggIcon(imageVector = Icons.Filled.Edit)
             }
             SnyggIconButton(onClick = onDelete) {
                 SnyggIcon(imageVector = Icons.Filled.Delete)

@@ -34,6 +34,8 @@ enum class VaultReason {
     MOVED,
     /** Written by a backup import. Older files never use this name. */
     IMPORTED,
+    /** Saved from the in-keyboard editor. */
+    USER,
 }
 
 /**

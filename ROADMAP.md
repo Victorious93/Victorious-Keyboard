@@ -30,8 +30,8 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | 🟡 word prediction (current word, next word, one-edit autocorrect) is JVM-tested and wired into the suggestion bar; learning is off by default and the file is not backed up. Gesture typing is still not done. Nothing has been run on a device (`DICTIONARY_PACKS.md`) |
-| 7 | AI workspace | ⬜ |
-| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Neon (light variant too); settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay Neon (presets, picker, persistence) and are JVM-tested; the screen is compiled and not run on a device. Older themes stay selectable. Responsive/tablet layout not started |
+| 7 | AI workspace | 🟡 on-device GGUF import and llama.cpp JNI: pure rules JVM-tested, settings and toolbar compiled, **not run on a device**. No `INTERNET` permission. No model is bundled. Network providers are not started. |
+| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Black (day and night); Victorious Neon and Neon Light stay selectable. Settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay those themes and are JVM-tested; the screen is compiled and not run on a device. Responsive/tablet layout not started |
 | 9 | Security and performance | ⬜ |
 | 10 | Release engineering | ⬜ |
 
@@ -69,7 +69,7 @@ As in the project brief. Notable decisions already taken:
 
 * P4: modifier→`KeyEvent` mapping is a pure function with a test table; Termux/SSH behaviour is device-test-only.
 * P6: suggestions are a pure predictor over the bundled packs, with learning off unless the user opts in. Gesture typing is still not done. `spell()` is still a stub.
-* P7: no `INTERNET` permission until a provider adapter is enabled by the user.
+* P7: no `INTERNET` permission until a provider adapter is enabled by the user. The on-device GGUF path does not add that permission. The user imports a `.gguf`; llama.cpp `b11624` runs locally. Network providers are not started.
 * P10: no production signing material in the repo; debug builds are never published as releases.
 
 ## Phase 3 — status detail

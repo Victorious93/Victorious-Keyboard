@@ -112,6 +112,19 @@ class FlorisImeService : LifecycleInputMethodService() {
             }
         }
 
+        fun launchLocalAiSettings() {
+            val ims = FlorisImeServiceReference.get() ?: return
+            ims.requestHideSelf(0)
+            ims.launchActivity(FlorisAppActivity::class) {
+                it.action = Intent.ACTION_VIEW
+                it.data = android.net.Uri.parse("ui://florisboard/settings/local-ai")
+                it.addCategory(Intent.CATEGORY_BROWSABLE)
+                it.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        }
+
         fun showUi() {
             val ims = FlorisImeServiceReference.get() ?: return
             ims.showUi()

@@ -31,14 +31,18 @@ object WordPredictor {
         lexicon: Map<String, Int>,
         learned: LearnedLexicon?,
         maxCandidates: Int = MAX_CANDIDATES,
+        knownWords: Set<String> = emptySet(),
+        level: AutocorrectLevel = AutocorrectLevel.NORMAL,
     ): List<Prediction> {
-        if (lexicon.isEmpty() && (learned == null || learned.words.isEmpty())) return emptyList()
+        if (lexicon.isEmpty() && (learned == null || learned.words.isEmpty()) && knownWords.isEmpty()) {
+            return emptyList()
+        }
         val limit = maxCandidates.coerceIn(1, MAX_CANDIDATES)
         val (previous, current) = contextTokens(textBeforeCursor)
         return if (current == null) {
             if (previous == null) emptyList() else nextWords(previous, lexicon, learned, limit)
         } else {
-            currentWord(current, lexicon, learned, limit)
+            currentWord(current, lexicon, learned, limit, knownWords, level)
         }
     }
 
@@ -60,6 +64,8 @@ object WordPredictor {
         lexicon: Map<String, Int>,
         learned: LearnedLexicon?,
         limit: Int,
+        knownWords: Set<String>,
+        level: AutocorrectLevel,
     ): List<Prediction> {
         val needle = typed.lowercase()
         val pool = merged(lexicon, learned)
@@ -76,15 +82,24 @@ object WordPredictor {
                 )
             }
             .toList()
-        if (needle in pool || typed.length < 2) return completions
+        // A word that is already real — English list, user dictionary, learned, or a pack entry —
+        // is kept. The AI pack stores "RoPE", which normalizes to "rope" and is one edit from
+        // "hope"; without this check space would replace hope.
+        val protected = needle in pool || needle in knownWords || typed in knownWords
+        if (protected || typed.length < 2) return keepTypedWord(typed, needle, completions, protected, limit)
         val corrections = pool.asSequence()
             .map { (word, freq) -> Triple(word, freq, distance(needle, word, 2)) }
             .filter { it.third <= 2 && !it.first.startsWith(needle) }
-            .sortedWith(compareBy<Triple<String, Int, Int>> { it.third }.thenByDescending { it.second }.thenBy { it.first })
+            .sortedWith(
+                compareBy<Triple<String, Int, Int>> { it.third }
+                    .thenBy { KeyProximity.substitutionRank(needle, it.first) }
+                    .thenByDescending { it.second }
+                    .thenBy { it.first },
+            )
             .take(limit)
             .toList()
         val best = corrections.firstOrNull()
-        val auto = best != null && best.third == 1 && typed.length >= AUTOCOMMIT_MIN_LENGTH
+        val auto = best != null && Autocorrect.allowsAutoCommit(typed, best.first, best.third, level)
         val correctionPreds = corrections.mapIndexed { index, (word, freq, dist) ->
             Prediction(
                 text = applyCase(typed, word),
@@ -94,6 +109,24 @@ object WordPredictor {
             )
         }
         return (correctionPreds + completions).distinctBy { it.text.lowercase() }.take(limit)
+    }
+
+    /** Show the typed word itself when it is already valid, and never mark it for replacement. */
+    private fun keepTypedWord(
+        typed: String,
+        needle: String,
+        completions: List<Prediction>,
+        protected: Boolean,
+        limit: Int,
+    ): List<Prediction> {
+        if (!protected || completions.any { it.text.equals(typed, ignoreCase = true) }) return completions
+        val self = Prediction(
+            text = applyCase(typed, needle),
+            kind = Prediction.Kind.COMPLETION,
+            confidence = 1.0,
+            autoCommit = false,
+        )
+        return (listOf(self) + completions).distinctBy { it.text.lowercase() }.take(limit)
     }
 
     private fun nextWords(
@@ -193,15 +226,18 @@ object LearningGate {
         val incognito: Boolean = false,
         val noPersonalizedLearning: Boolean = false,
         val noSuggestions: Boolean = false,
+        /** Vault text was just pasted into this field. Keep it out of learning and suggestions. */
+        val vaultHandoff: Boolean = false,
     )
 
     fun allowsPrediction(predictionEnabled: Boolean, field: Field): Boolean =
-        predictionEnabled && !field.passwordLike && !field.noSuggestions
+        predictionEnabled && !field.passwordLike && !field.noSuggestions && !field.vaultHandoff
 
     fun allowsLearning(learningEnabled: Boolean, field: Field): Boolean =
         learningEnabled &&
             !field.passwordLike &&
             !field.incognito &&
             !field.noPersonalizedLearning &&
-            !field.noSuggestions
+            !field.noSuggestions &&
+            !field.vaultHandoff
 }

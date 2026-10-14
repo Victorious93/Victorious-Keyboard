@@ -160,7 +160,7 @@ Privacy: [PRIVACY.md](PRIVACY.md).
 
 ## Download
 
-The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, and the separate sensitive clipboard. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
+The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, the separate sensitive clipboard, clipboard ZIP export and import, and the lift above the home-gesture strip. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
 
 ## Build and install
 

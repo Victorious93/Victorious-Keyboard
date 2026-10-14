@@ -157,6 +157,18 @@ class SensitiveVault(
         return plan
     }
 
+    /** Rewrites one row in place. The id, pin, and reason stay, so the text remains a vault item. */
+    @Synchronized
+    fun replaceText(id: String, text: String): Boolean {
+        if (text.isBlank() || text.length > policy().maxItemChars) return false
+        val records = readRecords().toMutableList()
+        val index = records.indexOfFirst { it.id == id }
+        if (index < 0) return false
+        records[index] = records[index].copy(payload = cipher.encrypt(text, id))
+        write(records)
+        return true
+    }
+
     @Synchronized
     fun setPinned(id: String, pinned: Boolean) {
         val records = readRecords()

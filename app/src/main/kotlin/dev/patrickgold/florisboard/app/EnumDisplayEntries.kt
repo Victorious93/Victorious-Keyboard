@@ -36,6 +36,7 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiHistory
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSkinTone
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
+import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectLevel
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
@@ -421,6 +422,28 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
             entry(
                 key = IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD,
                 label = stringRes(id = R.string.enum__incognito_display_mode__display_behind_keyboard),
+            )
+        }
+    },
+    AutocorrectLevel::class to DEFAULT to {
+        listPrefEntries {
+            entry(
+                key = AutocorrectLevel.OFF,
+                label = stringRes(R.string.enum__autocorrect_level__off),
+                description = stringRes(R.string.enum__autocorrect_level__off__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = AutocorrectLevel.MILD,
+                label = stringRes(R.string.enum__autocorrect_level__mild),
+                description = stringRes(R.string.enum__autocorrect_level__mild__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = AutocorrectLevel.NORMAL,
+                label = stringRes(R.string.enum__autocorrect_level__normal),
+                description = stringRes(R.string.enum__autocorrect_level__normal__description),
+                showDescriptionOnlyIfSelected = true,
             )
         }
     },

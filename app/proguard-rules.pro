@@ -27,3 +27,9 @@
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+-keep class dev.patrickgold.florisboard.ime.ai.LlamaNative { *; }
+-keep interface dev.patrickgold.florisboard.ime.ai.TokenSink { *; }
+-keepclassmembers class * implements dev.patrickgold.florisboard.ime.ai.TokenSink {
+    boolean onToken(java.lang.String);
+}

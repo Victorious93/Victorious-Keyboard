@@ -47,6 +47,7 @@ import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.keyboard.IncognitoMode
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
+import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectLevel
 import dev.patrickgold.florisboard.lib.compose.FlorisHyperlinkText
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -75,6 +76,12 @@ fun TypingScreen() = FlorisScreen {
                 icon = Icons.Default.AutoAwesome,
                 title = stringRes(R.string.pref__suggestion__prediction_enabled__label),
                 summary = stringRes(R.string.pref__suggestion__prediction_enabled__summary),
+            )
+            ListPreference(
+                prefs.suggestion.autocorrectLevel,
+                title = stringRes(R.string.pref__suggestion__autocorrect__label),
+                entries = enumDisplayEntriesOf(AutocorrectLevel::class),
+                enabledIf = { prefs.suggestion.predictionEnabled isEqualTo true },
             )
             SwitchPreference(
                 prefs.suggestion.learnFromTyping,

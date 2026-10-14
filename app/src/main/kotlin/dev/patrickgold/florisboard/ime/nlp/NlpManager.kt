@@ -22,6 +22,7 @@ import android.util.LruCache
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.clipboardManager
 import dev.patrickgold.florisboard.editorInstance
+import dev.patrickgold.florisboard.ime.ai.AiPrivacy
 import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipVisibility
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
@@ -36,6 +37,7 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.keyboardManager
+import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.florisboard.lib.util.NetworkUtils
 import dev.patrickgold.florisboard.subtypeManager
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +64,7 @@ class NlpManager(context: Context) {
     private val clipboardManager by context.clipboardManager()
     private val editorInstance by context.editorInstance()
     private val keyboardManager by context.keyboardManager()
+    private val localAi by context.localAiManager()
     private val subtypeManager by context.subtypeManager()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -209,13 +212,40 @@ class NlpManager(context: Context) {
         val info = editorInstance.activeInfo
         return LearningGate.allowsLearning(
             learningEnabled = prefs.suggestion.learnFromTyping.get(),
-            field = LearningGate.Field(
-                passwordLike = info.inputAttributes.isPasswordLike(),
-                incognito = keyboardManager.activeState.isIncognitoMode,
-                noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
-                noSuggestions = info.inputAttributes.flagTextNoSuggestions,
-            ),
+            field = currentLearningField(),
         )
+    }
+
+    private fun currentLearningField(): LearningGate.Field {
+        val info = editorInstance.activeInfo
+        return LearningGate.Field(
+            passwordLike = info.inputAttributes.isPasswordLike(),
+            incognito = keyboardManager.activeState.isIncognitoMode,
+            noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
+            noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+            vaultHandoff = keyboardManager.vaultLearningHold,
+        )
+    }
+
+    /**
+     * Optional on-device continuation. Off unless Local AI suggestions and learning are both on.
+     * The prefix is read only after that check, and the model call itself is not awaited.
+     */
+    private fun localSuggestion(content: EditorContent): WordSuggestionCandidate? {
+        val config = localAi.config.value
+        val allow = AiPrivacy.maySuggest(
+            suggestionsEnabled = config.suggestionsEnabled,
+            modelSelected = config.selectedModelId != null,
+            learningEnabled = prefs.suggestion.learnFromTyping.get(),
+            predictionEnabled = prefs.suggestion.predictionEnabled.get(),
+            field = currentLearningField(),
+        )
+        if (!allow) {
+            localAi.offerSuggestion(null)
+            return null
+        }
+        val prefix = WordPredictor.contextTokens(content.textBeforeSelection).second
+        return localAi.offerSuggestion(prefix)
     }
 
     /**
@@ -268,11 +298,13 @@ class NlpManager(context: Context) {
                     )
                 }
             }
+            val aiSuggestion = localSuggestion(content)
             internalSuggestionsGuard.withLock {
                 if (internalSuggestions.first < reqTime) {
                     internalSuggestions = reqTime to buildList {
                         addAll(emojiSuggestions)
                         addAll(suggestions)
+                        if (aiSuggestion != null) add(aiSuggestion)
                     }
                 }
             }
@@ -284,6 +316,10 @@ class NlpManager(context: Context) {
         runBlocking {
             internalSuggestions = reqTime to suggestions
         }
+    }
+
+    fun refreshSuggestions() {
+        suggest(subtypeManager.activeSubtype, editorInstance.activeContent)
     }
 
     fun clearSuggestions() {

@@ -28,10 +28,14 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,6 +51,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.developer.DevKey
@@ -101,18 +106,29 @@ fun DeveloperRowBar(
     val modifierState by keyboardManager.terminalModifierState.collectAsState()
     val keys = remember(profile, options) { DeveloperRows.row(profile, options) }
 
-    SnyggRow(
-        elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
+    // Scroll lives outside SnyggRow. The row's own background clips to its shape; putting the
+    // scroll modifier inside that clip measured the keys against the screen width and cut the
+    // last label (Home showed up as "Hor") instead of letting the row slide.
+    val rowHeight = FlorisImeSizing.smartbarHeight * style.heightScale
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(FlorisImeSizing.smartbarHeight * style.heightScale)
+            .height(rowHeight)
             .horizontalScroll(rememberScrollState()),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        for (key in keys) {
-            val action = key.action
-            val display = if (action is DevKeyAction.Modifier) modifierState.of(action.modifier) else ModifierDisplay.OFF
-            DevKeyButton(key = key, display = display, style = style, keyboardManager = keyboardManager)
+        SnyggRow(
+            elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
+            modifier = Modifier
+                .wrapContentWidth(unbounded = true)
+                .height(rowHeight),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            for (key in keys) {
+                val action = key.action
+                val display = if (action is DevKeyAction.Modifier) modifierState.of(action.modifier) else ModifierDisplay.OFF
+                DevKeyButton(key = key, display = display, style = style, keyboardManager = keyboardManager)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
         }
     }
 }
@@ -235,7 +251,10 @@ private fun DevKeyButton(key: DevKey, display: ModifierDisplay, style: Developer
             elementName = "$elementName-text",
             selector = selector,
             text = label,
-            modifier = Modifier.padding(horizontal = 8.dp),
+            modifier = Modifier.padding(horizontal = 4.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Visible,
+            softWrap = false,
         )
     }
 }

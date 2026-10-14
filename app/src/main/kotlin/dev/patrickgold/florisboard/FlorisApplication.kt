@@ -71,6 +71,7 @@ class FlorisApplication : Application() {
     val glideTypingManager = lazy { GlideTypingManager(this) }
     val snippetManager = lazy { SnippetManager(this) }
     val keyboardManager = lazy { KeyboardManager(this) }
+    val localAi = lazy { dev.patrickgold.florisboard.ime.ai.LocalAiManager(this) }
     val nlpManager = lazy { NlpManager(this) }
     val subtypeManager = lazy { SubtypeManager(this) }
     val themeManager = lazy { ThemeManager(this) }
@@ -116,7 +117,13 @@ class FlorisApplication : Application() {
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)
         snippetManager.value.ensureLoaded() // loads the snippet file off the main thread (also after a Direct Boot start)
+        localAi.value
         DictionaryManager.init(this)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (localAi.isInitialized()) localAi.value.onTrimMemory(level)
     }
 
     private inner class BootComplete : BroadcastReceiver() {
@@ -158,6 +165,8 @@ fun Context.extensionManager() = this.florisApplication().extensionManager
 fun Context.glideTypingManager() = this.florisApplication().glideTypingManager
 
 fun Context.keyboardManager() = this.florisApplication().keyboardManager
+
+fun Context.localAiManager() = this.florisApplication().localAi
 
 fun Context.nlpManager() = this.florisApplication().nlpManager
 

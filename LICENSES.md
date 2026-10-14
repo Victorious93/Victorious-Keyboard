@@ -56,6 +56,7 @@ Runtime libraries are declared in `gradle/libs.versions.toml`; the app generates
 | Emoji data (`assets/ime/media/emoji/*.txt`), emoticons | upstream assets | Not individually verified in this audit | **Open item:** confirm provenance/licence of each emoji annotation file before a public release |
 | Han shape-based pack (`han.sqlite3`) | `assets/ime/languagepack/…` | Not individually verified | **Open item:** confirm licence before a public release |
 | Keyboard layouts / localisation | `assets/ime/keyboard/…` | Upstream (Apache-2.0) | |
+| llama.cpp `b11624` and ggml | fetched at build time into the native library; notice in `assets/licenses/llama.cpp.MIT` | MIT | CPU-only JNI. No model weights are included. nlohmann json notice is `assets/licenses/nlohmann-json.MIT` in case that header is linked. |
 
 New runtime dependencies added by this project will be listed here when they are added, with their licences.
 Candidates under consideration for Phase 6 must be permissively licensed (Apache-2.0/MIT/BSD); GPL/AGPL/LGPL

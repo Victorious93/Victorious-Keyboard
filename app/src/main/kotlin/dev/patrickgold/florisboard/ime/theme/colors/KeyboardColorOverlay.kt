@@ -29,7 +29,7 @@ import org.florisboard.lib.snygg.value.SnyggStaticColorValue
  * Other themes are returned unchanged. Shapes, spacing, and the rest of the stylesheet stay.
  */
 object KeyboardColorOverlay {
-    val neonThemeIds = setOf("victorious_neon", "victorious_neon_light")
+    val neonThemeIds = setOf("victorious_black", "victorious_neon", "victorious_neon_light")
 
     private val suggestionRules = setOf("smartbar-candidate-word", "smartbar-candidate-clip")
     private val pressedRules = setOf("key", "media-emoji-key")

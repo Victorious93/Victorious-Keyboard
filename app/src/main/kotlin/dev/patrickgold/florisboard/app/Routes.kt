@@ -77,10 +77,12 @@ import dev.patrickgold.florisboard.app.settings.localization.SelectLocaleScreen
 import dev.patrickgold.florisboard.app.settings.localization.SubtypeEditorScreen
 import dev.patrickgold.florisboard.app.settings.media.MediaScreen
 import dev.patrickgold.florisboard.app.settings.smartbar.SmartbarScreen
+import dev.patrickgold.florisboard.app.settings.smartbar.ToolbarSettingsScreen
 import dev.patrickgold.florisboard.app.settings.theme.KeyboardColorsScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreenAction
 import dev.patrickgold.florisboard.app.settings.theme.ThemeScreen
+import dev.patrickgold.florisboard.app.settings.localai.LocalAiScreen
 import dev.patrickgold.florisboard.app.settings.typing.TypingScreen
 import dev.patrickgold.florisboard.app.setup.SetupScreen
 import kotlinx.serialization.SerialName
@@ -160,8 +162,16 @@ object Routes {
         object Smartbar
 
         @Serializable
+        @Deeplink("settings/smartbar/toolbar")
+        object Toolbar
+
+        @Serializable
         @Deeplink("settings/typing")
         object Typing
+
+        @Serializable
+        @Deeplink("settings/local-ai")
+        object LocalAi
 
         @Serializable
         @Deeplink("settings/dictionary")
@@ -335,8 +345,10 @@ object Routes {
             composableWithDeepLink(Settings.InputFeedback::class) { InputFeedbackScreen() }
 
             composableWithDeepLink(Settings.Smartbar::class) { SmartbarScreen() }
+            composableWithDeepLink(Settings.Toolbar::class) { ToolbarSettingsScreen() }
 
             composableWithDeepLink(Settings.Typing::class) { TypingScreen() }
+            composableWithDeepLink(Settings.LocalAi::class) { LocalAiScreen() }
 
             composableWithDeepLink(Settings.Dictionary::class) { DictionaryScreen() }
             composableWithDeepLink(Settings.DictionaryPacks::class) { DictionaryPacksScreen() }

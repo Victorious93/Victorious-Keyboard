@@ -52,6 +52,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FilterList
@@ -156,6 +157,12 @@ fun ClipboardInputLayout(
     val historyEnabled by prefs.clipboard.historyEnabled.observeAsState()
 
     var lane by remember { mutableStateOf(ClipLane.REGULAR) }
+    val requestedLane by keyboardManager.clipLaneRequest.collectAsState()
+    LaunchedEffect(requestedLane) {
+        val next = requestedLane ?: return@LaunchedEffect
+        lane = next
+        keyboardManager.clipLaneRequest.value = null
+    }
     var isFilterRowShown by remember { mutableStateOf(false) }
     val activeFilterTypes = remember { mutableStateSetOf<ItemType>() }
 
@@ -553,6 +560,22 @@ fun ClipboardInputLayout(
                                 popupItem = null
                             }
                             if (popupItem!!.type == ItemType.TEXT) {
+                                PopupAction(
+                                    icon = Icons.Filled.Edit,
+                                    text = stringRes(R.string.clip__edit_item),
+                                ) {
+                                    val item = popupItem!!
+                                    val text = item.text
+                                    if (!text.isNullOrBlank()) {
+                                        keyboardManager.openClipEditor(
+                                            dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin.REGULAR,
+                                            item.uuid,
+                                            text,
+                                            item.isSensitive,
+                                        )
+                                    }
+                                    popupItem = null
+                                }
                                 PopupAction(
                                     icon = Icons.AutoMirrored.Filled.ArrowBack,
                                     text = stringRes(R.string.clipboard__vault_move_to_vault),

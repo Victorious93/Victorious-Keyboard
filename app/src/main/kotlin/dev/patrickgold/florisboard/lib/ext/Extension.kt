@@ -17,8 +17,6 @@
 package dev.patrickgold.florisboard.lib.ext
 
 import android.content.Context
-import android.net.Uri
-import dev.patrickgold.florisboard.BuildConfig
 import dev.patrickgold.florisboard.lib.io.FlorisRef
 import dev.patrickgold.florisboard.lib.io.ZipUtils
 import kotlinx.serialization.Polymorphic
@@ -116,36 +114,10 @@ abstract class Extension {
 }
 
 /**
- * Generates an update url for [Extension] lists.
- *
- * @param version the version of the api path
- * @param host the host for the addons store
- * @return the Url
+ * Where "Search for Updates" opens. This fork does not ship an add-on store, so the button opens
+ * the project's GitHub releases page (the debug APKs live there) instead of an upstream host.
  */
-internal fun List<Extension>.generateUpdateUrl(
-    version: String = BuildConfig.FLADDONS_API_VERSION,
-    host: String = BuildConfig.FLADDONS_STORE_URL,
-): String {
-    return Uri.Builder().run {
-        scheme("https")
-        authority(host)
-        appendPath("check-updates")
-        // TODO: Uncomment when version is supported by the addons store api
-        //appendPath(version)
-        encodedFragment(
-            buildString {
-                append("data={")
-                for (extension in this@generateUpdateUrl) {
-                    append(extension.meta.getUpdateJsonPair())
-                    if (extension != this@generateUpdateUrl.last()) {
-                        append(",")
-                    }
-                }
-                append("}")
-            }
-        )
-    }.build().toString()
-}
+internal fun List<Extension>.generateUpdateUrl(): String = dev.patrickgold.florisboard.app.ProjectUrls.RELEASES
 
 interface ExtensionEditor {
     var meta: ExtensionMeta

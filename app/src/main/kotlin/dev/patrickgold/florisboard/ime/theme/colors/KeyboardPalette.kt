@@ -78,6 +78,14 @@ data class KeyboardPreset(
 )
 
 object KeyboardPalettes {
+    val Black = KeyboardPalette(
+        background = 0xFF050505.toInt(),
+        key = 0xFF161616.toInt(),
+        keyText = 0xFFE8E8E8.toInt(),
+        primary = 0xFF3A3A3A.toInt(),
+        secondary = 0xFF8A8A8A.toInt(),
+        suggestion = 0xFF1C1C1C.toInt(),
+    )
     val Neon = KeyboardPalette(
         background = 0xFF010619.toInt(),
         key = 0xFF141C33.toInt(),
@@ -128,6 +136,7 @@ object KeyboardPalettes {
     )
 
     val presets = listOf(
+        KeyboardPreset("black", Black),
         KeyboardPreset("neon", Neon),
         KeyboardPreset("cyber", CyberBlue),
         KeyboardPreset("matrix", MatrixGreen),

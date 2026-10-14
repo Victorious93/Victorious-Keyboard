@@ -46,6 +46,12 @@
       "isNight": true
     },
     {
+      "id": "victorious_black",
+      "label": "Victorious Black",
+      "authors": [ "Victorious Keyboard Contributors" ],
+      "isNight": true
+    },
+    {
       "id": "victorious_neon",
       "label": "Victorious Neon",
       "authors": [ "Victorious Keyboard Contributors" ],

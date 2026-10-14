@@ -10,14 +10,14 @@ Everything in this file was executed in the project's reference environment (Lin
 | JDK | 21.0.12 (upstream CI uses 17) | Gradle toolchains are not forced; any JDK ≥ 17 should work, only 21 verified |
 | Gradle | wrapper (`gradle/wrapper/gradle-wrapper.properties`): 9.2.0 | Use `./gradlew`; downloads itself |
 | Android SDK cmdline-tools | `14742923` (sha256 `04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7` verified before use) | Upstream's `tools.versions.toml` at this baseline pins the older `13114758`; the older pin was not tested here |
-| SDK packages | `platforms;android-36`, `build-tools;35.0.0` | |
+| SDK packages | `platforms;android-36`, `build-tools;35.0.0`, `ndk;27.2.12479018`, `cmake;3.31.6` | NDK and CMake are required for the on-device llama.cpp library. They are not required to read the project. |
 
 Install SDK packages:
 
 ```sh
 export ANDROID_HOME=/opt/android-sdk          # any directory
 sdkmanager --licenses
-sdkmanager "platforms;android-36" "build-tools;35.0.0"
+sdkmanager "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
 echo "sdk.dir=$ANDROID_HOME" > local.properties   # git-ignored
 ```
 

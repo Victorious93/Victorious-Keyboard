@@ -43,6 +43,7 @@ enum class ToolbarActionId {
     SEL_WORD, SEL_LINE, SEL_ALL, UNDO, REDO, CUT, COPY, PASTE,
     OPEN_CLIPBOARD, OPEN_VAULT, OPEN_SNIPPETS, EDIT_CLIP, PINNED, ZIP,
     INCOGNITO, LEARNING, BOTTOM_GAP, ONE_HAND, THEME, VOICE, EMOJI, SETTINGS, DEVROW,
+    AI_REWRITE, AI_GRAMMAR, AI_CONTINUE, AI_SUMMARIZE, AI_TRANSLATE, AI_SHELL, AI_ASK,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)
@@ -120,6 +121,13 @@ object ToolbarCatalog {
         act(ToolbarActionId.FENCE, ToolbarPage.AI, "```"),
         act(ToolbarActionId.COUNT, ToolbarPage.AI, "Count"),
         act(ToolbarActionId.PASTE_CODE, ToolbarPage.AI, "Clip```"),
+        act(ToolbarActionId.AI_REWRITE, ToolbarPage.AI, "Rewrite"),
+        act(ToolbarActionId.AI_GRAMMAR, ToolbarPage.AI, "Grammar"),
+        act(ToolbarActionId.AI_CONTINUE, ToolbarPage.AI, "Continue"),
+        act(ToolbarActionId.AI_SUMMARIZE, ToolbarPage.AI, "Brief"),
+        act(ToolbarActionId.AI_TRANSLATE, ToolbarPage.AI, "Translate"),
+        act(ToolbarActionId.AI_SHELL, ToolbarPage.AI, "Shell"),
+        act(ToolbarActionId.AI_ASK, ToolbarPage.AI, "Ask"),
         act(ToolbarActionId.SEL_WORD, ToolbarPage.EDIT, "Word"),
         act(ToolbarActionId.SEL_LINE, ToolbarPage.EDIT, "Line"),
         act(ToolbarActionId.SEL_ALL, ToolbarPage.EDIT, "All"),

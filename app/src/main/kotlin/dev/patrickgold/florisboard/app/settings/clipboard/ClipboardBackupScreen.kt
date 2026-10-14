@@ -124,6 +124,7 @@ fun ClipboardBackupScreen() = FlorisScreen {
     var password by remember { mutableStateOf("") }
     var password2 by remember { mutableStateOf("") }
     var includeSensitive by remember { mutableStateOf(false) }
+    var includeVault by remember { mutableStateOf(false) }
     var exportState by remember { mutableStateOf<Busy>(Busy.Idle) }
 
     val passwordProblem: String? = when {
@@ -138,12 +139,20 @@ fun ClipboardBackupScreen() = FlorisScreen {
         scope.launch {
             exportState = Busy.Working(R.string.clipboard_backup__creating)
             try {
+                val wantVault = includeVault && format == ExportFormat.ENCRYPTED_ZIP
+                if (wantVault && manager.vaultLockedFlow.value) {
+                    exportState = Busy.Failed(context.stringRes(R.string.clipboard__vault_locked_export))
+                    return@launch
+                }
+                val vaultEntries = if (wantVault) manager.exportVaultEntries() else emptyList()
                 val result = service.export(
                     ExportOptions(
                         format = format,
                         password = if (format == ExportFormat.ENCRYPTED_ZIP) password.toCharArray() else null,
                         includeSensitive = includeSensitive,
                         onlyIds = onlyIds,
+                        includeVault = wantVault,
+                        vaultEntries = vaultEntries,
                     )
                 )
                 withContext(Dispatchers.IO) { BackupIo.writeAndVerify(resolver, destination, result.bytes) }
@@ -376,6 +385,21 @@ fun ClipboardBackupScreen() = FlorisScreen {
             ) {
                 Text(modifier = Modifier.weight(1f), text = stringRes(R.string.clipboard_backup__include_sensitive))
                 Switch(checked = includeSensitive, onCheckedChange = { includeSensitive = it })
+            }
+            if (format == ExportFormat.ENCRYPTED_ZIP) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(text = stringRes(R.string.clipboard_backup__include_vault))
+                        Text(
+                            text = stringRes(R.string.clipboard_backup__include_vault_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    Switch(checked = includeVault, onCheckedChange = { includeVault = it })
+                }
             }
             if (includeSensitive && format != ExportFormat.ENCRYPTED_ZIP) {
                 FlorisInfoCard(

@@ -24,15 +24,24 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
 import dev.patrickgold.florisboard.editorInstance
+import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipCategory
+import dev.patrickgold.florisboard.ime.clipboard.history.ClipEntry
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipClassifier
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipTags
 import dev.patrickgold.florisboard.ime.clipboard.history.HistoryPolicy
 import dev.patrickgold.florisboard.ime.clipboard.history.InsertPlan
 import dev.patrickgold.florisboard.ime.clipboard.history.MAX_HISTORY_ENTRIES
-import dev.patrickgold.florisboard.ime.clipboard.history.SensitiveDetector
 import dev.patrickgold.florisboard.ime.clipboard.history.planInsert
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipRoute
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipRouteInput
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipRouter
+import dev.patrickgold.florisboard.ime.clipboard.lanes.SensitiveVault
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultLock
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultPlain
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultReason
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultSession
 import dev.patrickgold.florisboard.ime.clipboard.history.planInsertNonText
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDatabase
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
@@ -60,6 +69,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -97,6 +107,9 @@ class ClipboardManager(
         private const val INTERVAL = 60 * 1000L
 
         private const val VAULT_KEY_FILE = "clipboard_vault.key"
+        private const val SENSITIVE_VAULT_FILE = "sensitive-clipboard.vault"
+        private const val SENSITIVE_KEY_FILE = "sensitive_clipboard.key"
+        private const val SENSITIVE_KEY_ALIAS = "victorious_sensitive_clipboard_kek_v1"
         private const val NOTICE_THROTTLE_MS = 10_000L
 
         /**
@@ -138,6 +151,7 @@ class ClipboardManager(
         KeystoreDataKeyProvider(File(appContext.noBackupFilesDir, VAULT_KEY_FILE))
     }
     private val storeReady = CompletableDeferred<ClipboardStore>()
+    private val sensitiveVaultReady = CompletableDeferred<SensitiveVault>()
     private val historyMutex = Mutex()
     private var lastNoticeAtMs = 0L
 
@@ -149,6 +163,14 @@ class ClipboardManager(
     /** Text rows that cannot be decrypted (key lost). They are hidden, never auto-deleted. 0 normally. */
     val unreadableCountFlow: StateFlow<Int>
         field = MutableStateFlow(0)
+
+    /** Decrypted vault rows. Empty while the vault is locked, so the text is not held for the UI. */
+    val vaultItemsFlow: StateFlow<List<VaultPlain>>
+        field = MutableStateFlow(emptyList())
+    val vaultCountFlow: StateFlow<Int>
+        field = MutableStateFlow(0)
+    val vaultLockedFlow: StateFlow<Boolean>
+        field = MutableStateFlow(true)
 
     private val primaryClipLastFromCallbackGuard = Mutex(locked = false)
     private var primaryClipLastFromCallback: ClipData? = null
@@ -166,12 +188,23 @@ class ClipboardManager(
             while (isActive) {
                 delay(INTERVAL)
                 enforceExpiryDate(currentHistory)
+                enforceVaultExpiry()
             }
         }
     }
 
     fun initializeForContext(context: Context) {
         ioScope.launch {
+            if (!sensitiveVaultReady.isCompleted) {
+                try {
+                    sensitiveVaultReady.complete(openSensitiveVault())
+                    publishVault()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    sensitiveVaultReady.completeExceptionally(e)
+                }
+            }
             if (storeReady.isCompleted) return@launch
             try {
                 val db = ClipboardHistoryDatabase.new(context.applicationContext)
@@ -326,6 +359,112 @@ class ClipboardManager(
     }
 
     /**
+     * Stores a password-field copy in the sensitive vault only. Returns false when history is off,
+     * so the caller leaves the editor unchanged. Does not write the system clipboard.
+     */
+    fun capturePasswordText(text: String): Boolean {
+        if (!prefs.clipboard.historyEnabled.get() || text.isBlank()) return false
+        // Wait for the write so a cut does not delete the field before the vault has the text.
+        return runBlocking(Dispatchers.IO) {
+            historyMutex.withLock {
+                try {
+                    val plan = offerVault(text, VaultReason.PASSWORD_FIELD)
+                    val saved = plan is InsertPlan.Add || plan is InsertPlan.MoveToTop || plan is InsertPlan.IgnoreDuplicate
+                    if (saved) primaryClip = ClipboardItem.text(text).copy(isSensitive = true)
+                    saved
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    notify(R.string.clipboard__vault_error)
+                    false
+                }
+            }
+        }
+    }
+
+    fun moveToVault(item: ClipboardItem) {
+        val text = item.text ?: return
+        if (item.type != ItemType.TEXT || !prefs.clipboard.historyEnabled.get()) return
+        mutate { store ->
+            val plan = offerVault(text, VaultReason.MOVED)
+            if (plan is InsertPlan.Add || plan is InsertPlan.MoveToTop || plan is InsertPlan.IgnoreDuplicate) {
+                store.delete(item.id)
+                item.close(appContext)
+            }
+        }
+    }
+
+    fun moveVaultToClipboard(id: String) {
+        mutate { store ->
+            if (vaultIsLocked()) return@mutate
+            val vault = sensitiveVaultReady.await()
+            val plain = vault.remove(id) ?: return@mutate
+            val item = ClipboardItem.text(plain.text).copy(category = ClipClassifier.classify(plain.text).name)
+            val history = currentHistory.all
+            val plan = effectivePolicy().planInsert(history.map { it.toClipEntry() }, item.toClipEntry())
+            when (plan) {
+                is InsertPlan.Add -> {
+                    val evicted = history.filter { it.uuid in plan.evictIds }
+                    store.replaceInTransaction(evicted, listOf(item))
+                    evicted.forEach { it.close(appContext) }
+                }
+                is InsertPlan.MoveToTop -> {
+                    val old = history.first { it.uuid == plan.existingId }
+                    store.replaceInTransaction(
+                        listOf(old),
+                        listOf(item.copy(uuid = old.uuid, isPinned = old.isPinned, isFavorite = old.isFavorite, tags = old.tags)),
+                    )
+                }
+                is InsertPlan.IgnoreDuplicate -> Unit
+                is InsertPlan.RejectedTooLarge -> {
+                    vault.offer(plain.text, plain.reason)
+                    notify(R.string.clipboard__item_too_large)
+                }
+                is InsertPlan.RejectedHistoryFullOfPinned -> {
+                    vault.offer(plain.text, plain.reason)
+                    notify(R.string.clipboard__full_of_pinned)
+                }
+                InsertPlan.RejectedBlank -> vault.offer(plain.text, plain.reason)
+            }
+            publishVault()
+        }
+    }
+
+    fun setVaultPinned(id: String, pinned: Boolean) {
+        mutate {
+            sensitiveVaultReady.await().setPinned(id, pinned)
+            publishVault()
+        }
+    }
+
+    fun deleteVaultItem(id: String) {
+        mutate {
+            sensitiveVaultReady.await().remove(id)
+            publishVault()
+        }
+    }
+
+    fun syncVaultVisibility() {
+        ioScope.launch {
+            historyMutex.withLock {
+                try {
+                    publishVault()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    /** Plain vault rows for an explicit encrypted export. Empty while the vault is locked. */
+    suspend fun exportVaultEntries(): List<ClipEntry> =
+        withContext(Dispatchers.IO) {
+            if (vaultIsLocked()) return@withContext emptyList()
+            sensitiveVaultReady.await().loadPlain().map { it.toEntry() }
+        }
+
+    /**
      * Offers a new item to the clipboard history (if enabled). What happens is decided by the pure [HistoryPolicy]:
      * insert (evicting the oldest *unpinned* entries if full), move an identical entry to the top, ignore a
      * duplicate, or reject. Pinned entries are never evicted; if the history is full of them, the clip is not saved
@@ -338,11 +477,17 @@ class ClipboardManager(
             val text = newItem.text
             if (isText) {
                 if (text == null) return@mutate
-                if (!newItem.isSensitive && !prefs.clipboard.storeDetectedSecrets.get() &&
-                    SensitiveDetector.check(text) != null
-                ) {
-                    notify(R.string.clipboard__secret_not_saved)
-                    return@mutate
+                when (val route = ClipRouter.route(routeInput(text, newItem.isSensitive))) {
+                    is ClipRoute.Vault -> {
+                        if (!newItem.isSensitive) primaryClip = newItem.copy(isSensitive = true)
+                        offerVault(text, route.reason)
+                        return@mutate
+                    }
+                    ClipRoute.Dropped -> {
+                        notify(R.string.clipboard__secret_not_saved)
+                        return@mutate
+                    }
+                    ClipRoute.Regular -> Unit
                 }
             }
             val history = currentHistory.all
@@ -379,6 +524,62 @@ class ClipboardManager(
                 is InsertPlan.RejectedTooLarge -> notify(R.string.clipboard__item_too_large)
                 is InsertPlan.RejectedHistoryFullOfPinned -> notify(R.string.clipboard__full_of_pinned)
             }
+        }
+    }
+
+    private fun openSensitiveVault(): SensitiveVault = SensitiveVault(
+        file = File(appContext.noBackupFilesDir, SENSITIVE_VAULT_FILE),
+        cipher = PayloadCipher(
+            KeystoreDataKeyProvider(
+                File(appContext.noBackupFilesDir, SENSITIVE_KEY_FILE),
+                alias = SENSITIVE_KEY_ALIAS,
+            ),
+        ),
+        policy = { currentPolicy() },
+    )
+
+    private fun routeInput(text: String, androidSensitive: Boolean) = ClipRouteInput(
+        text = text,
+        fromPasswordField = editorInstance.activeInfo.inputAttributes.isPasswordLike(),
+        androidSensitive = androidSensitive,
+        detectSecrets = prefs.clipboard.detectSecretsToVault.get(),
+        storeDetectedInRegular = prefs.clipboard.storeDetectedSecrets.get(),
+    )
+
+    private fun vaultIsLocked(): Boolean = VaultLock.isLocked(
+        requireCredential = prefs.clipboard.vaultRequireUnlock.get(),
+        unlockedUntilMs = VaultSession.unlockedUntilMs.value,
+        nowMs = System.currentTimeMillis(),
+    )
+
+    private suspend fun offerVault(text: String, reason: VaultReason): InsertPlan {
+        val plan = sensitiveVaultReady.await().offer(text, reason)
+        when (plan) {
+            is InsertPlan.RejectedTooLarge -> notify(R.string.clipboard__item_too_large)
+            is InsertPlan.RejectedHistoryFullOfPinned -> notify(R.string.clipboard__full_of_pinned)
+            else -> Unit
+        }
+        publishVault()
+        return plan
+    }
+
+    private fun insertVault(text: String, reason: VaultReason) {
+        mutate { offerVault(text, reason) }
+    }
+
+    private suspend fun publishVault() {
+        val vault = sensitiveVaultReady.await()
+        val locked = vaultIsLocked()
+        vaultLockedFlow.value = locked
+        vaultCountFlow.value = runCatching { vault.count() }.getOrDefault(0)
+        vaultItemsFlow.value = if (locked) emptyList() else runCatching { vault.loadPlain() }.getOrDefault(emptyList())
+    }
+
+    private fun enforceVaultExpiry() {
+        mutate {
+            val ttl = prefs.clipboard.vaultLifetime.get().ttlMs()
+            sensitiveVaultReady.await().deleteExpired(System.currentTimeMillis(), ttl)
+            publishVault()
         }
     }
 

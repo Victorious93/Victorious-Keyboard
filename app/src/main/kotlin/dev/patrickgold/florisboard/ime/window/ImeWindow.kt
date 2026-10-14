@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -79,6 +81,12 @@ import org.florisboard.lib.snygg.ui.SnyggBox
 import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.rememberSnyggThemeQuery
+
+/** Bottom key row. Stays under Android's 200 dp gesture-exclusion cap. */
+private const val BOTTOM_ROW_EXCLUSION_DP = 64
+
+/** Android clips or drops exclusion rects taller than this. */
+private const val MAX_GESTURE_EXCLUSION_DP = 200
 
 /**
  * The main entry point of the IME user interface. This includes the keyboard itself, devtools overlays,
@@ -189,12 +197,16 @@ fun BoxScope.ImeWindow() {
 @Composable
 private fun ImeInnerWindow() {
     val context = LocalContext.current
+    val density = LocalDensity.current
     val windowController = LocalWindowController.current
 
     val keyboardManager by context.keyboardManager()
 
     val state by keyboardManager.activeState.collectAsState()
     val windowSpec by windowController.activeWindowSpec.collectAsState()
+    val clearance = rememberImeBottomClearance(allowFallback = windowSpec.isDockedPhone())
+    val bottomRowBandPx = with(density) { BOTTOM_ROW_EXCLUSION_DP.dp.toPx() }
+    val maxExclusionPx = with(density) { MAX_GESTURE_EXCLUSION_DP.dp.toPx() }
 
     ProvideActualLayoutDirection {
         val layoutDirection = LocalLayoutDirection.current
@@ -209,30 +221,52 @@ private fun ImeInnerWindow() {
             .fillMaxWidth()
             .wrapContentHeight()
             .ifIsInstance<ImeWindowProps.Fixed>(windowSpec.props) { props ->
+                // safeDrawing covers the drawn navigation bar and the caption bar. [clearance.extraBottom]
+                // adds whatever of the home-gesture strip that misses, plus the user's bottom gap.
+                // The window background is the parent of this padding, so the gap is keyboard-colored.
+                // Exclusion is only the bottom key row: a full-keyboard rect is taller than Android's
+                // 200 dp limit and does not opt out of the mandatory home gesture.
                 Modifier
                     .safeDrawingPadding()
-                    .systemGestureExclusion()
                     .padding(
                         start = props.paddingLeft.coerceAtLeast(0.dp),
                         end = props.paddingRight.coerceAtLeast(0.dp),
-                        bottom = props.paddingBottom.coerceAtLeast(0.dp),
+                        bottom = props.paddingBottom.coerceAtLeast(0.dp) + clearance.extraBottom,
                     )
+                    .systemGestureExclusion { coords ->
+                        val width = coords.size.width.toFloat()
+                        val height = coords.size.height.toFloat()
+                        val band = minOf(bottomRowBandPx, maxExclusionPx, height)
+                        Rect(0f, height - band, width, height)
+                    }
             }
             .ifIsInstance<ImeWindowProps.Floating>(windowSpec.props) {
                 Modifier.systemGestureExclusion()
             },
         allowClip = false,
     ) {
-        Column {
-            when (state.imeUiMode) {
-                ImeUiMode.TEXT -> TextInputLayout()
-                ImeUiMode.MEDIA -> ProvideActualLayoutDirection { MediaInputLayout() }
-                ImeUiMode.CLIPBOARD -> ProvideActualLayoutDirection { ClipboardInputLayout() }
-                ImeUiMode.SNIPPETS -> ProvideActualLayoutDirection { SnippetInputLayout() }
+        CompositionLocalProvider(LocalImeSystemBottomStrip provides clearance.systemStripPx) {
+            Column {
+                when (state.imeUiMode) {
+                    ImeUiMode.TEXT -> TextInputLayout()
+                    ImeUiMode.MEDIA -> ProvideActualLayoutDirection { MediaInputLayout() }
+                    ImeUiMode.CLIPBOARD -> ProvideActualLayoutDirection { ClipboardInputLayout() }
+                    ImeUiMode.SNIPPETS -> ProvideActualLayoutDirection { SnippetInputLayout() }
+                }
+                ImeSystemUiFloating()
             }
-            ImeSystemUiFloating()
         }
         ImeWindowResizeHandlesFixed()
+    }
+}
+
+private fun ImeWindowSpec.isDockedPhone(): Boolean {
+    if (this !is ImeWindowSpec.Fixed) return false
+    return when (constraints.formFactor.typeGuess) {
+        ImeFormFactor.Type.PHONE_PORTRAIT,
+        ImeFormFactor.Type.PHONE_LANDSCAPE,
+        -> true
+        else -> false
     }
 }
 
@@ -326,11 +360,12 @@ private fun BoxScope.OneHandedPanel(spec: ImeWindowSpec.Fixed) {
 
     if (!editorState.isEnabled) {
         Box(Modifier.matchParentSize()) {
+            val clearance = rememberImeBottomClearance(allowFallback = true)
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .safeDrawingPadding()
-                    .padding(bottom = spec.props.paddingBottom.coerceAtLeast(0.dp))
+                    .padding(bottom = spec.props.paddingBottom.coerceAtLeast(0.dp) + clearance.extraBottom)
                     .fold(
                         condition = spec.props.paddingLeft >= spec.props.paddingRight,
                         ifTrue = {

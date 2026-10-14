@@ -29,7 +29,7 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 
 * **Keyboard colors** — Settings → Look → Keyboard colors. Background, key, key text, accent, highlight, and suggestion pills, with presets and a reset. The choice is saved and painted over Victorious Neon.
 * **Word prediction** — current word, next word, and a close correction from the bundled dictionaries. *Learn from my typing* is off until you turn it on.
-* **Clipboard manager** — up to 500 items with search, pinning (pinned items are kept), filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key).
+* **Clipboard manager** — up to 500 items with search, pinning (pinned items are kept), filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key). A separate **Vault** tab holds sensitive clips.
 * **Developer row and operating modes** — off until you enable it. Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
@@ -46,6 +46,8 @@ Settings → Look holds Languages, Theme, Keyboard colors, and Keyboard.
 
 Victorious Neon is the default night theme and Neon Light is the day theme. Keys are rounded, spaced, and edged in the accent color. The suggestion bar, key popup, clipboard strip, developer row, and emoji panel use the same palette. Letter keys scale down slightly while held. This has been compiled and drawn from the stylesheet. It has not been shown on a device.
 
+Bottom gap (Settings → Look → Keyboard) lifts the docked keyboard above the navigation bar and the home-gesture strip. The padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets. A slider from 0 to 48 dp adds more space; it starts at 16 dp on gesture navigation and 4 dp with 3-button navigation, and the strip is the keyboard background. The keyboard preview on that screen is the real keyboard, so the gap shows there. A touch that starts on a key and slides into the system strip does not insert the character. This is compiled and unit-tested. It has not been run on a device.
+
 Keyboard colors (Settings → Look → Keyboard colors) let you recolor that Neon theme without the Snygg theme editor. You can set the background, key color, key text, accent and glow, highlight (space bar and emphasis), and suggestion pills. A hue and saturation wheel plus a hex field edits one color at a time, and the keyboard preview on the screen updates immediately. Presets: Neon, Cyber blue, Matrix, Purple, Red, and Mono. Reset to default restores Neon. Text that would be hard to read is replaced with a dark or light ink. The choice is stored in preferences and applied again on the next start, including popups, the clipboard strip, the developer row, and the emoji panel. It applies while Victorious Neon or Neon Light is the selected keyboard theme. Another theme is left alone. The screen is compiled and not yet run on a device.
 
 ### Typing (inherited)
@@ -59,10 +61,13 @@ QWERTY, numeric and symbol layouts, emoji, long-press, key repeat, haptics, soun
 | 500-item history; pinned items never evicted | ✅ policy · 🟦 wired |
 | Encrypted at rest (AES-256-GCM, Keystore-wrapped) | ✅ cipher · 🟦 Room/Keystore |
 | Search, filters, tags, favourites, edit, multi-select, share | ✅ logic · 🟦 screens |
-| Password / API-key / card-looking text not saved by default | ✅ |
-| Copy/Cut refused in password fields | ✅ detection · 🟦 call site |
-| Export/import: JSON, ZIP, encrypted archive, Markdown, text | ✅ logic · 🟦 file pickers |
+| Password / API-key / card-looking text not saved to the regular clipboard by default | ✅ |
+| Sensitive vault (separate store, masked, expiry, lock) | ✅ rules · 🟦 screen and Keystore |
+| Copy in a password field, or a clip Android marks sensitive, goes to the vault | ✅ routing · 🟦 call site |
+| Export/import: JSON, ZIP, encrypted archive, Markdown, text. Vault only in an encrypted export you opt into | ✅ logic · 🟦 file pickers |
 | Images/URI clips in backups | ⛔ skipped (cannot restore safely) |
+
+The keyboard clipboard panel has two tabs, **Clipboard** and **Vault**, using the same neon theme. Password-field copies and clips Android flags as sensitive go to the Vault when clipboard history is on. *Detect secrets into the vault* (Settings → Tools → Clipboard) is off until you turn it on; it looks for card numbers, IBANs, API keys, private keys, and one-time codes. You can move an item between the two lists. Vault text is encrypted with its own Android Keystore key, kept out of the suggestion bar, and masked until you reveal it. Viewing it asks for the device lock (on by default) and locks again after a timeout. Unpinned vault items expire after 24 hours unless you pick another period or Never; pins stay. Vault items are not in backups or exports unless you opt into an encrypted export. The regular history cap, pins, and search are unchanged. None of this has been run on a device.
 
 Details: [CLIPBOARD.md](CLIPBOARD.md), [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
@@ -109,6 +114,10 @@ These pictures are drawn from the shipped theme colors and the keyboard-colors s
 |---|---|---|
 | <img src="docs/screenshots/keyboard-preset-cyber.png" alt="Cyber blue keyboard preset" width="280"> | <img src="docs/screenshots/keyboard-preset-matrix.png" alt="Matrix green keyboard preset" width="280"> | <img src="docs/screenshots/keyboard-preset-purple.png" alt="Purple keyboard preset" width="280"> |
 
+| Clipboard tab | Vault tab |
+|---|---|
+| <img src="docs/screenshots/clipboard-tab.png" alt="Clipboard panel, regular tab, with a pinned item" width="280"> | <img src="docs/screenshots/clipboard-vault-tab.png" alt="Clipboard panel, vault tab, items masked" width="280"> |
+
 Still waiting on a device: the developer row with Ctrl locked, clipboard history with a pinned item, and the snippet picker.
 
 ## Status
@@ -150,7 +159,7 @@ Privacy: [PRIVACY.md](PRIVACY.md).
 
 ## Download
 
-The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, and keyboard colors. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
+The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, and the separate sensitive clipboard. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
 
 ## Build and install
 

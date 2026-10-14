@@ -26,7 +26,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
 | 1 | Project foundation | ✅ (builds, JVM tests, dependency verification proven from a cold Gradle home through a mirror; CI green through build + unit tests on GitHub, including a run that stored the APK; artifact upload stays non-fatal if the storage quota is full; `lintDebug` is a gate after the inherited lint errors were fixed — see `AUDIT.md` §8) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
-| 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
+| 3 | Advanced clipboard | 🟡 core ✅ JVM-tested, including regular/vault routing, detection, expiry, and export exclusion. Storage/UI 🟦 compiled, **not run on a device**; the vault credential prompt is not run |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | 🟡 word prediction (current word, next word, one-edit autocorrect) is JVM-tested and wired into the suggestion bar; learning is off by default and the file is not backed up. Gesture typing is still not done. Nothing has been run on a device (`DICTIONARY_PACKS.md`) |

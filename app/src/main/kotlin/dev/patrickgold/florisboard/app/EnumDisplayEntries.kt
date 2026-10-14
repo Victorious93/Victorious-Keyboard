@@ -22,6 +22,7 @@ import dev.patrickgold.florisboard.app.settings.theme.DisplayKbdAfterDialogs
 import dev.patrickgold.florisboard.app.settings.theme.SnyggLevel
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
 import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultLifetime
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.input.HapticVibrationMode
@@ -154,6 +155,15 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
                 label = stringRes(R.string.enum__clipboard_duplicate_behavior__keep_both),
                 description = stringRes(R.string.enum__clipboard_duplicate_behavior__keep_both__description),
             )
+        }
+    },
+    VaultLifetime::class to DEFAULT to {
+        listPrefEntries {
+            entry(key = VaultLifetime.HOUR_1, label = stringRes(R.string.enum__vault_lifetime__hour_1))
+            entry(key = VaultLifetime.HOUR_6, label = stringRes(R.string.enum__vault_lifetime__hour_6))
+            entry(key = VaultLifetime.HOUR_24, label = stringRes(R.string.enum__vault_lifetime__hour_24))
+            entry(key = VaultLifetime.DAYS_7, label = stringRes(R.string.enum__vault_lifetime__days_7))
+            entry(key = VaultLifetime.NEVER, label = stringRes(R.string.enum__vault_lifetime__never))
         }
     },
     ColorRepresentation::class to DEFAULT to {

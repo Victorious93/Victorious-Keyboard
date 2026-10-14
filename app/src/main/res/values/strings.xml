@@ -476,6 +476,11 @@
     <string name="pref__keyboard__space_bar_mode__label" comment="Preference title">Spacebar label</string>
     <string name="pref__keyboard__capitalization_behavior__label" comment="Preference title">Capitalization behavior</string>
     <string name="pref__keyboard__font_size_multiplier__label" comment="Preference title">Font size multiplier</string>
+    <string name="pref__keyboard__bottom_gap__label" comment="Preference title">Bottom gap</string>
+    <string name="pref__keyboard__bottom_gap__summary" comment="Preference summary. {v} is the gap in dp.">Lifts space and enter above the home gesture. The gap uses the keyboard background. Currently {v} dp.</string>
+    <string name="pref__keyboard__bottom_gap__summary_auto" comment="Preference summary when the gap follows the navigation style. {v} is dp.">Lifts space and enter above the home gesture. Recommended for this device: {v} dp. The gap uses the keyboard background.</string>
+    <string name="pref__keyboard__bottom_gap__value" translatable="false">{v} dp</string>
+    <string name="pref__keyboard__bottom_gap__use_recommended">Use recommended ({v} dp)</string>
     <string name="pref__keyboard__group_layout__label" comment="Preference group title">Layout</string>
     <string name="pref__keyboard__landscape_input_ui_mode__label" comment="Preference value">Landscape fullscreen input</string>
     <string name="pref__keyboard__key_spacing__label" comment="Preference title">Key spacing factor</string>
@@ -905,6 +910,36 @@
     <string name="pref__clipboard__duplicate_behavior__label">Duplicate clips</string>
     <string name="pref__clipboard__store_detected_secrets__label">Save passwords and keys</string>
     <string name="pref__clipboard__store_detected_secrets__summary">Off by default. When off, text that looks like a password, API key or card number is not saved to history. Detection is pattern-based and not perfect.</string>
+    <string name="pref__clipboard__group_vault__label">Sensitive vault</string>
+    <string name="pref__clipboard__detect_secrets_to_vault__label">Detect secrets into the vault</string>
+    <string name="pref__clipboard__detect_secrets_to_vault__summary">Off by default. When on, text that looks like a card number, IBAN, API key, private key or one-time code is saved in the vault instead of the regular clipboard. Pattern matching misses some secrets and can flag ordinary text.</string>
+    <string name="pref__clipboard__vault_require_unlock__label">Require unlock to view the vault</string>
+    <string name="pref__clipboard__vault_require_unlock__summary">On by default. Uses this device\'s biometric or screen lock. The vault stays locked until that succeeds, and locks again after the timeout.</string>
+    <string name="pref__clipboard__vault_lock_after__label">Lock the vault after</string>
+    <string name="pref__clipboard__vault_lifetime__label">Delete unpinned vault items after</string>
+    <string name="pref__clipboard__vault_lifetime__summary">Pinned vault items are kept. The default is 24 hours.</string>
+    <string name="enum__vault_lifetime__hour_1">1 hour</string>
+    <string name="enum__vault_lifetime__hour_6">6 hours</string>
+    <string name="enum__vault_lifetime__hour_24">24 hours</string>
+    <string name="enum__vault_lifetime__days_7">7 days</string>
+    <string name="enum__vault_lifetime__never">Never</string>
+    <string name="clipboard__tab_regular">Clipboard</string>
+    <string name="clipboard__tab_vault">Vault</string>
+    <string name="clipboard__vault_locked_title">Vault locked</string>
+    <string name="clipboard__vault_locked_message">Confirm this device\'s screen lock to view sensitive clips. They stay encrypted until then.</string>
+    <string name="clipboard__vault_unlock">Unlock</string>
+    <string name="clipboard__vault_empty">No sensitive clips</string>
+    <string name="clipboard__vault_count">{n} items</string>
+    <string name="clipboard__vault_reveal">Reveal</string>
+    <string name="clipboard__vault_hide">Hide</string>
+    <string name="clipboard__vault_move_to_vault">Move to vault</string>
+    <string name="clipboard__vault_move_to_clipboard">Move to clipboard</string>
+    <string name="clipboard__vault_chars">{n} characters</string>
+    <string name="clipboard__vault_locked_export">Unlock the vault on the keyboard before including it in an export.</string>
+    <string name="clipboard_backup__include_vault">Include the sensitive vault</string>
+    <string name="clipboard_backup__include_vault_summary">Off unless you turn it on. Only an encrypted export can carry vault items.</string>
+    <string name="clipboard__vault_unlock_title">Unlock sensitive clipboard</string>
+    <string name="clipboard__vault_unlock_message">Confirm it\'s you to view the vault.</string>
     <!-- Clipboard manager -->
     <string name="clipboard_manager__title">Clipboard manager</string>
     <string name="clipboard_manager__link_summary">Search, pin, tag, edit and delete saved clips</string>

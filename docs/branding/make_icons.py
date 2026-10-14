@@ -7,23 +7,21 @@ Builds the Victorious Keyboard launcher icons from the master logo, docs/brandin
 Writes, relative to the repository root:
 
   app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_app_icon_foreground.png
-      Adaptive-icon foreground: 108dp canvas, transparent outside the artwork.
+      Adaptive-icon foreground: 108dp canvas, transparent where the logo is flat navy.
   app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_app_icon_monochrome.png
       Themed-icon layer (Android 13+): white, alpha taken from the artwork's brightness.
   docs/branding/play_store_icon_512.png
-      Play listing icon, 512x512, filled with the background colour (Play applies its own mask).
+      Play listing icon, 512x512. The approved composition, navy included (Play applies its own mask).
 
 How it works:
-  * The disc in logo.png is exactly #11151C, which is also @color/ic_app_icon_background. The disc is removed from
-    the foreground (set transparent), so the launcher's own background shows through and no disc edge can appear.
-  * The artwork is centred on its own pixels (the figure sits above the disc centre) and scaled so that its farthest
-    pixel is 31dp from the canvas centre. The adaptive safe zone is a 33dp radius; the 31dp margin is the same one
-    used by the reference icon set this structure follows.
+  * logo.png is the 720x720 approved mark. Its flat field is dark navy #010619, the same value as
+    @color/ic_app_icon_background. Those pixels are cleared on the adaptive foreground so the
+    launcher background shows through and the ring has no square edge.
+  * The neon (ring, figure, keyboard, prompt, V) is scaled so its farthest pixel sits 32dp from
+    the canvas centre. The adaptive safe zone is a 33dp radius; the script refuses to write a
+    layer that sticks out past that.
 
-The source is only 117x117 px, so the xxxhdpi/Play outputs are upscaled. A larger master (1024 px or an SVG) gives
-sharper icons: replace docs/branding/logo.png and run this script again.
-
-Usage (Pillow required, pure Pillow otherwise):  python3 -I docs/branding/make_icons.py
+Usage (Pillow required):  python3 docs/branding/make_icons.py
 """
 import os
 import sys
@@ -35,24 +33,27 @@ MASTER = os.path.join(ROOT, "docs", "branding", "logo.png")
 RES = os.path.join(ROOT, "app", "src", "main", "res")
 PLAY_OUT = os.path.join(ROOT, "docs", "branding", "play_store_icon_512.png")
 
-DISC = (0x11, 0x15, 0x1C)  # disc colour of logo.png; equals @color/ic_app_icon_background
-DISC_TOLERANCE = 10  # max per-channel difference that still counts as disc
-EMBLEM_RADIUS = 31 / 108  # farthest artwork pixel, as a fraction of the canvas size
-OPAQUE = 128  # alpha threshold for "artwork pixel" when measuring the radius
+# Flat navy of logo.png. Equals @color/ic_app_icon_background.
+NAVY = (0x01, 0x06, 0x19)
+NAVY_TOLERANCE = 12  # max per-channel difference that still counts as the flat field
+# Farthest artwork pixel, as a fraction of the 108dp canvas. Safe zone radius is 33dp.
+EMBLEM_RADIUS = 32 / 108
+SAFE_RADIUS = 33 / 108
+OPAQUE = 128
 
 DENSITIES = {"mdpi": 108, "hdpi": 162, "xhdpi": 216, "xxhdpi": 324, "xxxhdpi": 432}
 
 
-def remove_disc(master):
-    """Return an RGBA image where the transparent area and the disc colour are alpha 0."""
-    out = master.copy()
+def strip_navy(master):
+    """Return an RGBA image. Flat navy (and any existing transparency) becomes alpha 0."""
+    out = master.convert("RGBA")
     px = out.load()
     w, h = out.size
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
-            near_disc = max(abs(r - DISC[0]), abs(g - DISC[1]), abs(b - DISC[2])) <= DISC_TOLERANCE
-            if a == 0 or near_disc:
+            near = max(abs(r - NAVY[0]), abs(g - NAVY[1]), abs(b - NAVY[2])) <= NAVY_TOLERANCE
+            if a == 0 or near:
                 px[x, y] = (0, 0, 0, 0)
     return out
 
@@ -63,7 +64,7 @@ def artwork_centre_and_radius(art):
     px = art.load()
     points = [(x, y) for y in range(h) for x in range(w) if px[x, y][3] >= OPAQUE]
     if not points:
-        sys.exit("make_icons: no artwork left after removing the disc; check docs/branding/logo.png")
+        sys.exit("make_icons: no artwork left after removing the navy field; check docs/branding/logo.png")
     xs = [p[0] for p in points]
     ys = [p[1] for p in points]
     cx = (min(xs) + max(xs) + 1) / 2
@@ -73,16 +74,32 @@ def artwork_centre_and_radius(art):
 
 
 def fit_layer(art, size):
-    """Transparent square layer of `size` px with the artwork scaled and centred on its own bounds."""
+    """Transparent square layer of `size` px. Artwork is scaled so it stays inside the safe zone."""
     cx, cy, radius = artwork_centre_and_radius(art)
     scale = EMBLEM_RADIUS * size / radius
     scaled_w = max(1, round(art.width * scale))
     scaled_h = max(1, round(art.height * scale))
     scaled = art.resize((scaled_w, scaled_h), Image.LANCZOS)
     layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    # Single layer over a transparent canvas: a plain paste replaces the transparent pixels exactly.
-    layer.paste(scaled, (round(size / 2 - cx * scale), round(size / 2 - cy * scale)))
+    layer.paste(scaled, (round(size / 2 - cx * scale), round(size / 2 - cy * scale)), scaled)
+    _assert_inside_safe_zone(layer, size)
     return layer
+
+
+def _assert_inside_safe_zone(layer, size):
+    px = layer.load()
+    limit = SAFE_RADIUS * size + 0.6  # half a pixel of resampling slack
+    cx = cy = size / 2
+    farthest = 0.0
+    for y in range(size):
+        for x in range(size):
+            if px[x, y][3] < OPAQUE:
+                continue
+            farthest = max(farthest, ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2) ** 0.5)
+    dp = farthest / size * 108
+    if farthest > limit:
+        sys.exit(f"make_icons: artwork reaches {dp:.1f}dp from centre; safe zone is 33dp")
+    print(f"  farthest opaque pixel: {dp:.1f}dp from centre (safe zone 33dp)")
 
 
 def monochrome(layer):
@@ -98,8 +115,10 @@ def monochrome(layer):
 def main():
     if not os.path.isfile(MASTER):
         sys.exit(f"make_icons: master logo missing: {MASTER}")
-    master = Image.open(MASTER).convert("RGBA")
-    art = remove_disc(master)
+    master = Image.open(MASTER)
+    if master.size[0] != master.size[1]:
+        sys.exit(f"make_icons: logo.png must be square, got {master.size}")
+    art = strip_navy(master)
 
     for name, size in DENSITIES.items():
         out_dir = os.path.join(RES, f"mipmap-{name}")
@@ -109,9 +128,9 @@ def main():
         monochrome(foreground).save(os.path.join(out_dir, "ic_app_icon_monochrome.png"), optimize=True)
         print(f"mipmap-{name}: {size}x{size}")
 
-    play = Image.new("RGBA", (512, 512), DISC + (255,))
-    play.alpha_composite(fit_layer(art, 512))
-    play.convert("RGB").save(PLAY_OUT, optimize=True)
+    # Play listing keeps the approved framing: the ring sits inside the square, navy fills the rest.
+    play = master.convert("RGB").resize((512, 512), Image.LANCZOS)
+    play.save(PLAY_OUT, optimize=True)
     print(f"play store icon: {PLAY_OUT}")
 
 

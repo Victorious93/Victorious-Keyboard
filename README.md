@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/branding/logo.png" alt="Victorious Keyboard logo" width="128">
+<img src="docs/branding/logo.png" alt="Victorious Keyboard logo" width="240" height="240">
 
 # Victorious Keyboard
 

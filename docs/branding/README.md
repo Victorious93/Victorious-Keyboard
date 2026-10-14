@@ -1,7 +1,8 @@
 # Branding
 
-* `logo.png`: the project logo, supplied by the repository owner. 117 × 117 px RGBA, transparent outside a near-black
-  disc of exactly `#11151C`. It is the master for the launcher icons and the README header.
+* `logo.png`: the project logo, supplied by the repository owner. 720 × 720 px RGB. Flat field is dark navy
+  `#010619`. It is the master for the launcher icons and the README header. A lossless recompress of this file
+  saves about 10 KB, so there is no separate optimized copy.
 * `make_icons.py`: builds all icon outputs from `logo.png`:
   * `app/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_app_icon_foreground.png`: adaptive-icon foreground (108 dp canvas);
   * `app/src/main/res/mipmap-*/ic_app_icon_monochrome.png`: themed-icon layer for Android 13 and newer;
@@ -9,20 +10,24 @@
 
   Run `python3 -I docs/branding/make_icons.py` (needs Pillow: `pip install pillow`). Run it again after changing `logo.png`.
 * `app/src/main/res/mipmap-anydpi-v26/ic_app_icon_{stable,debug}{,_round}.xml` combine the background colour
-  `@color/ic_app_icon_background` (`#11151C`, the same as the disc) with those two layers. Stable and debug builds share
-  the artwork; debug builds are told apart by the `.debug` package suffix and the "Victorious Keyboard Debug" label.
+  `@color/ic_app_icon_background` (`#010619`, the logo's navy) with those two layers. The round icons are these
+  adaptive XML files; `minSdk` is 26, so there is no pre-adaptive bitmap. Stable and debug builds share the artwork;
+  debug builds are told apart by the `.debug` package suffix and the "Victorious Keyboard Debug" label.
 
-The artwork is 117 px, so the density outputs are upscaled and will look soft at xxxhdpi and on the Play listing. For
-sharper icons, replace `logo.png` with a square PNG of at least 1024 px and run the script again.
+The master is 720 px, so the density outputs and the 512 px Play icon are downscales, not enlargements. The README
+header displays that file at 240 × 240 CSS pixels (at most 720 device pixels on a 3× screen).
 
-The script scales the artwork so its farthest pixel is 31 dp from the centre (the adaptive safe zone is 33 dp).
+The script scales the neon so its farthest pixel is 32 dp from the centre. The adaptive safe zone is a 33 dp radius,
+and the script stops if any opaque pixel lands outside it. The Play icon keeps the approved framing instead of that
+inset, because Play's mask is a circle of the full 512 px image and the ring already sits inside it.
 The `DroidCommand AI` launcher set supplied alongside the request was used only as a *structure* template (adaptive icon
 with foreground, monochrome and background, and the same density set); none of its artwork is in this repository.
 
-Checks done: the outputs were composed into launcher-style masks (circle, rounded square, square) and a monochrome
-preview, and inspected by eye. The debug APK packages all ten layers, and `aapt2` resolves the launcher and splash
-references to them. **Not done:** viewing them on a real launcher, with themed (monochrome) icons enabled, or in the
-Play Console.
+Checks done: the outputs were composed into launcher-style masks (circle, rounded square) and a monochrome
+preview, and inspected by eye. The generator reports the farthest opaque pixel at 31.8–32.3 dp from the centre,
+inside the 33 dp safe zone. The debug APK packages the foreground and monochrome layer at every density, the four
+adaptive XML icons (stable, debug, and both round icons), and `aapt2` resolves the launcher and splash references
+to them. **Not done:** viewing them on a real launcher, with themed (monochrome) icons enabled, or in the Play Console.
 
 ## What still says "Floris", and why
 

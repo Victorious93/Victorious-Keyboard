@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Changed
+- Logo: `docs/branding/logo.png` is the approved 720×720 neon mark (hooded figure at a keyboard). Launcher foregrounds,
+  monochrome layers and `docs/branding/play_store_icon_512.png` are regenerated from it. The adaptive-icon background is
+  the logo's navy, `#010619`. The neon stays inside the 33dp safe zone. The README header shows the 720px file at 240px,
+  so it is not enlarged.
 - Logo and launcher icons: the project logo (`docs/branding/logo.png`) is the master. `docs/branding/make_icons.py` generates
   the adaptive-icon foreground and monochrome layers for every density and the 512 px Play Store icon. The earlier generated
   vector mark and its generator (`make_logo.py`, SVG masters) were removed; they remain in git history.

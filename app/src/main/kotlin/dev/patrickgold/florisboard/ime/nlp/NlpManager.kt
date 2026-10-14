@@ -22,6 +22,7 @@ import android.util.LruCache
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.clipboardManager
 import dev.patrickgold.florisboard.editorInstance
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipVisibility
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
 import dev.patrickgold.florisboard.ime.core.Subtype
@@ -29,7 +30,11 @@ import dev.patrickgold.florisboard.ime.editor.EditorContent
 import dev.patrickgold.florisboard.ime.editor.EditorRange
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionProvider
 import dev.patrickgold.florisboard.ime.nlp.han.HanShapeBasedLanguageProvider
+import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.nlp.latin.LatinLanguageProvider
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
+import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
+import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.lib.util.NetworkUtils
 import dev.patrickgold.florisboard.subtypeManager
@@ -92,6 +97,12 @@ class NlpManager(context: Context) {
             assembleCandidates()
         }
         prefs.suggestion.enabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        prefs.suggestion.predictionEnabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        prefs.suggestion.learnFromTyping.asFlow().collectLatestIn(scope) {
             assembleCandidates()
         }
         prefs.clipboard.suggestionEnabled.asFlow().collectLatestIn(scope) {
@@ -190,8 +201,43 @@ class NlpManager(context: Context) {
 
     fun isSuggestionOn(): Boolean =
         prefs.suggestion.enabled.get()
+            || prefs.suggestion.predictionEnabled.get()
             || prefs.emoji.suggestionEnabled.get()
             || providerForcesSuggestionOn(subtypeManager.activeSubtype)
+
+    fun mayLearnFromCurrentField(): Boolean {
+        val info = editorInstance.activeInfo
+        return LearningGate.allowsLearning(
+            learningEnabled = prefs.suggestion.learnFromTyping.get(),
+            field = LearningGate.Field(
+                passwordLike = info.inputAttributes.isPasswordLike(),
+                incognito = keyboardManager.activeState.isIncognitoMode,
+                noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
+                noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+            ),
+        )
+    }
+
+    /**
+     * Stores [committed] (or the token being typed, when null). Returns before reading the editor
+     * when learning is not allowed, so a password field is not captured.
+     */
+    fun noteTypedOrCommitted(committed: String?) {
+        if (!mayLearnFromCurrentField()) return
+        val (previous, current) = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection)
+        val word = committed ?: current ?: return
+        scope.launch {
+            val provider = getSuggestionProvider(subtypeManager.activeSubtype)
+            (provider as? TypingLearner)?.recordCommitted(word, previous)
+        }
+    }
+
+    fun clearLearnedWords() {
+        scope.launch {
+            val provider = getSuggestionProvider(subtypeManager.activeSubtype)
+            (provider as? TypingLearner)?.clearLearned()
+        }
+    }
 
     fun suggest(subtype: Subtype, content: EditorContent) {
         val reqTime = SystemClock.uptimeMillis()
@@ -371,14 +417,14 @@ class NlpManager(context: Context) {
 
             val currentItem = validateClipboardItem(clipboardManager.primaryClip, lastClipboardItemId, content.text)
                 ?: return emptyList()
+            if (!ClipVisibility.showAsSuggestion(ClipVisibility.laneOfSensitiveClip(currentItem.isSensitive))) {
+                return emptyList()
+            }
 
             return buildList {
                 val now = System.currentTimeMillis()
                 if ((now - currentItem.creationTimestampMs) < prefs.clipboard.suggestionTimeout.get() * 1000) {
                     add(ClipboardSuggestionCandidate(currentItem, sourceProvider = this@ClipboardSuggestionProvider, context = context))
-                    if (currentItem.isSensitive) {
-                        return@buildList
-                    }
                     if (currentItem.type == ItemType.TEXT) {
                         val text = currentItem.stringRepresentation()
                         val matches = buildList {

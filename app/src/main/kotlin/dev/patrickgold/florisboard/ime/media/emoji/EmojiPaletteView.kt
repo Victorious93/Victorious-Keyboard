@@ -20,6 +20,9 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.widget.TextView
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -64,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -407,14 +411,33 @@ private fun EmojiKey(
     val base = emojiSet.base(withSkinTone = preferredSkinTone)
     val variations = emojiSet.variations(withoutSkinTone = preferredSkinTone)
     var showVariantsBox by remember { mutableStateOf(false) }
+    var pressed by remember { mutableStateOf(false) }
+    val pressedScale by animateFloatAsState(
+        targetValue = if (pressed) 0.9f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "emojiPress",
+    )
 
     SnyggBox(FlorisImeUi.MediaEmojiKey.elementName,
         modifier = Modifier
             .aspectRatio(1f)
+            .graphicsLayer {
+                scaleX = pressedScale
+                scaleY = pressedScale
+            }
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
+                        pressed = true
                         inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
+                        try {
+                            tryAwaitRelease()
+                        } finally {
+                            pressed = false
+                        }
                     },
                     onTap = {
                         onEmojiInput(base)

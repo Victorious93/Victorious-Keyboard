@@ -4,7 +4,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Added
+- Two clipboards. The keyboard panel has Clipboard and Vault tabs. Password-field copies and clips Android marks sensitive go to the Vault. Opt-in detection can also send card numbers, IBANs, API keys, private keys, and one-time codes there. Vault items use a separate Keystore key, stay out of suggestions, stay masked until revealed, lock with the device credential (on by default), expire (default 24 hours; Never is allowed; pins stay), and are left out of backups unless an encrypted export is opted into. Not run on a device.
+- Keyboard colors (Settings → Look). Six colors, a hue/saturation wheel and hex field, six presets, a live preview, and reset. Saved in preferences and painted over Victorious Neon and Neon Light, including popups, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Unreadable text is adjusted. Not run on a device.
+- Word prediction in the suggestion bar: current-word completions, a next-word guess, and a one-edit autocorrect from
+  the bundled dictionary packs. *Word prediction* is on by default. *Learn from my typing* is off by default; when on,
+  words stay in `noBackupFilesDir/prediction/learned-words.json` and are never read from password, incognito, or
+  no-personalized-learning fields. *Clear learned words* asks before deleting them. Not run on a device. `spell()` is
+  still a stub, and next-word without learning ranks dictionary frequency only.
+
 ### Changed
+- Look: Victorious Neon is the default keyboard theme (night) and Victorious Neon Light is the default day theme. Keys are rounded with a gap, an amber edge and a soft shadow; the suggestion bar, key popup, clipboard panel, snippet picker (same elements as clipboard), emoji panel and developer row use the same navy `#010619`, amber `#FFC107` and hot pink. The older FlorisBoard themes stay in the theme list. Settings defaults to the dark Material scheme (light and AMOLED remain); a chosen accent color still recolors the app. Letter keys scale down slightly while pressed.
 - Logo: `docs/branding/logo.png` is the approved 720×720 neon mark (hooded figure at a keyboard). Launcher foregrounds,
   monochrome layers and `docs/branding/play_store_icon_512.png` are regenerated from it. The adaptive-icon background is
   the logo's navy, `#010619`. The neon stays inside the 33dp safe zone. The README header shows the 720px file at 240px,
@@ -23,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Docked keyboard keys no longer sit in the home-gesture strip. The bottom padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets, plus a Bottom gap setting (Settings → Look → Keyboard, 0–48 dp, 16 dp on gesture navigation and 4 dp with buttons). The gap uses the keyboard background and shows in the keyboard preview. Not run on a device.
 - `lintDebug` errors that had failed the build since the Phase 1 baseline (and one added with the snippets screen):
   literal percents in the "above 50%" validation hint are escaped, plural labels use `%d` so locales whose "one"
   form covers more than one number keep the quantity, the physical-keyboard screen reads `LocalConfiguration`,

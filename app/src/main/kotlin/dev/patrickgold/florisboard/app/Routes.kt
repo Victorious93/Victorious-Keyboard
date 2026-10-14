@@ -76,6 +76,7 @@ import dev.patrickgold.florisboard.app.settings.localization.SelectLocaleScreen
 import dev.patrickgold.florisboard.app.settings.localization.SubtypeEditorScreen
 import dev.patrickgold.florisboard.app.settings.media.MediaScreen
 import dev.patrickgold.florisboard.app.settings.smartbar.SmartbarScreen
+import dev.patrickgold.florisboard.app.settings.theme.KeyboardColorsScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreenAction
 import dev.patrickgold.florisboard.app.settings.theme.ThemeScreen
@@ -140,6 +141,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/theme/manage")
         data class ThemeManager(val action: ThemeManagerScreenAction)
+
+        @Serializable
+        @Deeplink("settings/theme/colors")
+        object KeyboardColors
 
         @Serializable
         @Deeplink("settings/keyboard")
@@ -315,6 +320,7 @@ object Routes {
             }
 
             composableWithDeepLink(Settings.Theme::class) { ThemeScreen() }
+            composableWithDeepLink(Settings.KeyboardColors::class) { KeyboardColorsScreen() }
             composableWithDeepLink(Settings.ThemeManager::class) { navBackStack ->
                 val payload = navBackStack.toRoute<Settings.ThemeManager>()
                 ThemeManagerScreen(payload.action)

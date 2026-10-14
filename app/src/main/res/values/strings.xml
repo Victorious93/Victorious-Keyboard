@@ -126,6 +126,10 @@
     <string name="settings__system_default" comment="General string which is used when a preference has the system default value set">System default</string>
 
     <string name="settings__home__title" comment="Title of the Home screen">Welcome to {app_name}</string>
+    <string name="settings__home__section_look" comment="Home screen section">Look</string>
+    <string name="settings__home__section_typing" comment="Home screen section">Typing</string>
+    <string name="settings__home__section_tools" comment="Home screen section">Tools</string>
+    <string name="settings__home__section_about" comment="Home screen section">About</string>
     <string name="settings__home__ime_not_enabled" comment="Error message shown in Home fragment when Victorious Keyboard is not enabled in the system">Victorious Keyboard is not enabled in the system and thus won\'t be available as an input method in the input picker. Click here to resolve this issue.</string>
     <string name="settings__home__ime_not_selected" comment="Warning message shown in Home fragment when Victorious Keyboard is not selected as the default keyboard">Victorious Keyboard is not selected as the default input method. Click here to resolve this issue.</string>
 
@@ -168,6 +172,26 @@
     <string name="settings__localization__subtype_delete_confirmation_warning" comment="Warning message in the confirmation dialog to confirm the user's intent to delete">Are you sure you want to delete this subtype?</string>
 
     <string name="settings__theme__title" comment="Title of the Theme screen">Theme</string>
+    <string name="settings__keyboard_colors__title" comment="Title of the keyboard color screen">Keyboard colors</string>
+    <string name="settings__keyboard_colors__home_summary" comment="Home row summary">Background, keys, and accents</string>
+    <string name="settings__keyboard_colors__summary" comment="Intro under the title">Pick colors for Victorious Neon. The preview updates as you choose.</string>
+    <string name="settings__keyboard_colors__presets" comment="Section title">Presets</string>
+    <string name="settings__keyboard_colors__reset" comment="Button">Reset to default</string>
+    <string name="settings__keyboard_colors__hex" comment="Hex field label">Hex</string>
+    <string name="settings__keyboard_colors__contrast_note" comment="Shown when key text was adjusted">Adjusted so the letters stay readable</string>
+    <string name="settings__keyboard_colors__scope" comment="What the colors change">These colors restyle Victorious Neon and Neon Light: keys, the popup, suggestion pills, the clipboard strip, the developer row, and the emoji panel. Another keyboard theme is left as it is.</string>
+    <string name="settings__keyboard_colors__background" comment="Color row">Background</string>
+    <string name="settings__keyboard_colors__key" comment="Color row">Key color</string>
+    <string name="settings__keyboard_colors__key_text" comment="Color row">Key text</string>
+    <string name="settings__keyboard_colors__primary" comment="Color row">Accent and glow</string>
+    <string name="settings__keyboard_colors__secondary" comment="Color row">Highlight</string>
+    <string name="settings__keyboard_colors__suggestion" comment="Color row">Suggestion pills</string>
+    <string name="settings__keyboard_colors__preset_neon" comment="Preset name">Neon</string>
+    <string name="settings__keyboard_colors__preset_cyber" comment="Preset name">Cyber blue</string>
+    <string name="settings__keyboard_colors__preset_matrix" comment="Preset name">Matrix</string>
+    <string name="settings__keyboard_colors__preset_purple" comment="Preset name">Purple</string>
+    <string name="settings__keyboard_colors__preset_red" comment="Preset name">Red</string>
+    <string name="settings__keyboard_colors__preset_mono" comment="Preset name">Mono</string>
     <string name="pref__theme__mode__label" comment="Label of the theme mode preference">Theme mode</string>
     <string name="pref__theme__sunrise_time__label" comment="Label of the sunrise time preference">Sunrise time</string>
     <string name="pref__theme__sunset_time__label" comment="Label of the sunset time preference">Sunset time</string>
@@ -452,6 +476,11 @@
     <string name="pref__keyboard__space_bar_mode__label" comment="Preference title">Spacebar label</string>
     <string name="pref__keyboard__capitalization_behavior__label" comment="Preference title">Capitalization behavior</string>
     <string name="pref__keyboard__font_size_multiplier__label" comment="Preference title">Font size multiplier</string>
+    <string name="pref__keyboard__bottom_gap__label" comment="Preference title">Bottom gap</string>
+    <string name="pref__keyboard__bottom_gap__summary" comment="Preference summary. {v} is the gap in dp.">Lifts space and enter above the home gesture. The gap uses the keyboard background. Currently {v} dp.</string>
+    <string name="pref__keyboard__bottom_gap__summary_auto" comment="Preference summary when the gap follows the navigation style. {v} is dp.">Lifts space and enter above the home gesture. Recommended for this device: {v} dp. The gap uses the keyboard background.</string>
+    <string name="pref__keyboard__bottom_gap__value" translatable="false">{v} dp</string>
+    <string name="pref__keyboard__bottom_gap__use_recommended">Use recommended ({v} dp)</string>
     <string name="pref__keyboard__group_layout__label" comment="Preference group title">Layout</string>
     <string name="pref__keyboard__landscape_input_ui_mode__label" comment="Preference value">Landscape fullscreen input</string>
     <string name="pref__keyboard__key_spacing__label" comment="Preference title">Key spacing factor</string>
@@ -482,6 +511,14 @@
     <string name="pref__suggestion__title" comment="Preference group title">Suggestions</string>
     <string name="pref__suggestion__enabled__label" comment="Preference title">Display suggestions</string>
     <string name="pref__suggestion__enabled__summary" comment="Preference summary">Provides suggestions while you type</string>
+    <string name="pref__suggestion__prediction_enabled__label" comment="Preference title">Word prediction</string>
+    <string name="pref__suggestion__prediction_enabled__summary" comment="Preference summary">Suggest the current word, the next word, and close corrections from the bundled dictionaries. Off in password fields and fields that ask for no suggestions.</string>
+    <string name="pref__suggestion__learn_from_typing__label" comment="Preference title">Learn from my typing</string>
+    <string name="pref__suggestion__learn_from_typing__summary" comment="Preference summary">Off by default. When on, new words and how often they follow each other are stored only on this device. Nothing is stored from passwords, incognito, or fields that disallow personalized learning.</string>
+    <string name="pref__suggestion__clear_learned__label" comment="Preference title">Clear learned words</string>
+    <string name="pref__suggestion__clear_learned__summary" comment="Preference summary">Deletes every word this keyboard has learned from your typing</string>
+    <string name="pref__suggestion__clear_learned__confirm_title" comment="Dialog title">Clear learned words?</string>
+    <string name="pref__suggestion__clear_learned__confirm_message" comment="Dialog text">This deletes the on-device list of words learned from your typing. Bundled dictionaries stay.</string>
     <string name="pref__suggestion__display_mode__label" comment="Preference title">Suggestions display mode</string>
     <string name="pref__suggestion__block_possibly_offensive__label" comment="Preference title">Block possibly offensive words</string>
     <string name="pref__suggestion__block_possibly_offensive__summary" comment="Preference summary">Prevents possibly offensive words from being suggested while you type</string>
@@ -509,7 +546,7 @@
     <string name="settings__dictionary_packs__title" comment="Screen title and settings entry">Dictionary packs</string>
     <string name="settings__dictionary_packs__entry_summary" comment="Summary of the settings entry">Ready-made word lists: Kali tools, NetHunter, AI terms, slash commands, Termux</string>
     <string name="settings__dictionary_packs__note_title" comment="Heading of the explanation at the top of the screen">What packs do</string>
-    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages. Today they stop the system spell checker from flagging these words in apps that use it. Word suggestions while typing do not exist in this keyboard yet. Lists were written from memory and not checked against current releases.</string>
+    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages, which stops the system spell checker from flagging them in apps that use it. Word prediction reads the bundled pack lists directly and does not depend on installing a pack. Lists were written from memory and not checked against current releases.</string>
     <string name="settings__dictionary_packs__import" comment="Preference title">Open a pack file</string>
     <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device</string>
     <string name="settings__dictionary_packs__install" comment="Dialog button">Add words</string>
@@ -873,6 +910,36 @@
     <string name="pref__clipboard__duplicate_behavior__label">Duplicate clips</string>
     <string name="pref__clipboard__store_detected_secrets__label">Save passwords and keys</string>
     <string name="pref__clipboard__store_detected_secrets__summary">Off by default. When off, text that looks like a password, API key or card number is not saved to history. Detection is pattern-based and not perfect.</string>
+    <string name="pref__clipboard__group_vault__label">Sensitive vault</string>
+    <string name="pref__clipboard__detect_secrets_to_vault__label">Detect secrets into the vault</string>
+    <string name="pref__clipboard__detect_secrets_to_vault__summary">Off by default. When on, text that looks like a card number, IBAN, API key, private key or one-time code is saved in the vault instead of the regular clipboard. Pattern matching misses some secrets and can flag ordinary text.</string>
+    <string name="pref__clipboard__vault_require_unlock__label">Require unlock to view the vault</string>
+    <string name="pref__clipboard__vault_require_unlock__summary">On by default. Uses this device\'s biometric or screen lock. The vault stays locked until that succeeds, and locks again after the timeout.</string>
+    <string name="pref__clipboard__vault_lock_after__label">Lock the vault after</string>
+    <string name="pref__clipboard__vault_lifetime__label">Delete unpinned vault items after</string>
+    <string name="pref__clipboard__vault_lifetime__summary">Pinned vault items are kept. The default is 24 hours.</string>
+    <string name="enum__vault_lifetime__hour_1">1 hour</string>
+    <string name="enum__vault_lifetime__hour_6">6 hours</string>
+    <string name="enum__vault_lifetime__hour_24">24 hours</string>
+    <string name="enum__vault_lifetime__days_7">7 days</string>
+    <string name="enum__vault_lifetime__never">Never</string>
+    <string name="clipboard__tab_regular">Clipboard</string>
+    <string name="clipboard__tab_vault">Vault</string>
+    <string name="clipboard__vault_locked_title">Vault locked</string>
+    <string name="clipboard__vault_locked_message">Confirm this device\'s screen lock to view sensitive clips. They stay encrypted until then.</string>
+    <string name="clipboard__vault_unlock">Unlock</string>
+    <string name="clipboard__vault_empty">No sensitive clips</string>
+    <string name="clipboard__vault_count">{n} items</string>
+    <string name="clipboard__vault_reveal">Reveal</string>
+    <string name="clipboard__vault_hide">Hide</string>
+    <string name="clipboard__vault_move_to_vault">Move to vault</string>
+    <string name="clipboard__vault_move_to_clipboard">Move to clipboard</string>
+    <string name="clipboard__vault_chars">{n} characters</string>
+    <string name="clipboard__vault_locked_export">Unlock the vault on the keyboard before including it in an export.</string>
+    <string name="clipboard_backup__include_vault">Include the sensitive vault</string>
+    <string name="clipboard_backup__include_vault_summary">Off unless you turn it on. Only an encrypted export can carry vault items.</string>
+    <string name="clipboard__vault_unlock_title">Unlock sensitive clipboard</string>
+    <string name="clipboard__vault_unlock_message">Confirm it\'s you to view the vault.</string>
     <!-- Clipboard manager -->
     <string name="clipboard_manager__title">Clipboard manager</string>
     <string name="clipboard_manager__link_summary">Search, pin, tag, edit and delete saved clips</string>

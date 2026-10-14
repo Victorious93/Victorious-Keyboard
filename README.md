@@ -25,10 +25,12 @@
 ## Overview
 
 Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.com/florisboard/florisboard)
-(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine, layouts and themes and adds:
+(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine and layouts. The default look is Victorious Neon: navy `#010619`, amber `#FFC107`, and hot pink, with rounder keys, a gap between them, and a soft glow. A light variant is the day theme. The older FlorisBoard themes stay selectable. Settings are grouped under Look, Typing, Tools, and About. It adds:
 
-* **Clipboard manager** — up to 500 items with search, pinning, filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key).
-* **Developer row and operating modes** — Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
+* **Keyboard colors** — Settings → Look → Keyboard colors. Background, key, key text, accent, highlight, and suggestion pills, with presets and a reset. The choice is saved and painted over Victorious Neon.
+* **Word prediction** — current word, next word, and a close correction from the bundled dictionaries. *Learn from my typing* is off until you turn it on.
+* **Clipboard manager** — up to 500 items with search, pinning (pinned items are kept), filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key). A separate **Vault** tab holds sensitive clips.
+* **Developer row and operating modes** — off until you enable it. Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
@@ -37,6 +39,16 @@ It is not affiliated with or endorsed by the FlorisBoard project. The repository
 ## Features
 
 Status key: ✅ **tested** (JVM unit tests) · 🟦 **built, not run** on a device · 🔹 **inherited** from FlorisBoard · ⬜ **planned**
+
+### Look
+
+Settings → Look holds Languages, Theme, Keyboard colors, and Keyboard.
+
+Victorious Neon is the default night theme and Neon Light is the day theme. Keys are rounded, spaced, and edged in the accent color. The suggestion bar, key popup, clipboard strip, developer row, and emoji panel use the same palette. Letter keys scale down slightly while held. This has been compiled and drawn from the stylesheet. It has not been shown on a device.
+
+Bottom gap (Settings → Look → Keyboard) lifts the docked keyboard above the navigation bar and the home-gesture strip. The padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets. A slider from 0 to 48 dp adds more space; it starts at 16 dp on gesture navigation and 4 dp with 3-button navigation, and the strip is the keyboard background. The keyboard preview on that screen is the real keyboard, so the gap shows there. A touch that starts on a key and slides into the system strip does not insert the character. This is compiled and unit-tested. It has not been run on a device.
+
+Keyboard colors (Settings → Look → Keyboard colors) let you recolor that Neon theme without the Snygg theme editor. You can set the background, key color, key text, accent and glow, highlight (space bar and emphasis), and suggestion pills. A hue and saturation wheel plus a hex field edits one color at a time, and the keyboard preview on the screen updates immediately. Presets: Neon, Cyber blue, Matrix, Purple, Red, and Mono. Reset to default restores Neon. Text that would be hard to read is replaced with a dark or light ink. The choice is stored in preferences and applied again on the next start, including popups, the clipboard strip, the developer row, and the emoji panel. It applies while Victorious Neon or Neon Light is the selected keyboard theme. Another theme is left alone. The screen is compiled and not yet run on a device.
 
 ### Typing (inherited)
 
@@ -49,16 +61,19 @@ QWERTY, numeric and symbol layouts, emoji, long-press, key repeat, haptics, soun
 | 500-item history; pinned items never evicted | ✅ policy · 🟦 wired |
 | Encrypted at rest (AES-256-GCM, Keystore-wrapped) | ✅ cipher · 🟦 Room/Keystore |
 | Search, filters, tags, favourites, edit, multi-select, share | ✅ logic · 🟦 screens |
-| Password / API-key / card-looking text not saved by default | ✅ |
-| Copy/Cut refused in password fields | ✅ detection · 🟦 call site |
-| Export/import: JSON, ZIP, encrypted archive, Markdown, text | ✅ logic · 🟦 file pickers |
+| Password / API-key / card-looking text not saved to the regular clipboard by default | ✅ |
+| Sensitive vault (separate store, masked, expiry, lock) | ✅ rules · 🟦 screen and Keystore |
+| Copy in a password field, or a clip Android marks sensitive, goes to the vault | ✅ routing · 🟦 call site |
+| Export/import: JSON, ZIP, encrypted archive, Markdown, text. Vault only in an encrypted export you opt into | ✅ logic · 🟦 file pickers |
 | Images/URI clips in backups | ⛔ skipped (cannot restore safely) |
+
+The keyboard clipboard panel has two tabs, **Clipboard** and **Vault**, using the same neon theme. Password-field copies and clips Android flags as sensitive go to the Vault when clipboard history is on. *Detect secrets into the vault* (Settings → Tools → Clipboard) is off until you turn it on; it looks for card numbers, IBANs, API keys, private keys, and one-time codes. You can move an item between the two lists. Vault text is encrypted with its own Android Keystore key, kept out of the suggestion bar, and masked until you reveal it. Viewing it asks for the device lock (on by default) and locks again after a timeout. Unpinned vault items expire after 24 hours unless you pick another period or Never; pins stay. Vault items are not in backups or exports unless you opt into an encrypted export. The regular history cap, pins, and search are unchanged. None of this has been run on a device.
 
 Details: [CLIPBOARD.md](CLIPBOARD.md), [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
 ### Developer and terminal
 
-Developer row (off by default): Esc, Tab, Ctrl, Alt, arrows, Home/End/PgUp/PgDn. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet.
+The developer row is off until you turn it on (Settings → Keyboard → Developer mode). It adds Esc, Tab, Ctrl, Alt, arrows, Home/End/PgUp/PgDn. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet. The row itself is compiled and has not been rendered on a device.
 
 Details: [TERMINAL.md](TERMINAL.md), [docs/DEVELOPER_KEYBOARD.md](docs/DEVELOPER_KEYBOARD.md).
 
@@ -70,26 +85,40 @@ Details: [SNIPPETS.md](SNIPPETS.md).
 
 ### Dictionary packs
 
-Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources. Words reach the system spell checker only — **word suggestions are not implemented yet.**
+Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources.
+
+Word prediction is on by default and reads those lists in the suggestion bar: the word you are typing, a next-word guess, and a one-edit correction that can commit on space. *Learn from my typing* is a separate switch and **off by default**. While it is off, nothing you type is stored and only the static lists are used. While it is on, new words and the word before them stay in `noBackupFilesDir/prediction/learned-words.json` on this device. Passwords, incognito, and fields that disallow personalized learning are not stored. *Clear learned words* asks before it deletes that file. Next-word without learning ranks dictionary frequency, because the packs have no sentence pairs. `spell()` is still a stub. Gesture typing is not done. The suggestion wiring has not been run on a device.
 
 Details: [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md).
 
 ### Planned (not started or incomplete)
 
-* Word suggestions, autocorrect, next-word prediction, personal dictionary
-* Victorious theme presets and responsive layout (Phase 8)
+* Gesture typing (word prediction itself is in: current word, next word, and a close correction; learning is opt-in)
+* Further theme presets beyond the color-picker set (a separate AMOLED keyboard theme, Terminal Green) and a responsive/tablet layout (Phase 8). Victorious Neon, Neon Light, and Keyboard colors are already in.
 * AI workspace: prompt library, local transforms, optional provider adapters (Phase 7; network only after you enable a provider)
 * Voice typing via Android's recogniser
 
 ## Screenshots
 
-> Placeholders — the app has not been run on a device yet, so no real screenshots are available.
+These pictures are drawn from the shipped theme colors and the keyboard-colors screen layout. They are not photographs of the app on a device. The glow is a little stronger than the drop shadow the keyboard draws.
 
-| Keyboard (default) | Developer row | Clipboard history | Snippets picker | Settings |
-|---|---|---|---|---|
-| *TODO* | *TODO* | *TODO* | *TODO* | *TODO* |
+| Floris Night and Victorious Neon | Neon | Neon Light |
+|---|---|---|
+| <img src="docs/screenshots/keyboard-before-after.png" alt="Floris Night beside Victorious Neon" width="420"> | <img src="docs/screenshots/keyboard-neon.png" alt="Victorious Neon keyboard" width="280"> | <img src="docs/screenshots/keyboard-neon-light.png" alt="Victorious Neon light keyboard" width="280"> |
 
-Suggested captures once a device build is available: default QWERTY; developer row with Ctrl locked; clipboard history with a pinned item and search; snippet picker inserting a template; dictionary-packs install screen; About / privacy screen showing no Internet permission.
+| Settings, before and after | Keyboard colors | Color wheel |
+|---|---|---|
+| <img src="docs/screenshots/settings-before-after.png" alt="Settings home, previous green list and grouped navy and light schemes" width="420"> | <img src="docs/screenshots/keyboard-colors.png" alt="Keyboard colors screen with preview, presets, and color rows" width="280"> | <img src="docs/screenshots/keyboard-color-wheel.png" alt="Hue and saturation wheel with a hex field" width="280"> |
+
+| Cyber blue | Matrix | Purple |
+|---|---|---|
+| <img src="docs/screenshots/keyboard-preset-cyber.png" alt="Cyber blue keyboard preset" width="280"> | <img src="docs/screenshots/keyboard-preset-matrix.png" alt="Matrix green keyboard preset" width="280"> | <img src="docs/screenshots/keyboard-preset-purple.png" alt="Purple keyboard preset" width="280"> |
+
+| Clipboard tab | Vault tab |
+|---|---|
+| <img src="docs/screenshots/clipboard-tab.png" alt="Clipboard panel, regular tab, with a pinned item" width="280"> | <img src="docs/screenshots/clipboard-vault-tab.png" alt="Clipboard panel, vault tab, items masked" width="280"> |
+
+Still waiting on a device: the developer row with Ctrl locked, clipboard history with a pinned item, and the snippet picker.
 
 ## Status
 
@@ -101,7 +130,9 @@ Suggested captures once a device build is available: default QWERTY; developer r
 | 3 | Advanced clipboard | 🟡 core tested; storage/UI compiled, not run |
 | 4 | Developer and terminal modes | 🟡 core tested; wiring/row UI compiled, not run |
 | 5 | Snippets and productivity | 🟡 core tested; Android shell compiled, not run |
-| 6–10 | Prediction, AI workspace, themes, security/perf, release | ⬜ |
+| 6 | Word prediction | 🟡 predictor tested; suggestion wiring compiled, not run. Gesture typing not started |
+| 7, 9–10 | AI workspace, security/perf, release | ⬜ |
+| 8 | Themes | 🟡 Neon default and keyboard colors compiled, not run on a device; responsive layout not started |
 
 Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 
@@ -115,8 +146,8 @@ Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 | Permissions | `VIBRATE`, `POST_NOTIFICATIONS` (setup flow) |
 | Internet | **None** — no `INTERNET` permission |
 | Analytics / ads / telemetry | None |
-| Data | On-device only; clipboard and snippets excluded from Android auto-backup |
-| Distribution | No signed release yet — build from source |
+| Data | On-device only; clipboard, snippets, and learned words stay out of Android auto-backup |
+| Distribution | Debug pre-release on GitHub Releases. Signed with the Android debug key, not a store build |
 
 Privacy: [PRIVACY.md](PRIVACY.md).
 
@@ -125,6 +156,10 @@ Privacy: [PRIVACY.md](PRIVACY.md).
 * **JDK 21** (matches CI)
 * Android SDK: `platforms;android-36`, `build-tools;35.0.0`
 * Optional: connected device or emulator for sideload testing
+
+## Download
+
+The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, and the separate sensitive clipboard. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
 
 ## Build and install
 

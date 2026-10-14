@@ -15,7 +15,8 @@ possible as specified (reason given).
 | Physical keyboard support | 🔹 | upstream lists it as incomplete |
 | Floating keyboard | ⬜ | not in upstream at this version |
 | Split keyboard / tablet layouts | ⬜ | |
-| Required theme presets (Victorious Dark, AMOLED, Terminal Green, …) | ⬜ | Phase 8 |
+| Victorious Neon keyboard theme (dark default) and Neon Light, older Floris themes still selectable | 🟦 stylesheet + settings scheme compiled, **not rendered on a device** | Navy `#010619`, amber `#FFC107`, hot pink. Settings app uses the same brand (dark default, light variant). AMOLED and Terminal Green are not separate presets |
+| Keyboard colors: background, key, key text, accent, highlight, suggestion pills, presets, reset | 🟡 mapping and persistence JVM-tested · 🟦 screen compiled, **never run** | Overlay on Victorious Neon / Neon Light only. Text contrast is corrected when it would be hard to read |
 
 ## Clipboard (Phase 3) — see `CLIPBOARD.md`
 
@@ -26,7 +27,9 @@ possible as specified (reason given).
 | Search (in the Clipboard manager screen), filters, tags, favourites, categories, editing, multi-select, share | ✅ logic · 🟦 UI |
 | Search typed inside the keyboard panel | ⬜ (see CLIPBOARD.md) |
 | Credential detection (not saved by default) | ✅ |
-| Password-field guard on Copy/Cut | ✅ detection · 🟦 call site |
+| Password-field copies and Android sensitive clips route to the vault | ✅ routing · 🟦 call site |
+| Sensitive vault: own Keystore key and file, masked list, biometric/device-credential lock (default on), timeout, expiry (default 24h, Never allowed), pins kept | ✅ rules and file codec · 🟦 screen, Keystore, and credential prompt **never run** |
+| Vault excluded from backups and exports unless an encrypted export is explicitly opted into | ✅ |
 | Export JSON / ZIP / encrypted / Markdown / text; import with preview, merge/replace/skip, consent, atomic apply | ✅ logic · 🟦 SAF screens |
 | Backup library (user-chosen files, minimal metadata, availability check, delete) | ✅ model · 🟦 UI |
 | Images / URI clips in backups | ⛔ not safely restorable; skipped and counted |
@@ -56,7 +59,7 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Expansion on Enter and Tab, each opt-in and off by default; a non-match still sends the real key; never in password fields | ✅ rules JVM-tested · 🟦 wiring compiled, **never run** |
 | In-keyboard snippet picker (smartbar quick action, panel with tag chips, insert at the caret, `{{selection}}`, `{{cursor}}`) | ✅ pure parts JVM-tested (insertion rules, caret placement, list model, preview, migration of the quick action) · 🟦 panel and wiring compiled, **never run or rendered** |
 | Typed search in the picker, encrypted export | ⬜ |
-| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; words only reach the system spell checker today (no suggestions exist yet) |
+| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; prediction reads the bundled zips, and installing a pack still only feeds the system spell checker |
 | Command library | ⬜
 
 ## Prediction and voice (Phase 6)
@@ -64,7 +67,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Feature | Status |
 |---|---|
 | Glide typing | 🔹 upstream classifier exists; needs a dictionary; unverified |
-| Word suggestions, autocorrect, next-word prediction, personal dictionary | ⬜ upstream `suggest()` returns nothing and `spell()` is a test stub |
+| Word suggestions, autocorrect, next-word prediction | 🟡 pure predictor JVM-tested; suggestion-bar wiring and Typing settings compiled, **never run**. `spell()` is still a test stub. Next-word without learning is a frequency ranking (`DICTIONARY_PACKS.md`) |
+| Learn from my typing (off by default) and Clear learned words | 🟡 store and gate JVM-tested; file under `noBackupFilesDir/prediction/`; **never run** on a device |
 | Voice typing | ⬜ |
 | GIF integration | ⬜ |
 

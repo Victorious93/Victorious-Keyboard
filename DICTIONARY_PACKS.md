@@ -8,12 +8,19 @@ Status: **pure-Kotlin core JVM-tested; install screen and database wiring compil
   vocabulary**, **Slash commands**, **Termux and shell commands** (about 50-190 words each).
 * Installing a pack adds its words to the keyboard's **internal user dictionary** for all languages
   (Settings → Typing → Dictionary → *Dictionary packs*; the internal user dictionary must be switched on).
-* **Today the only consumer of the user dictionary is the Android spell checker service**
-  (`FlorisSpellCheckerService`): installed words stop being flagged as typos in apps that use the system spell checker.
-  **Word suggestions and autocorrect while typing do not exist in this keyboard yet** (`LatinLanguageProvider.suggest()`
-  returns nothing; Phase 6). The packs are the data those features will read; they do not make suggestions appear now.
+* The Android spell checker service (`FlorisSpellCheckerService`) reads the internal user dictionary: installed words
+  stop being flagged as typos in apps that use the system spell checker.
+* **Word prediction reads the bundled pack zips directly**, not the user-dictionary rows. With *Word prediction* on
+  (the default), the suggestion bar offers current-word completions, a next-word guess, and a close correction.
+  A correction is auto-committed on space only when it is one edit away, the typed token is at least 4 characters, and
+  the token is not already in the lexicon. *Learn from my typing* is off by default. When it is on, new words and the
+  word that came before them are stored in `noBackupFilesDir/prediction/learned-words.json` (not backed up, never
+  logged). Passwords, incognito, and fields with `IME_FLAG_NO_PERSONALIZED_LEARNING` or no-suggestions are not stored,
+  and prediction itself does not run in password or no-suggestions fields. The static packs have no sentence pairs, so
+  next-word with learning off is the most frequent dictionary word, which is a weak guess. `spell()` is still the
+  upstream test stub. None of this has been run on a device.
 * The spell checker looks at words, so entries that start with `/` or contain `-` are stored as typed but may not be
-  matched by it. That is accepted: the packs are meant to also feed the future suggestion engine.
+  matched by it. Prediction's token pattern does keep `_./+-`, so those pack words can still be suggested.
 
 ## Honest provenance
 
@@ -54,5 +61,6 @@ deterministically. `DictionaryPackAssetsTest` fails if a committed zip no longer
 
 ## Not done
 
-* Use of the words for suggestions (Phase 6), per-locale packs, a pack origin marker, translations of the pack texts,
-  verification of the lists against official sources, device validation.
+* Gesture typing still has no dictionary behind it. Per-locale packs, a pack origin marker, translations of the pack
+  texts, verification of the lists against official sources, and device validation of prediction are not done.
+  `spell()` remains a stub. Next-word without learning is a frequency ranking, not a language model.

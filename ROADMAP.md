@@ -26,12 +26,12 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 0 | Repository audit and baseline | ✅ (docs below; baseline built + 176 tests pass) |
 | 1 | Project foundation | ✅ (builds, JVM tests, dependency verification proven from a cold Gradle home through a mirror; CI green through build + unit tests on GitHub, including a run that stored the APK; artifact upload stays non-fatal if the storage quota is full; `lintDebug` is a gate after the inherited lint errors were fixed — see `AUDIT.md` §8) |
 | 2 | Stable keyboard engine | ⬜ (needs device; engine is upstream's) |
-| 3 | Advanced clipboard | 🟡 core ✅ JVM-tested; storage/UI 🟦 compiled, **not run on a device**; see open items |
+| 3 | Advanced clipboard | 🟡 core ✅ JVM-tested, including regular/vault routing, detection, expiry, and export exclusion. Storage/UI 🟦 compiled, **not run on a device**; the vault credential prompt is not run |
 | 4 | Developer and terminal modes | 🟡 pure core ✅ JVM-tested; wiring and developer-row UI 🟦 compiled, **never run or rendered** (see `TERMINAL.md`) |
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
-| 6 | Predictive and gesture typing | ⬜ (dictionary packs exist as data: `DICTIONARY_PACKS.md`; nothing reads them for suggestions yet) |
+| 6 | Predictive and gesture typing | 🟡 word prediction (current word, next word, one-edit autocorrect) is JVM-tested and wired into the suggestion bar; learning is off by default and the file is not backed up. Gesture typing is still not done. Nothing has been run on a device (`DICTIONARY_PACKS.md`) |
 | 7 | AI workspace | ⬜ |
-| 8 | Themes and responsive UI | ⬜ |
+| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Neon (light variant too); settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay Neon (presets, picker, persistence) and are JVM-tested; the screen is compiled and not run on a device. Older themes stay selectable. Responsive/tablet layout not started |
 | 9 | Security and performance | ⬜ |
 | 10 | Release engineering | ⬜ |
 
@@ -68,7 +68,7 @@ migration, then UI. Requirements and acceptance criteria are those in the projec
 As in the project brief. Notable decisions already taken:
 
 * P4: modifier→`KeyEvent` mapping is a pure function with a test table; Termux/SSH behaviour is device-test-only.
-* P6: suggestions/autocorrect do not exist upstream; they are built here or not shipped. No placeholder toggles.
+* P6: suggestions are a pure predictor over the bundled packs, with learning off unless the user opts in. Gesture typing is still not done. `spell()` is still a stub.
 * P7: no `INTERNET` permission until a provider adapter is enabled by the user.
 * P10: no production signing material in the repo; debug builds are never published as releases.
 

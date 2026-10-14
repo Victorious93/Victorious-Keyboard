@@ -54,8 +54,8 @@ provably isolated from key handling.
 * `ime/text/key/KeyCode` — key code space (positive = Unicode, negative = special: `CTRL=-1`, `ALT=-3`, arrows,
   `ESCAPE=27`, `TAB=9`, …); layouts are JSON under `assets/ime/keyboard/org.florisboard.layouts`, loaded as
   extensions (`ime/extension`, `lib/ext`).
-* `ime/nlp/NlpManager` — pluggable `NlpProvider`s (`latin/LatinLanguageProvider`, `han/…`). **Suggestions and
-  spell-check are stubs at this baseline.**
+* `ime/nlp/NlpManager` — pluggable `NlpProvider`s (`latin/LatinLanguageProvider`, `han/…`). Latin suggestions come from
+  `ime/nlp/prediction` (bundled packs, optional on-device learning). `spell()` is still the upstream test stub.
 * `ime/text/gestures` — swipe actions and glide typing (`StatisticalGlideTypingClassifier`).
 * `ime/clipboard` — `ClipboardManager` (listens to the system clipboard, owns history), `provider/ClipboardDatabase`
   (Room, plain SQLite), `provider/ClipboardMediaProvider` (a `ContentProvider` for stored images).

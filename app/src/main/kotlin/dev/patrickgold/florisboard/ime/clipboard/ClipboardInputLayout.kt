@@ -94,6 +94,7 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.clipboardManager
 import dev.patrickgold.florisboard.ime.ImeUiMode
+import dev.patrickgold.florisboard.ime.clipboard.lanes.ClipLane
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardFileStorage
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
@@ -154,6 +155,7 @@ fun ClipboardInputLayout(
     val deviceLocked = androidKeyguardManager.let { it.isDeviceLocked || it.isKeyguardLocked }
     val historyEnabled by prefs.clipboard.historyEnabled.observeAsState()
 
+    var lane by remember { mutableStateOf(ClipLane.REGULAR) }
     var isFilterRowShown by remember { mutableStateOf(false) }
     val activeFilterTypes = remember { mutableStateSetOf<ItemType>() }
 
@@ -550,6 +552,15 @@ fun ClipboardInputLayout(
                                 clipboardManager.setFavorite(popupItem!!, !popupItem!!.isFavorite)
                                 popupItem = null
                             }
+                            if (popupItem!!.type == ItemType.TEXT) {
+                                PopupAction(
+                                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                                    text = stringRes(R.string.clipboard__vault_move_to_vault),
+                                ) {
+                                    clipboardManager.moveToVault(popupItem!!)
+                                    popupItem = null
+                                }
+                            }
                             PopupAction(
                                 icon = Icons.Default.Delete,
                                 text = stringRes(R.string.clip__delete_item),
@@ -693,7 +704,10 @@ fun ClipboardInputLayout(
             .height(FlorisImeSizing.imeUiHeight()),
     ) {
         HeaderRow()
-        if (deviceLocked) {
+        LaneTabs(lane = lane, onLane = { lane = it })
+        if (lane == ClipLane.VAULT) {
+            ClipboardVaultPanel(Modifier.weight(1f))
+        } else if (deviceLocked) {
             HistoryLockedView()
         } else {
             if (historyEnabled) {
@@ -706,6 +720,27 @@ fun ClipboardInputLayout(
                 HistoryDisabledView()
             }
         }
+    }
+}
+
+@Composable
+private fun LaneTabs(lane: ClipLane, onLane: (ClipLane) -> Unit) {
+    SnyggRow(
+        elementName = FlorisImeUi.ClipboardFilterRow.elementName,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        SnyggChip(
+            elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+            attributes = mapOf("state" to if (lane == ClipLane.REGULAR) "active" else "inactive"),
+            onClick = { onLane(ClipLane.REGULAR) },
+            text = stringRes(R.string.clipboard__tab_regular),
+        )
+        SnyggChip(
+            elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+            attributes = mapOf("state" to if (lane == ClipLane.VAULT) "active" else "inactive"),
+            onClick = { onLane(ClipLane.VAULT) },
+            text = stringRes(R.string.clipboard__tab_vault),
+        )
     }
 }
 

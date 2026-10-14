@@ -21,6 +21,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.MotionEvent
 import android.view.animation.AccelerateInterpolator
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,12 +49,15 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -79,6 +85,8 @@ import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.key.KeyType
 import dev.patrickgold.florisboard.ime.text.key.KeyVariation
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
+import dev.patrickgold.florisboard.ime.window.KeyboardBottomClearance
+import dev.patrickgold.florisboard.ime.window.LocalImeSystemBottomStrip
 import dev.patrickgold.florisboard.ime.window.LocalWindowController
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.lib.FlorisRect
@@ -163,6 +171,8 @@ fun TextKeyboardLayout(
             .height(FlorisImeSizing.keyboardUiHeight())
             .onGloballyPositioned { coords ->
                 controller.size = coords.size.toSize()
+                controller.layoutTopInRootPx = coords.positionInRoot().y
+                controller.rootHeightPx = coords.findRootCoordinates().size.height
             }
             .pointerInteropFilter { event ->
                 when (event.actionMasked) {
@@ -219,6 +229,7 @@ fun TextKeyboardLayout(
 
         val windowController = LocalWindowController.current
         val windowSpec by windowController.activeWindowSpec.collectAsState()
+        controller.systemStripPx = LocalImeSystemBottomStrip.current
         val keyMarginH by remember { derivedStateOf { windowSpec.keyMarginH.toPx() } }
         val keyMarginV by remember { derivedStateOf { windowSpec.keyMarginV.toPx() } }
 
@@ -241,7 +252,9 @@ fun TextKeyboardLayout(
                     }
                 }
                 desiredKey.visibleBounds.applyFrom(desiredKey.touchBounds).deflateBy(keyMarginH, keyMarginV)
-                keyboard.layout(keyboardWidth, keyboardHeight, desiredKey, true)
+                // Do not extend the bottom row's touch target past the keyboard. That extension
+                // reaches into the home-gesture strip and the system treats the press as Home.
+                keyboard.layout(keyboardWidth, keyboardHeight, desiredKey, false)
             }
         }
 
@@ -321,6 +334,14 @@ private fun TextKeyButton(
     desiredKey: TextKey,
     debugShowTouchBoundaries: Boolean,
 ) = with(LocalDensity.current) {
+    val pressedScale by animateFloatAsState(
+        targetValue = if (key.isPressed) 0.94f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "keyPress",
+    )
     val attributes = mapOf(
         FlorisImeUi.Attr.Code to key.computedData.code,
         FlorisImeUi.Attr.Mode to evaluator.keyboard.mode.toString(),
@@ -340,7 +361,11 @@ private fun TextKeyButton(
         selector = selector,
         modifier = Modifier
             .requiredSize(size)
-            .absoluteOffset { key.visibleBounds.topLeft.toIntOffset() },
+            .absoluteOffset { key.visibleBounds.topLeft.toIntOffset() }
+            .graphicsLayer {
+                scaleX = pressedScale
+                scaleY = pressedScale
+            },
     ) {
         val isTelPadKey = key.computedData.type == KeyType.NUMERIC && evaluator.keyboard.mode == KeyboardMode.PHONE
         key.label?.let { label ->
@@ -416,12 +441,49 @@ private class TextKeyboardLayoutController(
 
     lateinit var keyboard: TextKeyboard
     var size = Size.Zero
+    var layoutTopInRootPx: Float = 0f
+    var rootHeightPx: Int = 0
+    var systemStripPx: Int = 0
+
+    private fun pointerInSystemStrip(event: MotionEvent, pointerIndex: Int): Boolean {
+        val yInRoot = layoutTopInRootPx + event.getY(pointerIndex)
+        return KeyboardBottomClearance.pointerInSystemStrip(yInRoot, rootHeightPx, systemStripPx)
+    }
+
+    private fun eventClaimsSystemStrip(event: MotionEvent): Boolean {
+        if (systemStripPx <= 0 || rootHeightPx <= 0) return false
+        if (event.actionMasked == MotionEvent.ACTION_MOVE) {
+            for (index in 0 until event.pointerCount) {
+                if (pointerInSystemStrip(event, index)) return true
+            }
+            return false
+        }
+        val index = event.actionIndex
+        if (index !in 0 until event.pointerCount) return false
+        val tracked = pointerMap.findById(event.getPointerId(index))
+        return pointerInSystemStrip(event, index) || tracked?.releasedIntoGestureStrip == true
+    }
 
     val isGlideEnabled: Boolean get() = prefs.glide.enabled.get() && editorInstance.activeInfo.isRichInputEditor &&
         keyboardManager.activeState.keyVariation != KeyVariation.PASSWORD
 
     fun onTouchEventInternal(event: MotionEvent) {
         flogDebug { "event=$event" }
+        if (eventClaimsSystemStrip(event)) {
+            for (pointer in pointerMap) {
+                pointer.releasedIntoGestureStrip = true
+                swipeGestureDetector.onTouchCancel(event, pointer)
+                onTouchCancelInternal(event, pointer)
+            }
+            if (event.actionMasked == MotionEvent.ACTION_UP ||
+                event.actionMasked == MotionEvent.ACTION_CANCEL ||
+                event.actionMasked == MotionEvent.ACTION_POINTER_UP
+            ) {
+                pointerMap.clear()
+            }
+            isGliding = false
+            return
+        }
         swipeGestureDetector.onTouchEvent(event)
         if (isGlideEnabled && keyboard.mode == KeyboardMode.CHARACTERS) {
             val glidePointer = pointerMap.findById(0)
@@ -446,8 +508,12 @@ private class TextKeyboardLayoutController(
                 val pointerId = event.getPointerId(pointerIndex)
                 val pointer = pointerMap.add(pointerId, pointerIndex)
                 if (pointer != null) {
-                    swipeGestureDetector.onTouchDown(event, pointer)
-                    onTouchDownInternal(event, pointer)
+                    if (pointerInSystemStrip(event, pointerIndex)) {
+                        pointer.releasedIntoGestureStrip = true
+                    } else {
+                        swipeGestureDetector.onTouchDown(event, pointer)
+                        onTouchDownInternal(event, pointer)
+                    }
                 }
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
@@ -469,8 +535,12 @@ private class TextKeyboardLayoutController(
                 }
                 val pointer = pointerMap.add(pointerId, pointerIndex)
                 if (pointer != null) {
-                    swipeGestureDetector.onTouchDown(event, pointer)
-                    onTouchDownInternal(event, pointer)
+                    if (pointerInSystemStrip(event, pointerIndex)) {
+                        pointer.releasedIntoGestureStrip = true
+                    } else {
+                        swipeGestureDetector.onTouchDown(event, pointer)
+                        onTouchDownInternal(event, pointer)
+                    }
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -479,6 +549,14 @@ private class TextKeyboardLayoutController(
                     val pointer = pointerMap.findById(pointerId)
                     if (pointer != null) {
                         pointer.index = pointerIndex
+                        if (pointer.releasedIntoGestureStrip || pointerInSystemStrip(event, pointerIndex)) {
+                            if (!pointer.releasedIntoGestureStrip) {
+                                pointer.releasedIntoGestureStrip = true
+                                swipeGestureDetector.onTouchCancel(event, pointer)
+                                onTouchCancelInternal(event, pointer)
+                            }
+                            continue
+                        }
                         val alwaysTriggerOnMove = (pointer.hasTriggeredGestureMove
                             && (pointer.initialKey?.computedData?.code == KeyCode.DELETE
                             && prefs.gestures.deleteKeySwipeLeft.get().let {
@@ -503,7 +581,10 @@ private class TextKeyboardLayoutController(
                 val pointer = pointerMap.findById(pointerId)
                 if (pointer != null) {
                     pointer.index = pointerIndex
-                    if (swipeGestureDetector.onTouchUp(event, pointer) || pointer.hasTriggeredGestureMove) {
+                    if (pointer.releasedIntoGestureStrip || pointerInSystemStrip(event, pointerIndex)) {
+                        swipeGestureDetector.onTouchCancel(event, pointer)
+                        onTouchCancelInternal(event, pointer)
+                    } else if (swipeGestureDetector.onTouchUp(event, pointer) || pointer.hasTriggeredGestureMove) {
                         if (pointer.hasTriggeredGestureMove && pointer.initialKey?.computedData?.code == KeyCode.DELETE) {
                             val selection = editorInstance.activeContent.selection
                             if (selection.isSelectionMode) {
@@ -523,7 +604,10 @@ private class TextKeyboardLayoutController(
                 for (pointer in pointerMap) {
                     if (pointer.id == pointerId) {
                         pointer.index = pointerIndex
-                        if (swipeGestureDetector.onTouchUp(event, pointer) || pointer.hasTriggeredGestureMove) {
+                        if (pointer.releasedIntoGestureStrip || pointerInSystemStrip(event, pointerIndex)) {
+                            swipeGestureDetector.onTouchCancel(event, pointer)
+                            onTouchCancelInternal(event, pointer)
+                        } else if (swipeGestureDetector.onTouchUp(event, pointer) || pointer.hasTriggeredGestureMove) {
                             if (pointer.hasTriggeredGestureMove &&
                                 pointer.initialKey?.computedData?.code == KeyCode.DELETE &&
                                 prefs.gestures.deleteKeySwipeLeft.get() != SwipeAction.SELECT_CHARACTERS_PRECISELY &&
@@ -992,6 +1076,7 @@ private class TextKeyboardLayoutController(
         var hasTriggeredLongPress: Boolean = false
         var hasTriggeredMassSelection: Boolean = false
         var pressedKeyInfo: InputEventDispatcher.PressedKeyInfo? = null
+        var releasedIntoGestureStrip: Boolean = false
 
         override fun reset() {
             super.reset()
@@ -1001,6 +1086,7 @@ private class TextKeyboardLayoutController(
             hasTriggeredLongPress = false
             hasTriggeredMassSelection = false
             pressedKeyInfo = null
+            releasedIntoGestureStrip = false
         }
 
         override fun toString(): String {

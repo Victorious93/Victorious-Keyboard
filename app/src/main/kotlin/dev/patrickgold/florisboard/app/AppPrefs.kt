@@ -26,6 +26,7 @@ import dev.patrickgold.florisboard.app.setup.NotificationPermissionState
 import dev.patrickgold.florisboard.ime.clipboard.CLIPBOARD_HISTORY_NUM_GRID_COLUMNS_AUTO
 import dev.patrickgold.florisboard.ime.clipboard.ClipboardSyncBehavior
 import dev.patrickgold.florisboard.ime.clipboard.history.DuplicateBehavior
+import dev.patrickgold.florisboard.ime.clipboard.lanes.VaultLifetime
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.core.Subtype
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
@@ -46,6 +47,8 @@ import dev.patrickgold.florisboard.ime.developer.DevRowSize
 import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPaletteCodec
+import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPalettes
 import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
@@ -164,6 +167,26 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         val storeDetectedSecrets = boolean(
             key = "clipboard__store_detected_secrets",
             default = false,
+        )
+        /** When true, detected cards, IBANs, keys, tokens and OTP codes are stored in the sensitive vault. */
+        val detectSecretsToVault = boolean(
+            key = "clipboard__detect_secrets_to_vault",
+            default = false,
+        )
+        /** When true (default), the vault list stays masked until the device credential is confirmed. */
+        val vaultRequireUnlock = boolean(
+            key = "clipboard__vault_require_unlock",
+            default = true,
+        )
+        /** Minutes of inactivity after an unlock before the vault locks again. */
+        val vaultLockAfterMinutes = int(
+            key = "clipboard__vault_lock_after_minutes",
+            default = 5,
+        )
+        /** How long unpinned vault items are kept. [VaultLifetime.NEVER] disables expiry. Pins are kept. */
+        val vaultLifetime = enum(
+            key = "clipboard__vault_lifetime",
+            default = VaultLifetime.DEFAULT,
         )
         val historyHideOnPaste = boolean(
             key = "clipboard__history_hide_on_paste",
@@ -660,6 +683,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "keyboard__font_size_multiplier_landscape",
             default = 100,
         )
+        /** Extra dp under the keys. -1 follows gesture navigation (16) or 3-button (4). */
+        val bottomGapDp = int(
+            key = "keyboard__bottom_gap_dp",
+            default = -1,
+        )
         val landscapeInputUiMode = enum(
             key = "keyboard__landscape_input_ui_mode",
             default = LandscapeInputUiMode.DYNAMICALLY_SHOW,
@@ -732,7 +760,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
     inner class Other {
         val settingsTheme = enum(
             key = "other__settings_theme",
-            default = AppTheme.AUTO,
+            default = AppTheme.DARK,
         )
         val accentColor = custom(
             key = "other__accent_color",
@@ -825,6 +853,14 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "suggestion__enabled",
             default = false,
         )
+        val predictionEnabled = boolean(
+            key = "suggestion__prediction_enabled",
+            default = true,
+        )
+        val learnFromTyping = boolean(
+            key = "suggestion__learn_from_typing",
+            default = false,
+        )
         val displayMode = enum(
             key = "suggestion__display_mode",
             default = CandidatesDisplayMode.DYNAMIC_SCROLLABLE,
@@ -852,18 +888,22 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val dayThemeId = custom(
             key = "theme__day_theme_id",
-            default = extCoreTheme("floris_day"),
+            default = extCoreTheme("victorious_neon_light"),
             serializer = ExtensionComponentName.Serializer,
         )
         val nightThemeId = custom(
             key = "theme__night_theme_id",
-            default = extCoreTheme("floris_night"),
+            default = extCoreTheme("victorious_neon"),
             serializer = ExtensionComponentName.Serializer,
         )
         val accentColor = custom(
             key = "theme__accent_color",
             default = Color.Unspecified,
             serializer = ColorPreferenceSerializer,
+        )
+        val keyboardColors = string(
+            key = "theme__keyboard_colors",
+            default = KeyboardPaletteCodec.encode(KeyboardPalettes.Neon),
         )
         val sunriseTime = localTime(
             key = "theme__sunrise_time",

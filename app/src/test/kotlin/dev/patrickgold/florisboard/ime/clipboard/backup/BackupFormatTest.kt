@@ -101,7 +101,7 @@ class BackupFormatTest : FunSpec({
     test("the JSON export is human readable") {
         val text = BackupWriter.writeJson(sample, meta).toString(Charsets.UTF_8)
         text shouldContain "\"text\": \"plain text\""
-        text shouldContain "\"formatVersion\": 1"
+        text shouldContain "\"formatVersion\": 2"
     }
 
     test("detection") {
@@ -149,9 +149,20 @@ class BackupFormatTest : FunSpec({
 
     context("versions and migrations") {
         test("a newer format is refused with a clear, typed error") {
-            val z = craftedZip("""{"entries":[]}""", 0, version = 2)
+            val z = craftedZip("""{"entries":[]}""", 0, version = 3)
             val e = shouldThrow<BackupException.UnsupportedVersion> { BackupReader.read(z, null) }
-            e.found shouldBe 2
+            e.found shouldBe 3
+        }
+        test("version 1 files without a lane import as the regular clipboard") {
+            val entry = sample[0]
+            val parsed = BackupReader.read(craftedZip("""{"entries":[${backupEntryJson(entry)}]}""", 1, version = 1), null)
+            parsed.laneOf(entry.id) shouldBe LANE_REGULAR
+            parsed.entries.single().text shouldBe entry.text
+        }
+        test("an unknown lane is rejected") {
+            val hash = ClipHash.sha256Hex("hi")
+            val entries = """{"entries":[{"id":"a1","text":"hi","createdAtMs":5,"contentHash":"$hash","lane":"other"}]}"""
+            shouldThrow<BackupException.Malformed> { BackupReader.read(craftedZip(entries, 1, version = 2), null) }
         }
         test("version 0 and negative versions are malformed") {
             shouldThrow<BackupException.Malformed> { BackupReader.read(craftedZip("""{"entries":[]}""", 0, version = 0), null) }

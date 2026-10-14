@@ -22,6 +22,12 @@ import dev.patrickgold.florisboard.ime.clipboard.history.ClipHash
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipTags
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
@@ -39,16 +45,40 @@ data class ExportMeta(
     val skippedSensitive: Int = 0,
 )
 
-/** Upgrades older backup JSON to the current shape. Format v1 is current, so the chain is empty. */
+/**
+ * Upgrades older backup JSON to the current shape.
+ * The v1 → v2 step marks every entry that has no `lane` as the regular clipboard.
+ * The entries hash is checked on the original bytes before this runs.
+ */
 internal object BackupMigrations {
-    /** Index = source version. Each step must be pure and map version N documents to version N+1. */
-    private val steps: List<(kotlinx.serialization.json.JsonObject) -> kotlinx.serialization.json.JsonObject> = emptyList()
+    /** Index = source version minus 1. Each step must be pure and map version N documents to version N+1. */
+    private val steps: List<(JsonObject) -> JsonObject> = listOf { doc ->
+        val entries = doc["entries"]?.asArrayOrNull() ?: return@listOf doc
+        val upgraded = JsonArray(entries.map { element ->
+            val obj = element as? JsonObject ?: return@map element
+            if (obj.containsKey("lane")) obj
+            else JsonObject(obj.toMap() + ("lane" to JsonPrimitive(LANE_REGULAR)))
+        })
+        JsonObject(doc.toMap() + ("entries" to upgraded))
+    }
 
     fun requireReadable(version: Int) {
         if (version < 1) throw BackupException.Malformed("invalid format version $version")
         if (version > BACKUP_FORMAT_VERSION) throw BackupException.UnsupportedVersion(version)
         check(steps.size == BACKUP_FORMAT_VERSION - 1) { "migration chain does not cover all versions" }
     }
+
+    fun upgradeEntries(formatVersion: Int, doc: JsonObject): JsonObject {
+        var current = doc
+        var version = formatVersion
+        while (version < BACKUP_FORMAT_VERSION) {
+            current = steps[version - 1](current)
+            version++
+        }
+        return current
+    }
+
+    private fun JsonElement.asArrayOrNull(): JsonArray? = runCatching { jsonArray }.getOrNull()
 }
 
 object BackupWriter {
@@ -65,7 +95,13 @@ object BackupWriter {
 
     private val order = compareByDescending<ClipEntry> { it.createdAtMs }.thenBy { it.id }
 
-    private fun toBackup(e: ClipEntry) = BackupEntry(
+    private fun laneName(id: String, lanes: Map<String, String>): String {
+        val lane = lanes[id] ?: LANE_REGULAR
+        if (lane != LANE_REGULAR && lane != LANE_VAULT) throw BackupException.Malformed("unknown clipboard lane")
+        return lane
+    }
+
+    private fun toBackup(e: ClipEntry, lane: String) = BackupEntry(
         id = e.id,
         text = e.text,
         createdAtMs = e.createdAtMs,
@@ -75,45 +111,85 @@ object BackupWriter {
         tags = e.tags.sorted(),
         category = e.category.name,
         contentHash = e.contentHash,
+        lane = lane,
     )
 
-    private fun manifest(count: Int, meta: ExportMeta, entriesSha: String?) = BackupManifest(
+    private fun manifest(
+        count: Int,
+        meta: ExportMeta,
+        entriesSha: String?,
+        regularCount: Int,
+        vaultCount: Int,
+        passwordProtected: Boolean = false,
+    ) = BackupManifest(
         createdAtMs = meta.createdAtMs,
         appVersion = meta.appVersion,
         itemCount = count,
         entriesSha256 = entriesSha,
         skippedUnsupported = meta.skippedUnsupported,
         skippedSensitive = meta.skippedSensitive,
+        regularCount = regularCount,
+        vaultCount = vaultCount,
+        passwordProtected = passwordProtected,
     )
 
+    private fun packed(entries: List<ClipEntry>, lanes: Map<String, String>): List<BackupEntry> =
+        entries.sortedWith(order).map { toBackup(it, laneName(it.id, lanes)) }
+
     /** Single-file, human-readable JSON. */
-    fun writeJson(entries: List<ClipEntry>, meta: ExportMeta): ByteArray {
-        val sorted = entries.sortedWith(order).map(::toBackup)
-        val doc = BackupDocument(manifest(sorted.size, meta, null), sorted)
+    fun writeJson(entries: List<ClipEntry>, meta: ExportMeta, lanes: Map<String, String> = emptyMap()): ByteArray {
+        val sorted = packed(entries, lanes)
+        val doc = BackupDocument(
+            manifest(sorted.size, meta, null, sorted.regularCount(), sorted.vaultCount()),
+            sorted,
+        )
         return json.encodeToString(BackupDocument.serializer(), doc).toByteArray(Charsets.UTF_8)
     }
 
     /** ZIP with `manifest.json` + `entries.json`; the manifest carries the SHA-256 of `entries.json`. */
-    fun writeZip(entries: List<ClipEntry>, meta: ExportMeta): ByteArray {
-        val sorted = entries.sortedWith(order).map(::toBackup)
+    fun writeZip(entries: List<ClipEntry>, meta: ExportMeta, lanes: Map<String, String> = emptyMap()): ByteArray {
+        val sorted = packed(entries, lanes)
         val entriesBytes = json.encodeToString(BackupEntries.serializer(), BackupEntries(sorted))
             .toByteArray(Charsets.UTF_8)
         val manifestBytes = json.encodeToString(
             BackupManifest.serializer(),
-            manifest(sorted.size, meta, ClipHash.sha256Hex(entriesBytes)),
+            manifest(
+                sorted.size,
+                meta,
+                ClipHash.sha256Hex(entriesBytes),
+                sorted.regularCount(),
+                sorted.vaultCount(),
+            ),
         ).toByteArray(Charsets.UTF_8)
+        return zipMembers(MANIFEST_NAME to manifestBytes, ENTRIES_NAME to entriesBytes)
+    }
 
-        val out = ByteArrayOutputStream()
-        ZipOutputStream(out).use { zip ->
-            // Fixed timestamps keep output deterministic for a given input.
-            for ((name, bytes) in listOf(MANIFEST_NAME to manifestBytes, ENTRIES_NAME to entriesBytes)) {
-                val ze = ZipEntry(name).apply { time = 0L }
-                zip.putNextEntry(ze)
-                zip.write(bytes)
-                zip.closeEntry()
-            }
-        }
-        return out.toByteArray()
+    /**
+     * User-facing ZIP whose item text lives in `content.vkbk` (the password container around a plain ZIP).
+     * `manifest.json` records counts and the hash of that container. It does not contain item text.
+     */
+    fun writePasswordZip(
+        entries: List<ClipEntry>,
+        meta: ExportMeta,
+        lanes: Map<String, String> = emptyMap(),
+        password: CharArray,
+        random: SecureRandom = SecureRandom(),
+        iterations: Int = BackupCrypto.DEFAULT_ITERATIONS,
+    ): ByteArray {
+        val sorted = packed(entries, lanes)
+        val cipher = BackupCrypto.encrypt(writeZip(entries, meta, lanes), password, random, iterations)
+        val manifestBytes = json.encodeToString(
+            BackupManifest.serializer(),
+            manifest(
+                sorted.size,
+                meta,
+                ClipHash.sha256Hex(cipher),
+                sorted.regularCount(),
+                sorted.vaultCount(),
+                passwordProtected = true,
+            ),
+        ).toByteArray(Charsets.UTF_8)
+        return zipMembers(MANIFEST_NAME to manifestBytes, CONTENT_NAME to cipher)
     }
 
     /** ZIP wrapped in the password-based authenticated container. See [BackupCrypto]. */
@@ -123,7 +199,26 @@ object BackupWriter {
         password: CharArray,
         random: SecureRandom = SecureRandom(),
         iterations: Int = BackupCrypto.DEFAULT_ITERATIONS,
-    ): ByteArray = BackupCrypto.encrypt(writeZip(entries, meta), password, random, iterations)
+        lanes: Map<String, String> = emptyMap(),
+    ): ByteArray = BackupCrypto.encrypt(writeZip(entries, meta, lanes), password, random, iterations)
+
+    private fun List<BackupEntry>.regularCount(): Int = count { it.lane != LANE_VAULT }
+
+    private fun List<BackupEntry>.vaultCount(): Int = count { it.lane == LANE_VAULT }
+
+    private fun zipMembers(vararg members: Pair<String, ByteArray>): ByteArray {
+        val out = ByteArrayOutputStream()
+        ZipOutputStream(out).use { zip ->
+            // Fixed timestamps keep output deterministic for a given input.
+            for ((name, bytes) in members) {
+                val ze = ZipEntry(name).apply { time = 0L }
+                zip.putNextEntry(ze)
+                zip.write(bytes)
+                zip.closeEntry()
+            }
+        }
+        return out.toByteArray()
+    }
 
     /**
      * One-way, human-readable archive. Cannot be re-imported (no integrity data); use JSON/ZIP for restores.
@@ -170,12 +265,14 @@ object BackupWriter {
 
     internal const val MANIFEST_NAME = "manifest.json"
     internal const val ENTRIES_NAME = "entries.json"
+    /** Password container (see [BackupCrypto]) stored inside a user-facing ZIP. */
+    internal const val CONTENT_NAME = "content.vkbk"
 }
 
 /**
  * Reads backups. **Everything in the file is untrusted input.** The reader:
  *  * enforces [BackupLimits] on file size, uncompressed size, entry counts and text sizes,
- *  * only ever reads two whitelisted ZIP members into memory (nothing is extracted to disk, so path traversal is
+ *  * only ever reads whitelisted ZIP members into memory (nothing is extracted to disk, so path traversal is
  *    impossible; hostile member names are still rejected),
  *  * verifies manifest/entry hashes and rejects duplicates and invalid ids,
  *  * reports failures as [BackupException] with messages that never include clip text.
@@ -196,25 +293,30 @@ object BackupReader {
         return when (detect(bytes)) {
             BackupKind.ENCRYPTED -> {
                 if (password == null) throw BackupException.PasswordRequired()
-                readZip(BackupCrypto.decrypt(bytes, password, limits), limits)
+                readZip(BackupCrypto.decrypt(bytes, password, limits), limits, password).copy(passwordProtected = true)
             }
-            BackupKind.ZIP -> readZip(bytes, limits)
+            BackupKind.ZIP -> readZip(bytes, limits, password)
             BackupKind.JSON -> readJson(bytes, limits)
             BackupKind.UNKNOWN -> throw BackupException.NotABackup()
         }
     }
 
     private fun readJson(bytes: ByteArray, limits: BackupLimits): ParsedBackup {
-        val doc = decode(BackupDocument.serializer(), bytes)
-        validateManifest(doc.manifest)
-        if (doc.manifest.entriesSha256 != null) {
+        val root = parseObject(bytes)
+        val manifestEl = root["manifest"] ?: throw BackupException.Malformed("invalid JSON structure")
+        val manifest = decodeElement(BackupManifest.serializer(), manifestEl)
+        validateManifest(manifest)
+        if (manifest.entriesSha256 != null) {
             // A JSON document cannot self-hash; a hash here would be meaningless, so treat it as malformed.
             throw BackupException.Malformed("unexpected entries hash in single-file backup")
         }
-        return finish(doc.manifest, doc.entries, limits)
+        if (manifest.passwordProtected) throw BackupException.Malformed("marked encrypted but no container")
+        val entriesEl = root["entries"] ?: throw BackupException.Malformed("invalid JSON structure")
+        val upgraded = BackupMigrations.upgradeEntries(manifest.formatVersion, JsonObject(mapOf("entries" to entriesEl)))
+        return finish(manifest, decodeElement(BackupEntries.serializer(), upgraded).entries, limits)
     }
 
-    private fun readZip(bytes: ByteArray, limits: BackupLimits): ParsedBackup {
+    private fun readZip(bytes: ByteArray, limits: BackupLimits, password: CharArray?, depth: Int = 0): ParsedBackup {
         val members = HashMap<String, ByteArray>()
         var total = 0L
         var count = 0
@@ -249,16 +351,37 @@ object BackupReader {
             throw BackupException.Malformed("archive could not be read")
         }
         val manifestBytes = members[BackupWriter.MANIFEST_NAME] ?: throw BackupException.Malformed("manifest missing")
-        val entriesBytes = members[BackupWriter.ENTRIES_NAME] ?: throw BackupException.Malformed("entries missing")
-
         val manifest = decode(BackupManifest.serializer(), manifestBytes)
         validateManifest(manifest)
+        val cipher = members[BackupWriter.CONTENT_NAME]
+        val entriesBytes = members[BackupWriter.ENTRIES_NAME]
+        if (cipher != null && entriesBytes != null) {
+            throw BackupException.Malformed("archive mixes plaintext entries with an encrypted container")
+        }
+        if (cipher != null) {
+            if (depth > 0) throw BackupException.Malformed("nested encrypted container")
+            if (!manifest.passwordProtected) {
+                throw BackupException.Malformed("encrypted container is not marked password-protected")
+            }
+            if (password == null) throw BackupException.PasswordRequired()
+            val expected = manifest.entriesSha256 ?: throw BackupException.Corrupt("manifest has no entries hash")
+            if (!constantTimeEquals(expected, ClipHash.sha256Hex(cipher))) {
+                throw BackupException.Corrupt("entries do not match the manifest hash")
+            }
+            val inner = readZip(BackupCrypto.decrypt(cipher, password, limits), limits, password, depth + 1)
+            if (inner.manifest.itemCount != manifest.itemCount) {
+                throw BackupException.Corrupt("item count does not match the manifest")
+            }
+            return inner.copy(passwordProtected = true)
+        }
+        if (manifest.passwordProtected) throw BackupException.Malformed("marked encrypted but no container")
+        val plain = entriesBytes ?: throw BackupException.Malformed("entries missing")
         val expected = manifest.entriesSha256 ?: throw BackupException.Corrupt("manifest has no entries hash")
-        if (!constantTimeEquals(expected, ClipHash.sha256Hex(entriesBytes))) {
+        if (!constantTimeEquals(expected, ClipHash.sha256Hex(plain))) {
             throw BackupException.Corrupt("entries do not match the manifest hash")
         }
-        val entries = decode(BackupEntries.serializer(), entriesBytes).entries
-        return finish(manifest, entries, limits)
+        val upgraded = BackupMigrations.upgradeEntries(manifest.formatVersion, parseObject(plain))
+        return finish(manifest, decodeElement(BackupEntries.serializer(), upgraded).entries, limits)
     }
 
     private fun validateManifest(m: BackupManifest) {
@@ -272,10 +395,19 @@ object BackupReader {
 
         val seen = HashSet<String>(raw.size * 2)
         var unsupported = 0
+        var regularCount = 0
+        var vaultCount = 0
         val out = ArrayList<ClipEntry>(raw.size)
+        val lanes = HashMap<String, String>(raw.size * 2)
         for (e in raw) {
             if (!idPattern.matches(e.id)) throw BackupException.Malformed("invalid entry id")
             if (!seen.add(e.id)) throw BackupException.Malformed("duplicate entry id")
+            val lane = when (e.lane) {
+                LANE_REGULAR -> LANE_REGULAR
+                LANE_VAULT -> LANE_VAULT
+                else -> throw BackupException.Malformed("unknown clipboard lane")
+            }
+            if (lane == LANE_VAULT) vaultCount++ else regularCount++
             if (e.type != ENTRY_TYPE_TEXT) {
                 unsupported++
                 continue
@@ -286,6 +418,7 @@ object BackupReader {
             if (!constantTimeEquals(e.contentHash, ClipHash.sha256Hex(e.text))) {
                 throw BackupException.Corrupt("an entry does not match its hash")
             }
+            lanes[e.id] = lane
             out.add(
                 ClipEntry(
                     id = e.id,
@@ -299,18 +432,49 @@ object BackupReader {
                 )
             )
         }
-        return ParsedBackup(manifest, out, unsupported + manifest.skippedUnsupported.coerceAtLeast(0))
+        if (manifest.formatVersion >= 2 &&
+            (manifest.regularCount != regularCount || manifest.vaultCount != vaultCount)
+        ) {
+            throw BackupException.Corrupt("lane counts do not match the manifest")
+        }
+        return ParsedBackup(manifest, out, unsupported + manifest.skippedUnsupported.coerceAtLeast(0), lanes)
+    }
+
+    private fun parseObject(bytes: ByteArray): JsonObject {
+        // Reject non-objects before the parser walks them. A deeply nested array would otherwise
+        // overflow the stack inside the JSON reader.
+        if (firstNonSpace(bytes) != '{'.code.toByte()) throw BackupException.Malformed("invalid JSON structure")
+        val element = try {
+            json.parseToJsonElement(bytes.toString(Charsets.UTF_8))
+        } catch (e: BackupException) {
+            throw e
+        } catch (e: StackOverflowError) {
+            throw BackupException.Malformed("invalid JSON structure")
+        } catch (e: Exception) {
+            throw BackupException.Malformed("invalid JSON structure")
+        }
+        return element as? JsonObject ?: throw BackupException.Malformed("invalid JSON structure")
+    }
+
+    private fun <T> decodeElement(s: kotlinx.serialization.KSerializer<T>, element: JsonElement): T = try {
+        json.decodeFromJsonElement(s, element)
+    } catch (e: BackupException) {
+        throw e
+    } catch (e: Exception) {
+        throw BackupException.Malformed("invalid JSON structure")
     }
 
     private fun <T> decode(s: kotlinx.serialization.KSerializer<T>, bytes: ByteArray): T = try {
         json.decodeFromString(s, bytes.toString(Charsets.UTF_8))
+    } catch (e: StackOverflowError) {
+        throw BackupException.Malformed("invalid JSON structure")
     } catch (e: SerializationException) {
         throw BackupException.Malformed("invalid JSON structure")
     } catch (e: IllegalArgumentException) {
         throw BackupException.Malformed("invalid JSON structure")
     }
 
-    private val WANTED = setOf(BackupWriter.MANIFEST_NAME, BackupWriter.ENTRIES_NAME)
+    private val WANTED = setOf(BackupWriter.MANIFEST_NAME, BackupWriter.ENTRIES_NAME, BackupWriter.CONTENT_NAME)
 
     private fun isUnsafeName(n: String): Boolean =
         n.isEmpty() || n.startsWith("/") || n.contains('\\') || n.contains(':') || n.contains('\u0000') ||

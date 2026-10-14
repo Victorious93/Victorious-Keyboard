@@ -59,6 +59,18 @@ fun ClipboardScreen() = FlorisScreen {
             summary = stringRes(R.string.clipboard_backup__link_summary),
             onClick = { navController.navigate(Routes.Settings.ClipboardBackup) },
         )
+        Preference(
+            icon = Icons.Default.Backup,
+            title = stringRes(R.string.clipboard_zip__export),
+            summary = stringRes(R.string.clipboard_zip__export_summary),
+            onClick = { navController.navigate(Routes.Settings.ClipboardZip) },
+        )
+        Preference(
+            icon = Icons.Default.Backup,
+            title = stringRes(R.string.clipboard_zip__import),
+            summary = stringRes(R.string.clipboard_zip__import_summary),
+            onClick = { navController.navigate(Routes.Settings.ClipboardZip) },
+        )
         SwitchPreference(
             prefs.clipboard.useInternalClipboard,
             title = stringRes(R.string.pref__clipboard__use_internal_clipboard__label),

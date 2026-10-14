@@ -65,9 +65,10 @@ QWERTY, numeric and symbol layouts, emoji, long-press, key repeat, haptics, soun
 | Sensitive vault (separate store, masked, expiry, lock) | ✅ rules · 🟦 screen and Keystore |
 | Copy in a password field, or a clip Android marks sensitive, goes to the vault | ✅ routing · 🟦 call site |
 | Export/import: JSON, ZIP, encrypted archive, Markdown, text. Vault only in an encrypted export you opt into | ✅ logic · 🟦 file pickers |
+| ZIP export/import of Regular, Vault, or both. Vault requires a password. Merge or replace on import | ✅ logic · 🟦 file picker |
 | Images/URI clips in backups | ⛔ skipped (cannot restore safely) |
 
-The keyboard clipboard panel has two tabs, **Clipboard** and **Vault**, using the same neon theme. Password-field copies and clips Android flags as sensitive go to the Vault when clipboard history is on. *Detect secrets into the vault* (Settings → Tools → Clipboard) is off until you turn it on; it looks for card numbers, IBANs, API keys, private keys, and one-time codes. You can move an item between the two lists. Vault text is encrypted with its own Android Keystore key, kept out of the suggestion bar, and masked until you reveal it. Viewing it asks for the device lock (on by default) and locks again after a timeout. Unpinned vault items expire after 24 hours unless you pick another period or Never; pins stay. Vault items are not in backups or exports unless you opt into an encrypted export. The regular history cap, pins, and search are unchanged. None of this has been run on a device.
+The keyboard clipboard panel has two tabs, **Clipboard** and **Vault**, using the same neon theme. Password-field copies and clips Android flags as sensitive go to the Vault when clipboard history is on. *Detect secrets into the vault* (Settings → Tools → Clipboard) is off until you turn it on; it looks for card numbers, IBANs, API keys, private keys, and one-time codes. You can move an item between the two lists. Vault text is encrypted with its own Android Keystore key, kept out of the suggestion bar, and masked until you reveal it. Viewing it asks for the device lock (on by default) and locks again after a timeout. Unpinned vault items expire after 24 hours unless you pick another period or Never; pins stay. Vault items are not in the older backup formats unless you opt into an encrypted export. Settings → Tools → Clipboard also has **Export to ZIP** and **Import from ZIP**. You choose Regular, Vault, or both. A Regular ZIP can be plain, with an optional password. A ZIP that includes the vault must be password-encrypted (the same AES-256-GCM container, stored inside the ZIP) and the screen says so. Import checks the file, asks for the password when there is one, and can merge or replace; vault rows go back to the vault. Images are still skipped. The regular history cap, pins, and search are unchanged. None of this has been run on a device.
 
 Details: [CLIPBOARD.md](CLIPBOARD.md), [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
@@ -159,7 +160,7 @@ Privacy: [PRIVACY.md](PRIVACY.md).
 
 ## Download
 
-The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, and the separate sensitive clipboard. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
+The newest debug build is the latest pre-release on [GitHub Releases](https://github.com/Victorious93/Victorious-Keyboard/releases). It is signed with the Android debug key. It includes Victorious Neon, word prediction, keyboard colors, the separate sensitive clipboard, clipboard ZIP export and import, and the lift above the home-gesture strip. It has not been installed or exercised on a device from this repository. Install it with `adb install`, then enable Victorious Keyboard under Android *Language & input*.
 
 ## Build and install
 

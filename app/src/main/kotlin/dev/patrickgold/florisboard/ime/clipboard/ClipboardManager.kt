@@ -25,6 +25,7 @@ import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.editor.isPasswordLike
+import dev.patrickgold.florisboard.ime.clipboard.backup.BackupException
 import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipCategory
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipEntry
@@ -47,6 +48,7 @@ import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDataba
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
 import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardBackupService
+import dev.patrickgold.florisboard.ime.clipboard.vault.VaultEntryRepository
 import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardEntryRepository
 import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardStore
 import dev.patrickgold.florisboard.ime.clipboard.vault.HistorySnapshot
@@ -783,10 +785,29 @@ class ClipboardManager(
         }
     }
 
+    /** Storage seam for vault rows inside a ZIP import. Refuses to read or write while the vault is locked. */
+    val vaultRepository: VaultEntryRepository = object : VaultEntryRepository {
+        override fun isLocked(): Boolean = vaultIsLocked()
+
+        override suspend fun snapshot(): List<ClipEntry> = withContext(Dispatchers.IO) {
+            if (vaultIsLocked()) throw BackupException.VaultLocked()
+            sensitiveVaultReady.await().loadPlain().map { it.toEntry() }
+        }
+
+        override suspend fun apply(plan: ImportPlan) = withContext(Dispatchers.IO) {
+            historyMutex.withLock {
+                if (vaultIsLocked()) throw BackupException.VaultLocked()
+                sensitiveVaultReady.await().applyImport(plan)
+                publishVault()
+            }
+        }
+    }
+
     fun backupService(): ClipboardBackupService = ClipboardBackupService(
         repo = entryRepository,
         appVersion = BuildConfig.VERSION_NAME,
         policy = ::currentPolicy,
+        vault = vaultRepository,
     )
 
     /**

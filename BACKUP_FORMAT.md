@@ -1,4 +1,4 @@
-# Clipboard backup format (version 1)
+# Clipboard backup format (version 2)
 
 Implemented in `ime/clipboard/backup/` (pure Kotlin, JVM-tested). Reading a backup treats **every byte as hostile**.
 
@@ -6,42 +6,65 @@ Implemented in `ime/clipboard/backup/` (pure Kotlin, JVM-tested). Reading a back
 
 | Variant | Extension | Importable | Contains |
 |---|---|---|---|
-| Encrypted ZIP | `.vkbk` | yes | password-protected ZIP (below) |
+| Password ZIP | `.zip` | yes | `manifest.json` + `content.vkbk` (the encrypted container around a plain ZIP) |
 | ZIP | `.zip` | yes | `manifest.json` + `entries.json` |
+| Encrypted container | `.vkbk` | yes | the password container around a plain ZIP |
 | JSON | `.json` | yes | one document: `{ "manifest": …, "entries": […] }` |
 | Markdown | `.md` | **no** | human-readable archive, no integrity data |
 | Plain text | `.txt` | **no** | entry texts separated by a dashed line |
 
-Only **text** entries are exported. Images/videos/URI clips are not preserved (their data isn't safely restorable) and
-are counted in `skippedUnsupported`. Entries flagged sensitive by Android or that look like credentials are left out
-unless the user asks, and are counted in `skippedSensitive`.
+Only **text** entries are exported. Images, videos, and URI clips are not preserved (their data isn't safely restorable)
+and are counted in `skippedUnsupported`. The older backup screen still leaves out entries flagged sensitive by Android,
+or that look like credentials, unless the user asks (`skippedSensitive`). The ZIP screen exports the text of the
+clipboard the user picked (Regular, Vault, or both) and does not apply that second filter.
+
+A Regular-only ZIP may be the plain ZIP, with an optional password. **Any export whose scope is Vault or Both must be
+the password ZIP**, even when the vault is empty. A locked vault is not read, so it cannot be exported or imported.
+Item text for a password ZIP is only inside `content.vkbk`. The outer `manifest.json` has counts and a hash, not the
+clips. There is no way to recover a lost password.
 
 ## `manifest`
 
 | Field | Meaning |
 |---|---|
 | `format` | `"victorious-keyboard-clipboard"` (anything else → "not a backup") |
-| `formatVersion` | integer, currently `1` |
+| `formatVersion` | integer, currently `2`. `1` is still read |
 | `createdAtMs` | export time, epoch ms |
 | `appVersion` | app version that wrote it |
 | `itemCount` | number of entries in the file (checked against the real count) |
 | `supportedEntryTypes` | `["text"]` |
-| `entriesSha256` | hex SHA-256 of `entries.json` bytes (ZIP/encrypted only; **must be absent** in the JSON variant) |
+| `entriesSha256` | hex SHA-256 of `entries.json`, or of `content.vkbk` when `passwordProtected` is true. **Must be absent** in the JSON variant |
 | `skippedUnsupported`, `skippedSensitive` | counts of what was left out |
-| `attachments` | reserved, always `[]` in v1 (`{path, sha256, mime, entryId}` when used) |
+| `attachments` | reserved, always `[]` (`{path, sha256, mime, entryId}` when used). Images are still not stored |
+| `regularCount`, `vaultCount` | how many rows belong to each clipboard. On version 2 and newer their sum equals `itemCount` and each is checked against the rows. Version 1 files omit them |
+| `passwordProtected` | true only on the outer manifest of a password ZIP |
 
 ## Entry
 
 `id` (stable UUID-like string, `[A-Za-z0-9_-]{1,64}`), `type` (`"text"`), `text`, `createdAtMs`, `editedAtMs?`,
-`pinned`, `favorite`, `tags[]`, `category`, `contentHash` (hex SHA-256 of the UTF-8 `text`, verified on read).
+`pinned`, `favorite`, `tags[]`, `category`, `contentHash` (hex SHA-256 of the UTF-8 `text`, verified on read),
+`lane` (`"regular"` or `"vault"`). An unknown `lane` is rejected. A missing `lane` (every version 1 file) is the
+regular clipboard, so an old file cannot place rows into the vault and a new file cannot be misread by an older app
+that would ignore an unknown field and import vault text into regular history.
+
 Unknown JSON fields are ignored; an unknown `category` reads as `GENERAL`; entries with an unknown `type` are counted
 and skipped. No passwords, keys or key hints are ever written.
 
+If a vault row uses the same id as a regular row in one file, the vault id is renamed with a `-v` suffix. The regular
+id is left alone. The vault file itself stores id, text, created time, pin, and reason. Favourite, tags, category, and
+`editedAtMs` travel in the ZIP for both lanes, and the regular history keeps them; a vault import keeps the previous
+reason for an existing id and marks a new row `IMPORTED`.
+
 ## ZIP layout
 
-Exactly two members are read: `manifest.json`, `entries.json`. Other members are ignored and never extracted
-(nothing is ever written to disk during import). Member names containing `..`, a leading `/`, `\`, `:` or NUL are
-rejected. Timestamps inside the ZIP are fixed so identical input gives identical bytes.
+A plain ZIP has `manifest.json` and `entries.json`. A password ZIP has `manifest.json` and `content.vkbk` (the
+encrypted container below; its plaintext is a plain ZIP). A file that contains both `entries.json` and `content.vkbk`
+is rejected. Other members are ignored and never extracted (nothing is ever written to disk during import). Member
+names containing `..`, a leading `/`, `\`, `:` or NUL are rejected. Timestamps inside the ZIP are fixed so identical
+plaintext input gives identical bytes. The password ZIP is not byte-identical across runs, because the container uses
+a random salt and nonce.
+
+`entriesSha256` is checked on the original member bytes **before** the version 1 → 2 migration adds `lane`.
 
 ## Encrypted container
 
@@ -77,14 +100,15 @@ revisit for low-memory devices in Phase 9.
 ## Reading and errors
 
 `BackupReader.read` returns a parsed backup or throws `BackupException` (`NotABackup`, `UnsupportedVersion`,
-`Malformed`, `Corrupt`, `TooLarge`, `PasswordRequired`, `WrongPasswordOrTampered`, `WeakPassword`). Messages never
-contain clip text.
+`Malformed`, `Corrupt`, `TooLarge`, `PasswordRequired`, `WrongPasswordOrTampered`, `WeakPassword`,
+`EncryptionRequired`, `VaultLocked`). Messages never contain clip text.
 
 ## Versioning and migrations
 
 `formatVersion` > the app's version → "created by a newer version, update the app". Versions ≥ 1 and ≤ current are
-read through `BackupMigrations` (an ordered chain of pure JSON transformations; empty for v1). A format change must
-add a step, a test fixture of the old format, and a note here. Old files must stay importable.
+read through `BackupMigrations` (an ordered chain of pure JSON transformations). The one step today is v1 → v2: add
+`lane: "regular"` where it is missing. A format change must add a step, a test fixture of the old format, and a note
+here. Old files must stay importable.
 
 ## Import semantics (`ImportPlanner`, pure)
 
@@ -102,4 +126,9 @@ The plan is computed before anything changes and shown to the user.
   or dropped entry is listed in the plan; any removal/drop makes `requiresConfirmation` true.
 * Consent (`Confirmation`) is tied to the exact entries previewed; if the history changed so that more would be
   deleted, the user is asked again.
-* Applying is one database transaction (`deleteIds` + `upserts`). If it fails, nothing changed.
+* Applying is one transaction per store (`deleteIds` + `upserts`). Regular and vault are planned separately, so a
+  replace of a regular-only file does not empty the vault, and a vault row is never inserted into regular history.
+  The vault transaction runs first. If it fails, regular history is unchanged. If the regular transaction then fails,
+  the vault file has already been updated.
+* Import asks for a password when the file is a `.vkbk` or a password ZIP. The user can merge, replace, or skip
+  duplicates. Merge and skip de-duplicate by id or identical text inside that clipboard.

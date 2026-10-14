@@ -26,7 +26,9 @@ import dev.patrickgold.florisboard.ime.clipboard.vault.ClipboardEntryRepository
 import dev.patrickgold.florisboard.ime.clipboard.vault.ExportFormat
 import dev.patrickgold.florisboard.ime.clipboard.vault.ExportOptions
 import dev.patrickgold.florisboard.ime.clipboard.vault.HistorySnapshot
+import dev.patrickgold.florisboard.ime.clipboard.backup.ImportMode
 import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
+import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlanner
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -126,6 +128,24 @@ class ClipLanesTest : FunSpec({
         vault.offer("second", VaultReason.MOVED)
         vault.deleteExpired(nowMs = 10 + day, ttlMs = day) shouldBe 1
         vault.loadPlain().map { it.text } shouldBe listOf(secret)
+
+        val imported = "IMPORTEDSECRETTOKEN"
+        val existingId = vault.loadPlain().single().id
+        val plan = ImportPlanner.plan(
+            vault.loadPlain().map { it.toEntry() },
+            listOf(
+                ClipEntry(id = existingId, text = secret, createdAtMs = 10, pinned = true),
+                ClipEntry(id = "new-row", text = imported, createdAtMs = 11),
+            ),
+            ImportMode.MERGE,
+        )
+        vault.applyImport(plan)
+        file.readText() shouldNotContain imported
+        val after = vault.loadPlain().associateBy { it.id }
+        after.getValue(existingId).reason shouldBe VaultReason.DETECTED
+        after.getValue(existingId).pinned shouldBe true
+        after.getValue("new-row").reason shouldBe VaultReason.IMPORTED
+        after.getValue("new-row").text shouldBe imported
 
         val damaged = File(dir, "damaged.vault")
         damaged.writeText("not a vault")

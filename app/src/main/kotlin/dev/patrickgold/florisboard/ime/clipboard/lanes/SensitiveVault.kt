@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.clipboard.lanes
 
+import dev.patrickgold.florisboard.ime.clipboard.backup.ImportPlan
 import dev.patrickgold.florisboard.ime.clipboard.history.ClipEntry
 import dev.patrickgold.florisboard.ime.clipboard.history.HistoryPolicy
 import dev.patrickgold.florisboard.ime.clipboard.history.InsertPlan
@@ -170,6 +171,38 @@ class SensitiveVault(
         val target = records.firstOrNull { it.id == id } ?: return null
         write(records.filter { it.id != id })
         return target.decryptOrNull()
+    }
+
+    /**
+     * Applies a backup import. Existing rows keep their [VaultReason]; new rows are [VaultReason.IMPORTED].
+     * The file is replaced in one atomic move. Item text is encrypted and is not logged.
+     */
+    @Synchronized
+    fun applyImport(plan: ImportPlan) {
+        val records = readRecords()
+        val reasons = records.associate { it.id to it.reason }
+        val byId = records.associateBy { it.id }.toMutableMap()
+        for (id in plan.deleteIds) byId.remove(id)
+        for (entry in plan.upserts) {
+            byId[entry.id] = VaultRecord(
+                id = entry.id,
+                createdAtMs = entry.createdAtMs,
+                pinned = entry.pinned,
+                reason = reasons[entry.id] ?: VaultReason.IMPORTED,
+                payload = cipher.encrypt(entry.text, entry.id),
+            )
+        }
+        val ordered = ArrayList<VaultRecord>(byId.size)
+        val seen = HashSet<String>()
+        for (record in records) {
+            val next = byId[record.id] ?: continue
+            if (seen.add(next.id)) ordered.add(next)
+        }
+        for (entry in plan.upserts) {
+            val next = byId[entry.id] ?: continue
+            if (seen.add(next.id)) ordered.add(next)
+        }
+        write(ordered)
     }
 
     /** Deletes unpinned items whose age has reached [ttlMs]. Returns how many were removed. */

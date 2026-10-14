@@ -32,6 +32,8 @@ enum class VaultReason {
     ANDROID_SENSITIVE,
     DETECTED,
     MOVED,
+    /** Written by a backup import. Older files never use this name. */
+    IMPORTED,
 }
 
 /**

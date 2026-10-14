@@ -34,7 +34,7 @@ Status: **implemented and unit-tested at the logic level; compiled but not run o
 
 Text, UUID, timestamps (created, edited), pinned, favourite, tags (≤ 16, normalised), category, sensitive flag.
 Character count is derived. Images and videos (upstream feature) remain in history and count toward the cap, but are
-**not** exported: backup format v1 is text-only, and URI-backed clips can't be restored faithfully.
+**not** exported: backups are text-only (format version 2; version 1 files still import as the regular clipboard), and URI-backed clips can't be restored faithfully.
 
 ## Local categorisation
 
@@ -51,7 +51,7 @@ The keyboard panel has **Clipboard** (regular) and **Vault** (sensitive) tabs. T
 * An item can be moved from one list to the other. A move does not run detection again.
 * Vault rows live in `noBackupFilesDir/sensitive-clipboard.vault`, encrypted with AES-256-GCM under a **different** Keystore key from the regular history (`sensitive_clipboard.key`). The file is not part of Android auto-backup.
 * Vault items are never suggestion-bar candidates. The list shows bullets until Reveal. Unlock uses the device credential (default on) and locks again after a timeout (default 5 minutes). Unpinned items expire (default 24 hours; Never is a setting). Pins are not expired and are not evicted to make room.
-* Backups and exports omit the vault unless the user opts in, and then only the password-encrypted export format accepts those rows. A locked vault is not exported.
+* The older backup screen omits the vault unless the user opts in, and then only the password-encrypted export accepts those rows. **Export to ZIP** / **Import from ZIP** (Settings → Tools → Clipboard) can save Regular, Vault, or both. A ZIP that includes the vault must have a password; the item text sits in `content.vkbk` inside the ZIP. Import merges or replaces, and a vault row is not written into regular history. A locked vault is not exported or imported. Images are still skipped. See `BACKUP_FORMAT.md`.
 * The regular history cap, pins, and search are unchanged.
 
 The tabs, the credential prompt, and Keystore wrapping of the vault key have been compiled and **not run on a device**.

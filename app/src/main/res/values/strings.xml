@@ -986,6 +986,27 @@
     <string name="clipboard_manager__reset_vault_message">This permanently deletes ALL saved clipboard history, including pinned items, and creates a new encryption key. This cannot be undone.</string>
 
     <!-- Clipboard backup -->
+    <string name="clipboard_zip__export">Export to ZIP</string>
+    <string name="clipboard_zip__export_summary">Save Regular, Vault, or both. A password is required when the vault is included.</string>
+    <string name="clipboard_zip__import">Import from ZIP</string>
+    <string name="clipboard_zip__import_summary">Merge or replace items from a ZIP backup. Vault rows stay in the vault.</string>
+    <string name="clipboard_zip__title">Clipboard ZIP</string>
+    <string name="clipboard_zip__export_title">Export to ZIP</string>
+    <string name="clipboard_zip__import_title">Import from ZIP</string>
+    <string name="clipboard_zip__scope_regular">Regular</string>
+    <string name="clipboard_zip__scope_regular_desc">The regular clipboard only. A password is optional.</string>
+    <string name="clipboard_zip__scope_vault">Vault</string>
+    <string name="clipboard_zip__scope_vault_desc">The sensitive vault only. A password is required.</string>
+    <string name="clipboard_zip__scope_both">Both</string>
+    <string name="clipboard_zip__scope_both_desc">Regular and vault. A password is required.</string>
+    <string name="clipboard_zip__encrypt">Encrypt this export</string>
+    <string name="clipboard_zip__vault_warning">This file will contain vault items. It is encrypted with the password you choose. There is no way to recover a lost password.</string>
+    <string name="clipboard_zip__images_note">Images and other non-text clips are skipped.</string>
+    <string name="clipboard_zip__export_button">Export to ZIP…</string>
+    <string name="clipboard_zip__import_button">Import from ZIP…</string>
+    <string name="clipboard_zip__exported">ZIP saved: {regular} regular, {vault} vault.</string>
+    <string name="clipboard_zip__store_regular">Regular</string>
+    <string name="clipboard_zip__store_vault">Vault</string>
     <string name="clipboard_backup__title">Backup and restore clipboard</string>
     <string name="clipboard_backup__link_summary">Export or import clipboard history as an encrypted file</string>
     <string name="clipboard_backup__create_title">Create backup</string>

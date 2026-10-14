@@ -4,6 +4,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Added
+- Word prediction in the suggestion bar: current-word completions, a next-word guess, and a one-edit autocorrect from
+  the bundled dictionary packs. *Word prediction* is on by default. *Learn from my typing* is off by default; when on,
+  words stay in `noBackupFilesDir/prediction/learned-words.json` and are never read from password, incognito, or
+  no-personalized-learning fields. *Clear learned words* asks before deleting them. Not run on a device. `spell()` is
+  still a stub, and next-word without learning ranks dictionary frequency only.
+
 ### Changed
 - Logo: `docs/branding/logo.png` is the approved 720×720 neon mark (hooded figure at a keyboard). Launcher foregrounds,
   monochrome layers and `docs/branding/play_store_icon_512.png` are regenerated from it. The adaptive-icon background is

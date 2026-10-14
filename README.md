@@ -70,13 +70,13 @@ Details: [SNIPPETS.md](SNIPPETS.md).
 
 ### Dictionary packs
 
-Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources. Words reach the system spell checker only — **word suggestions are not implemented yet.**
+Five bundled word lists: Kali tools, NetHunter, AI terms, slash commands, Termux. Strict zip reader; non-destructive install/remove. Lists were written from memory and are not yet verified against official sources. Word prediction (on by default) reads those lists for the suggestion bar. *Learn from my typing* is off until you turn it on, and then stays on this device. Gesture typing is not done. The suggestion wiring has not been run on a device.
 
 Details: [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md).
 
 ### Planned (not started or incomplete)
 
-* Word suggestions, autocorrect, next-word prediction, personal dictionary
+* Gesture typing (word prediction itself is in: current word, next word, and a close correction; learning is opt-in)
 * Victorious theme presets and responsive layout (Phase 8)
 * AI workspace: prompt library, local transforms, optional provider adapters (Phase 7; network only after you enable a provider)
 * Voice typing via Android's recogniser

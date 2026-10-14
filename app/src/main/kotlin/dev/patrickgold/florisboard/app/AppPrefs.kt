@@ -825,6 +825,14 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "suggestion__enabled",
             default = false,
         )
+        val predictionEnabled = boolean(
+            key = "suggestion__prediction_enabled",
+            default = true,
+        )
+        val learnFromTyping = boolean(
+            key = "suggestion__learn_from_typing",
+            default = false,
+        )
         val displayMode = enum(
             key = "suggestion__display_mode",
             default = CandidatesDisplayMode.DYNAMIC_SCROLLABLE,

@@ -482,6 +482,14 @@
     <string name="pref__suggestion__title" comment="Preference group title">Suggestions</string>
     <string name="pref__suggestion__enabled__label" comment="Preference title">Display suggestions</string>
     <string name="pref__suggestion__enabled__summary" comment="Preference summary">Provides suggestions while you type</string>
+    <string name="pref__suggestion__prediction_enabled__label" comment="Preference title">Word prediction</string>
+    <string name="pref__suggestion__prediction_enabled__summary" comment="Preference summary">Suggest the current word, the next word, and close corrections from the bundled dictionaries. Off in password fields and fields that ask for no suggestions.</string>
+    <string name="pref__suggestion__learn_from_typing__label" comment="Preference title">Learn from my typing</string>
+    <string name="pref__suggestion__learn_from_typing__summary" comment="Preference summary">Off by default. When on, new words and how often they follow each other are stored only on this device. Nothing is stored from passwords, incognito, or fields that disallow personalized learning.</string>
+    <string name="pref__suggestion__clear_learned__label" comment="Preference title">Clear learned words</string>
+    <string name="pref__suggestion__clear_learned__summary" comment="Preference summary">Deletes every word this keyboard has learned from your typing</string>
+    <string name="pref__suggestion__clear_learned__confirm_title" comment="Dialog title">Clear learned words?</string>
+    <string name="pref__suggestion__clear_learned__confirm_message" comment="Dialog text">This deletes the on-device list of words learned from your typing. Bundled dictionaries stay.</string>
     <string name="pref__suggestion__display_mode__label" comment="Preference title">Suggestions display mode</string>
     <string name="pref__suggestion__block_possibly_offensive__label" comment="Preference title">Block possibly offensive words</string>
     <string name="pref__suggestion__block_possibly_offensive__summary" comment="Preference summary">Prevents possibly offensive words from being suggested while you type</string>
@@ -509,7 +517,7 @@
     <string name="settings__dictionary_packs__title" comment="Screen title and settings entry">Dictionary packs</string>
     <string name="settings__dictionary_packs__entry_summary" comment="Summary of the settings entry">Ready-made word lists: Kali tools, NetHunter, AI terms, slash commands, Termux</string>
     <string name="settings__dictionary_packs__note_title" comment="Heading of the explanation at the top of the screen">What packs do</string>
-    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages. Today they stop the system spell checker from flagging these words in apps that use it. Word suggestions while typing do not exist in this keyboard yet. Lists were written from memory and not checked against current releases.</string>
+    <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages, which stops the system spell checker from flagging them in apps that use it. Word prediction reads the bundled pack lists directly and does not depend on installing a pack. Lists were written from memory and not checked against current releases.</string>
     <string name="settings__dictionary_packs__import" comment="Preference title">Open a pack file</string>
     <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device</string>
     <string name="settings__dictionary_packs__install" comment="Dialog button">Add words</string>

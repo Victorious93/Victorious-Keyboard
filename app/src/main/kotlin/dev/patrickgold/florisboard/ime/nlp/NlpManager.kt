@@ -29,7 +29,11 @@ import dev.patrickgold.florisboard.ime.editor.EditorContent
 import dev.patrickgold.florisboard.ime.editor.EditorRange
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionProvider
 import dev.patrickgold.florisboard.ime.nlp.han.HanShapeBasedLanguageProvider
+import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.nlp.latin.LatinLanguageProvider
+import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
+import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
+import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.lib.util.NetworkUtils
 import dev.patrickgold.florisboard.subtypeManager
@@ -92,6 +96,12 @@ class NlpManager(context: Context) {
             assembleCandidates()
         }
         prefs.suggestion.enabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        prefs.suggestion.predictionEnabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        prefs.suggestion.learnFromTyping.asFlow().collectLatestIn(scope) {
             assembleCandidates()
         }
         prefs.clipboard.suggestionEnabled.asFlow().collectLatestIn(scope) {
@@ -190,8 +200,43 @@ class NlpManager(context: Context) {
 
     fun isSuggestionOn(): Boolean =
         prefs.suggestion.enabled.get()
+            || prefs.suggestion.predictionEnabled.get()
             || prefs.emoji.suggestionEnabled.get()
             || providerForcesSuggestionOn(subtypeManager.activeSubtype)
+
+    fun mayLearnFromCurrentField(): Boolean {
+        val info = editorInstance.activeInfo
+        return LearningGate.allowsLearning(
+            learningEnabled = prefs.suggestion.learnFromTyping.get(),
+            field = LearningGate.Field(
+                passwordLike = info.inputAttributes.isPasswordLike(),
+                incognito = keyboardManager.activeState.isIncognitoMode,
+                noPersonalizedLearning = info.imeOptions.flagNoPersonalizedLearning,
+                noSuggestions = info.inputAttributes.flagTextNoSuggestions,
+            ),
+        )
+    }
+
+    /**
+     * Stores [committed] (or the token being typed, when null). Returns before reading the editor
+     * when learning is not allowed, so a password field is not captured.
+     */
+    fun noteTypedOrCommitted(committed: String?) {
+        if (!mayLearnFromCurrentField()) return
+        val (previous, current) = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection)
+        val word = committed ?: current ?: return
+        scope.launch {
+            val provider = getSuggestionProvider(subtypeManager.activeSubtype)
+            (provider as? TypingLearner)?.recordCommitted(word, previous)
+        }
+    }
+
+    fun clearLearnedWords() {
+        scope.launch {
+            val provider = getSuggestionProvider(subtypeManager.activeSubtype)
+            (provider as? TypingLearner)?.clearLearned()
+        }
+    }
 
     fun suggest(subtype: Subtype, content: EditorContent) {
         val reqTime = SystemClock.uptimeMillis()

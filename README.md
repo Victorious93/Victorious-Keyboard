@@ -196,6 +196,14 @@ docs/                        Branding, developer-keyboard notes, upstream docs
 
 Kotlin package stays `dev.patrickgold.florisboard` to ease upstream merges; product identity is the application ID and resources. New features follow *pure-Kotlin core + thin Android shell* — see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+## Spell checker
+
+The system spell-checker service is the Android one FlorisBoard exposes. Turn it on from the system keyboard settings after enabling Victorious Keyboard. Suggestions inside the keyboard are the on-device dictionary, not a network spell check.
+
+## Theme editor
+
+Settings → Theme → the extension list opens the theme editor shipped with the keyboard. Styles are Snygg stylesheets (`app/src/main/assets/ime/theme`). The default themes are Victorious Neon and Victorious Neon Light; older themes stay in the list.
+
 ## Documentation
 
 | Document | Covers |

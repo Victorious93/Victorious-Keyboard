@@ -1,13 +1,13 @@
 <resources>
+    <!-- Locked to ProjectUrls. The upstream repository stays here for the About credit only. -->
     <string name="florisboard__repo_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard</string>
     <string name="florisboard__upstream_url" translatable="false">https://github.com/florisboard/florisboard</string>
     <string name="florisboard__issue_tracker_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/issues</string>
     <string name="florisboard__privacy_policy_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/PRIVACY.md</string>
     <string name="florisboard__changelog_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/CHANGELOG.md</string>
     <string name="florisboard__commit_by_hash_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/commit/{hash}</string>
-    <!-- The two wiki links below point to documentation of the upstream FlorisBoard project, which describes the same code. -->
-    <string name="florisboard__spell_checker_wiki_url" translatable="false">https://github.com/florisboard/florisboard/wiki/System-spell-checker-service</string>
-    <string name="florisboard__theme_editor_wiki_url" translatable="false">https://github.com/florisboard/florisboard/wiki/Using-the-new-Theme-Editor</string>
+    <string name="florisboard__spell_checker_wiki_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/README.md#spell-checker</string>
+    <string name="florisboard__theme_editor_wiki_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/README.md#theme-editor</string>
     <string name="florisboard__internal_key_codes_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/app/src/main/kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt</string>
     <string name="florisboard__character_key_codes_url" translatable="false">https://unicode-table.com/en</string>
 

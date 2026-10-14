@@ -35,6 +35,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ### Fixed
 - Docked keyboard keys no longer sit in the home-gesture strip. The bottom padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets, plus a Bottom gap setting (Settings → Look → Keyboard, 0–48 dp, 16 dp on gesture navigation and 4 dp with buttons). The gap uses the keyboard background and shows in the keyboard preview. Not run on a device.
+- "Search for Updates" on Add-ons & Extensions opens this project's GitHub releases page. Product links (repository, issues, privacy, changelog, spell-checker and theme-editor notes) live in `ProjectUrls` and no longer send people to the FlorisBoard add-on store or wiki. The About screen still links to the upstream FlorisBoard repository as attribution.
+- Suggestion chips: the neon pill's vertical margin and padding were larger than the fixed smartbar row, so Compose clipped the lower half of each word. The chip now uses a short vertical margin, does not clip the glyphs, and shrinks the type size so the line box fits at font scales 0.85×–1.3×. Long words ellipsize. The same spacing is what the color-picker overlay paints over. The developer row scrolls outside its background clip, so the Home key is no longer cut off at the screen edge.
 - `lintDebug` errors that had failed the build since the Phase 1 baseline (and one added with the snippets screen):
   literal percents in the "above 50%" validation hint are escaped, plural labels use `%d` so locales whose "one"
   form covers more than one number keep the quantity, the physical-keyboard screen reads `LocalConfiguration`,

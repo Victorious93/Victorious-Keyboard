@@ -17,52 +17,53 @@
 package dev.patrickgold.florisboard.lib.fleet
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
- * Provisional payloads for [FleetHub.getSnippets] and the list-commands ask.
- * TODO-confirm-with-hub: replace this parser when the hub's real document is known.
- * A document that cannot be read becomes an empty list. It is never logged.
+ * JSON documents a provider returns from the binder. A document that cannot be read becomes an
+ * empty list. It is never logged.
+ *
+ * TODO-confirm-with-hub: the field names match the shared module README.
  */
 object FleetCodec {
     private const val MAX_DOCUMENT = 65_536
     private val json = Json { ignoreUnknownKeys = true }
     private val namePattern = Regex("[a-z][a-z0-9_-]{0,31}")
 
-    fun commands(raw: String?): List<FleetCommand> {
-        val text = bounded(raw) ?: return emptyList()
-        val parsed = try {
-            json.decodeFromString<List<RawCommand>>(text)
-        } catch (e: Throwable) {
-            if (e is SerializationException || e is IllegalArgumentException || e is StackOverflowError) {
-                return emptyList()
-            }
-            return emptyList()
-        }
-        val out = ArrayList<FleetCommand>()
+    fun commands(raw: String?): List<FleetAdvertised> {
+        val parsed = decode<RawCommand>(raw) ?: return emptyList()
+        val out = ArrayList<FleetAdvertised>()
         for (row in parsed) {
             val name = row.name.lowercase()
             if (!namePattern.matches(name)) continue
-            out.add(FleetCommand(name, clean(row.description, 120, allowNewlines = false)))
+            out.add(FleetAdvertised(name, plain(row.description, 120, allowNewlines = false)))
+            if (out.size >= 40) break
+        }
+        return out
+    }
+
+    fun actions(raw: String?): List<FleetAction> {
+        val parsed = decode<RawAction>(raw) ?: return emptyList()
+        val out = ArrayList<FleetAction>()
+        val seen = HashSet<String>()
+        for (row in parsed) {
+            val name = row.name.lowercase()
+            if (!namePattern.matches(name) || !seen.add(name)) continue
+            val label = plain(row.label, 48, allowNewlines = false).ifEmpty { name }
+            out.add(FleetAction(name, label))
             if (out.size >= 40) break
         }
         return out
     }
 
     fun snippets(raw: String?): List<FleetSnippet> {
-        val text = bounded(raw) ?: return emptyList()
-        val parsed = try {
-            json.decodeFromString<List<RawSnippet>>(text)
-        } catch (e: Throwable) {
-            return emptyList()
-        }
+        val parsed = decode<RawSnippet>(raw) ?: return emptyList()
         val out = ArrayList<FleetSnippet>()
         for ((index, row) in parsed.withIndex()) {
-            val label = clean(row.label, 48, allowNewlines = false)
+            val label = plain(row.label, 48, allowNewlines = false)
             if (label.isEmpty()) continue
-            val body = clean(row.text, 4_000, allowNewlines = true)
-            val command = clean(row.command, 64, allowNewlines = false)
+            val body = plain(row.text, 4_000, allowNewlines = true)
+            val command = plain(row.command, 64, allowNewlines = false)
             if (body.isEmpty() && command.isEmpty()) continue
             val id = row.id.takeIf { it.matches(Regex("[A-Za-z0-9_-]{1,64}")) } ?: "s$index"
             out.add(
@@ -72,7 +73,7 @@ object FleetCodec {
                     kind = kindOf(row.kind),
                     text = body,
                     command = command,
-                    args = row.args.take(8).map { clean(it, 200, allowNewlines = false) },
+                    args = row.args.take(8).map { plain(it, 200, allowNewlines = false) },
                 ),
             )
             if (out.size >= 40) break
@@ -80,20 +81,7 @@ object FleetCodec {
         return out
     }
 
-    private fun bounded(raw: String?): String? {
-        if (raw.isNullOrBlank()) return null
-        if (raw.length > MAX_DOCUMENT) return null
-        return raw
-    }
-
-    private fun kindOf(raw: String): FleetSnippetKind = when (raw.lowercase()) {
-        "adb" -> FleetSnippetKind.ADB
-        "fastboot" -> FleetSnippetKind.FASTBOOT
-        "termux" -> FleetSnippetKind.TERMUX
-        else -> FleetSnippetKind.OTHER
-    }
-
-    private fun clean(text: String, max: Int, allowNewlines: Boolean): String {
+    fun plain(text: String, max: Int, allowNewlines: Boolean): String {
         val out = StringBuilder()
         for (ch in text) {
             val keep = ch == '\t' || (allowNewlines && ch == '\n') || !ch.isISOControl()
@@ -103,10 +91,32 @@ object FleetCodec {
         return out.toString().trim()
     }
 
+    private inline fun <reified T> decode(raw: String?): List<T>? {
+        if (raw.isNullOrBlank() || raw.length > MAX_DOCUMENT) return null
+        return try {
+            json.decodeFromString<List<T>>(raw)
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    private fun kindOf(raw: String): FleetSnippetKind = when (raw.lowercase()) {
+        "adb" -> FleetSnippetKind.ADB
+        "fastboot" -> FleetSnippetKind.FASTBOOT
+        "termux" -> FleetSnippetKind.TERMUX
+        else -> FleetSnippetKind.OTHER
+    }
+
     @Serializable
     private data class RawCommand(
         val name: String = "",
         val description: String = "",
+    )
+
+    @Serializable
+    private data class RawAction(
+        val name: String = "",
+        val label: String = "",
     )
 
     @Serializable
@@ -121,25 +131,101 @@ object FleetCodec {
 }
 
 object FleetSession {
-    /** Reads the hub. Any failure leaves the keyboard usable and sends nothing. */
-    fun load(enabled: Boolean, installed: Boolean, hub: FleetHub?): FleetSnapshot {
-        if (!enabled || !installed || hub == null) return FleetSnapshot.absent()
+    /** Reads every endpoint. Any failure leaves that app disconnected and sends nothing. */
+    fun load(enabled: Boolean, endpoints: List<FleetEndpoint>): FleetSnapshot {
+        if (!enabled || endpoints.isEmpty()) return FleetSnapshot.absent()
+        val rows = endpoints.take(FleetDiscovery.MAX_PROVIDERS).map { read(it) }
+        return FleetSnapshot(assign(rows))
+    }
+
+    private data class Read(
+        val packageName: String,
+        val title: String,
+        val declaredNamespace: String,
+        val connected: Boolean,
+        val iconPng: ByteArray?,
+        val commands: List<FleetAdvertised>,
+        val snippets: List<FleetSnippet>,
+        val actions: List<FleetAction>,
+    )
+
+    private fun read(endpoint: FleetEndpoint): Read {
+        val provider = endpoint.provider ?: return disconnected(endpoint.packageName)
         val alive = try {
-            hub.ping()
+            provider.ping()
         } catch (e: Exception) {
             false
         }
-        if (!alive) return FleetSnapshot.installed()
-        val advertised = try {
-            FleetCodec.commands(hub.askHub(FleetHubContract.ACTION_LIST_COMMANDS, ""))
+        if (!alive) return disconnected(endpoint.packageName)
+        val title = try {
+            FleetCodec.plain(provider.providerName(), 48, allowNewlines = false).ifEmpty { tail(endpoint.packageName) }
+        } catch (e: Exception) {
+            tail(endpoint.packageName)
+        }
+        val namespace = try {
+            provider.namespace()
+        } catch (e: Exception) {
+            ""
+        }
+        val commands = try {
+            FleetCodec.commands(provider.slashCommands())
         } catch (e: Exception) {
             emptyList()
         }
         val snippets = try {
-            FleetCodec.snippets(hub.getSnippets())
+            FleetCodec.snippets(provider.snippets())
         } catch (e: Exception) {
             emptyList()
         }
-        return FleetSnapshot(FleetLink.CONNECTED, advertised, snippets)
+        val actions = try {
+            FleetCodec.actions(provider.actions())
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val icon = try {
+            FleetIcons.keep(provider.icon())
+        } catch (e: Exception) {
+            null
+        }
+        return Read(endpoint.packageName, title, namespace, true, icon, commands, snippets, actions)
+    }
+
+    private fun disconnected(packageName: String): Read = Read(
+        packageName = packageName,
+        title = tail(packageName),
+        declaredNamespace = "",
+        connected = false,
+        iconPng = null,
+        commands = emptyList(),
+        snippets = emptyList(),
+        actions = emptyList(),
+    )
+
+    private fun tail(packageName: String): String {
+        val raw = packageName.substringAfterLast('.').ifEmpty { packageName }
+        return FleetCodec.plain(raw, 32, allowNewlines = false).ifEmpty { "App" }
+    }
+
+    private fun assign(rows: List<Read>): List<FleetApp> {
+        val taken = HashSet<String>()
+        return rows.map { row ->
+            val namespace = if (row.connected) {
+                val token = FleetNamespaces.tokenFor(row.declaredNamespace, row.title, row.packageName, taken)
+                taken.add(token)
+                token
+            } else {
+                ""
+            }
+            FleetApp(
+                packageName = row.packageName,
+                title = row.title,
+                namespace = namespace,
+                connected = row.connected,
+                iconPng = row.iconPng,
+                commands = row.commands,
+                snippets = row.snippets,
+                actions = row.actions,
+            )
+        }
     }
 }

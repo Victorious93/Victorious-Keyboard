@@ -572,13 +572,16 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     private fun expandFleetSlash(candidate: SlashSuggestionCandidate) {
         if (!prefs.fleet.enabled.get()) return
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
+        val packageName = candidate.fleetPackage?.takeIf { it.isNotBlank() } ?: return
+        val rawName = candidate.fleetRawName?.takeIf { it.isNotBlank() } ?: return
         val argument = dev.patrickgold.florisboard.lib.fleet.FleetPolicy.slashText(
             candidate.argument,
             passwordLike = false,
         ) ?: return
         val token = editorInstance.activeContent.textBeforeSelection.takeLast(candidate.replaceLength)
         scope.launch {
-            val reply = fleet.ask(candidate.commandName, argument)
+            val reply = fleet.ask(packageName, rawName, argument)
             withContext(Dispatchers.Main) {
                 if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
                 if (reply.isNullOrBlank()) {
@@ -593,8 +596,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         }
     }
 
-    /** Sends only the current selection. Vault text is included because the tap is an explicit pick. */
-    fun askHub() {
+    /**
+     * Sends only the current selection to the app the user picked.
+     * [action] is empty for Ask, or an advertised action name. Vault text is included because the tap is explicit.
+     */
+    fun askFleet(packageName: String, action: String = "") {
         if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
             appContext.showShortToastSync(R.string.fleet__password)
             return
@@ -618,7 +624,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             return
         }
         scope.launch {
-            val reply = fleet.ask(dev.patrickgold.florisboard.lib.fleet.FleetHubContract.ACTION_ASK, text)
+            val reply = fleet.ask(packageName, action, text)
             withContext(Dispatchers.Main) {
                 if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
                 if (reply.isNullOrBlank()) {
@@ -631,14 +637,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         }
     }
 
-    /** Inserts hub snippet text. A command name asks the hub for text and does not run it. */
-    fun insertFleetSnippet(snippet: dev.patrickgold.florisboard.lib.fleet.FleetSnippet) {
+    /** Inserts provider snippet text. A command name asks that provider for text and does not run it. */
+    fun insertFleetSnippet(packageName: String, snippet: dev.patrickgold.florisboard.lib.fleet.FleetSnippet) {
         if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
             appContext.showShortToastSync(R.string.fleet__password)
             return
         }
         scope.launch {
-            val outcome = fleet.insertSnippet(snippet)
+            val outcome = fleet.insertSnippet(packageName, snippet)
             withContext(Dispatchers.Main) {
                 if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
                 if (outcome == null || outcome.execute || outcome.text.isBlank()) {

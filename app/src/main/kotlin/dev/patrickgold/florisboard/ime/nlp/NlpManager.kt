@@ -431,6 +431,8 @@ class NlpManager(context: Context) {
                         argument = plan.argument,
                         replaceLength = plan.replaceLength,
                         fleet = offer.fleet,
+                        fleetPackage = offer.fleetPackage,
+                        fleetRawName = offer.fleetRawName,
                     )
                 }
                 is StripPlan.Words -> buildList {

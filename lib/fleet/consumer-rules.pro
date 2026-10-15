@@ -1,2 +1,1 @@
--keep class dev.patrickgold.florisboard.lib.fleet.IFleetHub { *; }
--keep class dev.patrickgold.florisboard.lib.fleet.IFleetHub$Stub { *; }
+# Binder keep rules live in fleet-keyboard-api/consumer-rules.pro.

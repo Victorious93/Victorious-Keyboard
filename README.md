@@ -88,9 +88,9 @@ Type `/` at the start of a word and the strip lists matching commands. Tap one t
 
 ### Droidcommand-AI fleet
 
-The keyboard stays standalone. It does not request the Internet permission. An optional link binds to the Droidcommand-AI hub with a signature-level permission and a `<queries>` package entry. If that app is not installed, or the fleet switch is off, every fleet feature stays hidden. The hub's package name, service action, and permission are still placeholders (`todo.confirm.with.hub`, marked `TODO-confirm-with-hub` in `FleetHubContract`) until the hub publishes them.
+The keyboard stays standalone. It does not request the Internet permission. It does not ship a list of fleet apps. It discovers every installed app that exports the shared service action, holds the shared signature permission, and is signed with this keyboard's certificate. If none are installed, or the fleet switch is off, every fleet feature stays hidden. The action (`com.victorious.fleet.KEYBOARD_PROVIDER`) and permission (`com.victorious.fleet.PERMISSION`) are still placeholders, marked `TODO-confirm-with-hub` in `fleet-keyboard-api`.
 
-When the hub is connected, `/build`, `/status`, `/note`, and any command the hub advertises appear with the other slash commands. Ask hub sends the current selection. ADB, fastboot, and Termux snippets from the hub appear in the tools panel under Terminal keys, with a connection dot in the header. Password fields are never sent. Vault text is sent only when you tap Ask hub. Text that comes back is inserted and never run.
+Each connected app can advertise a name, an icon, slash commands, snippets, and actions. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel gets a section per app under Terminal keys, and Ask sends the selection to the app you tap. The status row lists each trusted app. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. Text that comes back is inserted and never run. Adding or removing an app rescans.
 
 Details: [docs/FLEET.md](docs/FLEET.md). Not run on a device.
 

@@ -249,6 +249,7 @@ dependencies {
     implementation(projects.lib.kotlin)
     implementation(projects.lib.snygg)
     implementation(projects.lib.fleet)
+    implementation(projects.fleetKeyboardApi)
 
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)

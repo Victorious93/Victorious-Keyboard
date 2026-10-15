@@ -144,13 +144,17 @@ fun TextInputLayout(
                 },
                 onClose = { keyboardManager.setToolsOpen(false) },
                 fleet = fleetSnapshot.panel(),
-                onAskHub = {
+                onAsk = { packageName ->
                     keyboardManager.setToolsOpen(false)
-                    keyboardManager.askHub()
+                    keyboardManager.askFleet(packageName)
                 },
-                onSnippet = { snippet ->
+                onFleetAction = { packageName, action ->
                     keyboardManager.setToolsOpen(false)
-                    keyboardManager.insertFleetSnippet(snippet)
+                    keyboardManager.askFleet(packageName, action)
+                },
+                onSnippet = { packageName, snippet ->
+                    keyboardManager.setToolsOpen(false)
+                    keyboardManager.insertFleetSnippet(packageName, snippet)
                 },
                 modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight()),
             )

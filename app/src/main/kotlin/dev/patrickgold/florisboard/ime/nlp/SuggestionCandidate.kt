@@ -199,6 +199,8 @@ data class SlashSuggestionCandidate(
     val argument: String,
     val replaceLength: Int,
     val fleet: Boolean = false,
+    val fleetPackage: String? = null,
+    val fleetRawName: String? = null,
     override val secondaryText: CharSequence? = null,
     override val confidence: Double = 1.0,
     override val isEligibleForAutoCommit: Boolean = false,

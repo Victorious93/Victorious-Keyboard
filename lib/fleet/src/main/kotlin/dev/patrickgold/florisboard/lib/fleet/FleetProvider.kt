@@ -17,16 +17,26 @@
 package dev.patrickgold.florisboard.lib.fleet
 
 /**
- * The hub port the keyboard calls. [IFleetHub] is the binder shape of the same four methods
- * and can be replaced when the hub publishes its own AIDL. Returned strings are inserted.
+ * One fleet app, as the keyboard sees it. The binder shape is
+ * `com.victorious.fleet.IFleetKeyboardProvider`. Returned strings are inserted.
  * Nothing in this interface runs a command.
  */
-interface FleetHub {
-    fun askHub(action: String, text: String): String
+interface FleetProvider {
+    fun ping(): Boolean
+
+    fun providerName(): String
+
+    fun namespace(): String
+
+    fun icon(): ByteArray
+
+    fun slashCommands(): String
+
+    fun snippets(): String
+
+    fun actions(): String
+
+    fun ask(action: String, text: String): String
 
     fun runCommand(name: String, args: List<String>): String
-
-    fun getSnippets(): String
-
-    fun ping(): Boolean
 }

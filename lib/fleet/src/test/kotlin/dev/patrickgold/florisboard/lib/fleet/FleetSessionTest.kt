@@ -20,26 +20,38 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 
-class FakeFleetHub(
+class FakeFleetProvider(
     var pingOk: Boolean = true,
     var failPing: Boolean = false,
-    var commandPayload: String = """[{"name":"deploy","description":"Deploy"},{"name":"date","description":"shadow"}]""",
-    var snippetPayload: String =
-        """[{"id":"adb1","label":"devices","kind":"adb","text":"adb devices"},""" +
-            """{"id":"fb1","label":"devices","kind":"fastboot","text":"fastboot devices"},""" +
-            """{"id":"tx1","label":"info","kind":"termux","command":"termux-info","args":[]}]""",
-    var replies: Map<String, String> = mapOf(
-        "build" to "gradle assembleDebug",
-        "status" to "idle",
-        "note" to "noted",
-        FleetHubContract.ACTION_ASK to "answer",
-    ),
-) : FleetHub {
+    var displayName: String = "Example",
+    var namespaceToken: String = "ex",
+    var iconBytes: ByteArray = ByteArray(0),
+    var commandPayload: String = """[{"name":"status","description":"Status"}]""",
+    var snippetPayload: String = "[]",
+    var actionPayload: String = "[]",
+    var replies: Map<String, String> = mapOf("" to "answer"),
+) : FleetProvider {
     val calls = mutableListOf<String>()
 
-    override fun askHub(action: String, text: String): String {
+    override fun ping(): Boolean {
+        if (failPing) throw IllegalStateException("down")
+        return pingOk
+    }
+
+    override fun providerName(): String = displayName
+
+    override fun namespace(): String = namespaceToken
+
+    override fun icon(): ByteArray = iconBytes
+
+    override fun slashCommands(): String = commandPayload
+
+    override fun snippets(): String = snippetPayload
+
+    override fun actions(): String = actionPayload
+
+    override fun ask(action: String, text: String): String {
         calls += "ask:$action:${text.length}"
-        if (action == FleetHubContract.ACTION_LIST_COMMANDS) return commandPayload
         return replies[action] ?: ""
     }
 
@@ -47,66 +59,149 @@ class FakeFleetHub(
         calls += "run:$name"
         return "text-for-$name"
     }
-
-    override fun getSnippets(): String = snippetPayload
-
-    override fun ping(): Boolean {
-        if (failPing) throw IllegalStateException("down")
-        return pingOk
-    }
 }
 
 class FleetSessionTest : FunSpec({
-    test("a missing hub hides every fleet feature") {
-        val snapshot = FleetSession.load(enabled = true, installed = false, hub = FakeFleetHub())
-        snapshot.link shouldBe FleetLink.ABSENT
+    val cert = byteArrayOf(1, 2, 3)
+    val other = byteArrayOf(9, 9)
+
+    test("no trusted provider hides every fleet feature") {
+        val snapshot = FleetSession.load(enabled = true, endpoints = emptyList())
         snapshot.commands(emptySet()) shouldBe emptyList()
         snapshot.panel() shouldBe FleetPanelState.Hidden
-        snapshot.panel().showDot shouldBe false
-    }
 
-    test("a switched-off link stays hidden even when the hub answers") {
-        val snapshot = FleetSession.load(enabled = false, installed = true, hub = FakeFleetHub())
-        snapshot.link shouldBe FleetLink.ABSENT
-        snapshot.panel().showDot shouldBe false
-    }
-
-    test("a hub that fails ping shows a disconnected dot and no commands") {
-        val down = FakeFleetHub(pingOk = false)
-        val snapshot = FleetSession.load(enabled = true, installed = true, hub = down)
-        snapshot.link shouldBe FleetLink.INSTALLED
-        snapshot.commands(emptySet()) shouldBe emptyList()
-        snapshot.panel().showDot shouldBe true
-        snapshot.panel().connected shouldBe false
-        snapshot.snippets shouldBe emptyList()
-
-        val thrown = FleetSession.load(enabled = true, installed = true, hub = FakeFleetHub(failPing = true))
-        thrown.link shouldBe FleetLink.INSTALLED
-    }
-
-    test("a connected hub offers built-ins, advertised commands, and snippets") {
-        val hub = FakeFleetHub()
-        val snapshot = FleetSession.load(enabled = true, installed = true, hub = hub)
-        snapshot.link shouldBe FleetLink.CONNECTED
-        val names = snapshot.commands(reserved = setOf("date", "shell")).map { it.name }
-        names shouldBe listOf("build", "status", "note", "deploy")
-        names.contains("date") shouldBe false
-        snapshot.panel().connected shouldBe true
-        snapshot.snippets.map { it.kind } shouldBe listOf(
-            FleetSnippetKind.ADB,
-            FleetSnippetKind.FASTBOOT,
-            FleetSnippetKind.TERMUX,
+        val off = FleetSession.load(
+            enabled = false,
+            endpoints = listOf(FleetEndpoint("com.example.edl", FakeFleetProvider())),
         )
-        hub.calls shouldContain "ask:${FleetHubContract.ACTION_LIST_COMMANDS}:0"
+        off.panel() shouldBe FleetPanelState.Hidden
+        off.commands(emptySet()) shouldBe emptyList()
     }
 
-    test("hostile snippet and command documents become empty lists") {
+    test("two providers namespace a shared slash name and keep a unique name") {
+        val edl = FakeFleetProvider(
+            displayName = "EDL",
+            namespaceToken = "edl",
+            commandPayload = """[{"name":"status","description":"EDL status"},{"name":"flash","description":"Flash"}]""",
+            snippetPayload = """[{"id":"adb1","label":"devices","kind":"adb","text":"adb devices"}]""",
+            actionPayload = """[{"name":"flash","label":"Flash"}]""",
+        )
+        val swarm = FakeFleetProvider(
+            displayName = "Swarm",
+            namespaceToken = "swarm",
+            commandPayload = """[{"name":"status","description":"Swarm status"},{"name":"date","description":"shadow"}]""",
+            snippetPayload = """[{"id":"tx1","label":"info","kind":"termux","command":"termux-info","args":[]}]""",
+        )
+        val snapshot = FleetSession.load(
+            enabled = true,
+            endpoints = listOf(
+                FleetEndpoint("com.example.edl", edl),
+                FleetEndpoint("com.example.swarm", swarm),
+            ),
+        )
+        val commands = snapshot.commands(reserved = setOf("date", "shell"))
+        commands.map { it.name } shouldBe listOf("edl:status", "flash", "swarm:status", "swarm:date")
+        commands.first { it.name == "edl:status" }.rawName shouldBe "status"
+        commands.first { it.name == "edl:status" }.packageName shouldBe "com.example.edl"
+        commands.first { it.name == "flash" }.rawName shouldBe "flash"
+        snapshot.panel().statuses.map { it.title to it.connected } shouldBe listOf(
+            "EDL" to true,
+            "Swarm" to true,
+        )
+        snapshot.panel().sections.map { it.packageName } shouldBe listOf("com.example.edl", "com.example.swarm")
+        snapshot.panel().sections.first().actions.map { it.name } shouldBe listOf("flash")
+        snapshot.panel().sections.first().snippets.map { it.kind } shouldBe listOf(FleetSnippetKind.ADB)
+        snapshot.panel().sections.last().snippets.map { it.kind } shouldBe listOf(FleetSnippetKind.TERMUX)
+    }
+
+    test("a failed ping stays in the status row and contributes no commands") {
+        val down = FakeFleetProvider(pingOk = false, displayName = "Down", namespaceToken = "down")
+        val up = FakeFleetProvider(displayName = "Up", namespaceToken = "up")
+        val snapshot = FleetSession.load(
+            enabled = true,
+            endpoints = listOf(
+                FleetEndpoint("com.example.down", down),
+                FleetEndpoint("com.example.up", up),
+            ),
+        )
+        snapshot.panel().statuses.map { it.connected } shouldBe listOf(false, true)
+        snapshot.panel().statuses.first().title shouldBe "down"
+        snapshot.commands(emptySet()).map { it.packageName }.toSet() shouldBe setOf("com.example.up")
+        snapshot.panel().sections.map { it.packageName } shouldBe listOf("com.example.up")
+
+        val thrown = FleetSession.load(
+            enabled = true,
+            endpoints = listOf(FleetEndpoint("com.example.down", FakeFleetProvider(failPing = true))),
+        )
+        thrown.panel().statuses.single().connected shouldBe false
+        thrown.commands(emptySet()) shouldBe emptyList()
+    }
+
+    test("matching namespaces are disambiguated and a blank namespace uses the title") {
+        val first = FakeFleetProvider(namespaceToken = "edl", commandPayload = """[{"name":"status","description":"a"}]""")
+        val second = FakeFleetProvider(namespaceToken = "edl", commandPayload = """[{"name":"status","description":"b"}]""")
+        val named = FleetSession.load(
+            enabled = true,
+            endpoints = listOf(
+                FleetEndpoint("com.example.a", first),
+                FleetEndpoint("com.example.b", second),
+            ),
+        )
+        named.commands(emptySet()).map { it.name } shouldBe listOf("edl:status", "edl2:status")
+
+        val titled = FakeFleetProvider(
+            displayName = "Swarm AI",
+            namespaceToken = "",
+            commandPayload = """[{"name":"status","description":"only"}]""",
+        )
+        val fromTitle = FleetSession.load(true, listOf(FleetEndpoint("com.example.swarm", titled)))
+        fromTitle.commands(emptySet()).single().name shouldBe "status"
+        fromTitle.apps.single().namespace shouldBe "swarm"
+    }
+
+    test("discovery keeps two trusted services and drops permission or certificate mismatches") {
+        val keyboard = listOf(cert)
+        val selected = FleetDiscovery.select(
+            ownPackage = "dev.patrickgold.florisboard",
+            keyboardCertificates = keyboard,
+            candidates = listOf(
+                FleetServiceCandidate("dev.patrickgold.florisboard", "Own", true, keyboard),
+                FleetServiceCandidate("com.example.edl", "Z", true, keyboard),
+                FleetServiceCandidate("com.example.edl", "A", true, keyboard),
+                FleetServiceCandidate("com.example.swarm", "S", true, keyboard),
+                FleetServiceCandidate("com.example.denied", "D", false, keyboard),
+                FleetServiceCandidate("com.example.other", "O", true, listOf(other)),
+                FleetServiceCandidate("com.example.empty", "E", true, emptyList()),
+            ),
+        )
+        selected shouldBe listOf(
+            FleetServiceTarget("com.example.edl", "A"),
+            FleetServiceTarget("com.example.swarm", "S"),
+        )
+        FleetTrust.accept(true, listOf(cert, other), listOf(other, cert)) shouldBe true
+        FleetTrust.accept(true, emptyList(), listOf(cert)) shouldBe false
+        FleetDiscovery.select("app", keyboard, List(20) {
+            FleetServiceCandidate("com.example.p$it", "C", true, keyboard)
+        }).size shouldBe FleetDiscovery.MAX_PROVIDERS
+    }
+
+    test("hostile documents and a non-png icon become empty") {
         FleetCodec.commands("[{") shouldBe emptyList()
         FleetCodec.commands("[" + "[".repeat(400)) shouldBe emptyList()
         FleetCodec.snippets("{not-a-list}") shouldBe emptyList()
-        FleetCodec.snippets("x".repeat(70_000)) shouldBe emptyList()
+        FleetCodec.actions("x".repeat(70_000)) shouldBe emptyList()
         val kept = FleetCodec.commands("""[{"name":"Build","description":"ok"},{"name":"../x","description":"no"}]""")
         kept.map { it.name } shouldBe listOf("build")
+        val png = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
+        val provider = FakeFleetProvider(iconBytes = png)
+        val snapshot = FleetSession.load(true, listOf(FleetEndpoint("com.example.edl", provider)))
+        snapshot.apps.single().iconPng?.contentEquals(png) shouldBe true
+        val huge = ByteArray(FleetIcons.MAX_BYTES + 1)
+        png.copyInto(huge)
+        FleetSession.load(true, listOf(FleetEndpoint("com.example.edl", FakeFleetProvider(iconBytes = huge))))
+            .apps.single().iconPng shouldBe null
+        FleetSession.load(true, listOf(FleetEndpoint("com.example.edl", FakeFleetProvider(iconBytes = byteArrayOf(1, 2, 3, 4)))))
+            .apps.single().iconPng shouldBe null
     }
 
     test("password fields and implicit vault text are not sent") {
@@ -121,17 +216,30 @@ class FleetSessionTest : FunSpec({
     }
 
     test("snippet text is inserted and runCommand text is not executed") {
-        val hub = FakeFleetHub()
-        val snapshot = FleetSession.load(enabled = true, installed = true, hub = hub)
-        val adb = snapshot.snippets.first { it.kind == FleetSnippetKind.ADB }
-        val termux = snapshot.snippets.first { it.kind == FleetSnippetKind.TERMUX }
-        val adbOut = adb.insertText(hub)
+        val edl = FakeFleetProvider(
+            snippetPayload = """[{"id":"adb1","label":"devices","kind":"adb","text":"adb devices"}]""",
+        )
+        val swarm = FakeFleetProvider(
+            namespaceToken = "swarm",
+            snippetPayload = """[{"id":"tx1","label":"info","kind":"termux","command":"termux-info","args":[]}]""",
+        )
+        val snapshot = FleetSession.load(
+            true,
+            listOf(
+                FleetEndpoint("com.example.edl", edl),
+                FleetEndpoint("com.example.swarm", swarm),
+            ),
+        )
+        val adb = snapshot.panel().sections.first().snippets.single()
+        val adbOut = adb.insertText(edl)
         adbOut.text shouldBe "adb devices"
         adbOut.execute shouldBe false
-        hub.calls.none { it.startsWith("run:") } shouldBe true
-        val termuxOut = termux.insertText(hub)
+        edl.calls.none { it.startsWith("run:") } shouldBe true
+        val termux = snapshot.panel().sections.last().snippets.single()
+        val termuxOut = termux.insertText(swarm)
         termuxOut.text shouldBe "text-for-termux-info"
         termuxOut.execute shouldBe false
-        hub.calls shouldContain "run:termux-info"
+        swarm.calls shouldContain "run:termux-info"
+        edl.calls.none { it.startsWith("run:") } shouldBe true
     }
 })

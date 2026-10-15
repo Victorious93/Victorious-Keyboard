@@ -67,9 +67,19 @@ object StripPlanner {
             if (token != null && slashEnabled) {
                 val local = SlashCatalog.match(token.name, commands, enabled = true)
                 val fleetOffers = fleetCommands
-                    .filter { token.name.isEmpty() || it.name.startsWith(token.name) }
+                    .filter { token.name.isEmpty() || it.name.startsWith(token.name) || it.rawName.startsWith(token.name) }
                     .filter { command -> local.none { it.name == command.name } }
-                    .map { SlashOffer(it.name, it.description, null, null, fleet = true) }
+                    .map {
+                        SlashOffer(
+                            it.name,
+                            it.description,
+                            null,
+                            null,
+                            fleet = true,
+                            fleetPackage = it.packageName,
+                            fleetRawName = it.rawName,
+                        )
+                    }
                 return StripPlan.Slash(
                     offers = (local + fleetOffers).take(24),
                     replaceLength = token.replaceLength,

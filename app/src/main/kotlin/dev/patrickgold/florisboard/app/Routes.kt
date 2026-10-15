@@ -62,6 +62,7 @@ import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardZipScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardManagerScreen
 import dev.patrickgold.florisboard.app.settings.keyboard.AdvancedDeveloperScreen
 import dev.patrickgold.florisboard.app.settings.snippets.SnippetsScreen
+import dev.patrickgold.florisboard.app.settings.snippets.SnippetExpansionScreen
 import dev.patrickgold.florisboard.app.settings.clipboard.ClipboardScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.DictionaryPacksScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.DictionaryScreen
@@ -69,6 +70,7 @@ import dev.patrickgold.florisboard.app.settings.dictionary.UserDictionaryScreen
 import dev.patrickgold.florisboard.app.settings.dictionary.UserDictionaryType
 import dev.patrickgold.florisboard.app.settings.gestures.GesturesScreen
 import dev.patrickgold.florisboard.app.settings.keyboard.InputFeedbackScreen
+import dev.patrickgold.florisboard.app.settings.keyboard.DeveloperScreen
 import dev.patrickgold.florisboard.app.settings.keyboard.KeyboardScreen
 import dev.patrickgold.florisboard.app.settings.localization.LanguagePackManagerScreen
 import dev.patrickgold.florisboard.app.settings.localization.LanguagePackManagerScreenAction
@@ -211,6 +213,14 @@ object Routes {
         @Serializable
         @Deeplink("settings/snippets")
         object Snippets
+
+        @Serializable
+        @Deeplink("settings/snippets/expansion")
+        object SnippetExpansion
+
+        @Serializable
+        @Deeplink("settings/developer")
+        object Developer
 
         @Serializable
         @Deeplink("settings/keyboard/developer-advanced")
@@ -382,6 +392,8 @@ object Routes {
             composableWithDeepLink(Settings.ClipboardBackup::class) { ClipboardBackupScreen() }
             composableWithDeepLink(Settings.ClipboardZip::class) { ClipboardZipScreen() }
             composableWithDeepLink(Settings.Snippets::class) { SnippetsScreen() }
+            composableWithDeepLink(Settings.SnippetExpansion::class) { SnippetExpansionScreen() }
+            composableWithDeepLink(Settings.Developer::class) { DeveloperScreen() }
             composableWithDeepLink(Settings.AdvancedDeveloper::class) { AdvancedDeveloperScreen() }
 
             composableWithDeepLink(Settings.Media::class) { MediaScreen() }

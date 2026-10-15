@@ -25,25 +25,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
-import dev.patrickgold.florisboard.ime.developer.CustomSymbols
 import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
-import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowBar
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowStyle
-import dev.patrickgold.florisboard.ime.editor.InputAttributes
+import dev.patrickgold.florisboard.ime.developer.ui.rememberDeveloperRowExtraHeight
+import dev.patrickgold.florisboard.ime.developer.ui.rememberTerminalRowPlan
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
-import dev.patrickgold.florisboard.ime.mode.DeveloperRowPrefs
-import dev.patrickgold.florisboard.ime.mode.ModePresets
-import dev.patrickgold.florisboard.ime.mode.TerminalRowPolicy
 import dev.patrickgold.florisboard.ime.toolbar.ui.ToolsPanel
-import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.clipedit.ui.ClipEditorPanel
@@ -53,7 +47,6 @@ import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
-import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -65,9 +58,7 @@ fun TextInputLayout(
 ) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
-    val editorInstance by context.editorInstance()
     val localAi by context.localAiManager()
-    val fleetClient by context.fleetHub()
 
     val prefs by FlorisPreferenceStore
 
@@ -91,41 +82,16 @@ fun TextInputLayout(
         if (clipEditor != null) {
             ClipEditorPanel()
         }
-        val operatingMode by keyboardManager.activeMode.collectAsState()
         val toolsOpen by keyboardManager.toolsOpen.collectAsState()
-        val fleetSnapshot by fleetClient.snapshot.collectAsState()
-        val devEnabled by prefs.devrow.enabled.observeAsState()
-        val devProfile by prefs.devrow.profile.observeAsState()
-        val devTerminalKeys by prefs.devrow.terminalKeys.observeAsState()
-        val devNavigationKeys by prefs.devrow.navigationKeys.observeAsState()
-        val devSymbols by prefs.devrow.symbols.observeAsState()
-        val terminalKeyRow by prefs.devrow.terminalKeyRow.observeAsState()
-        val developerRow = ModePresets.developerRow(
-            operatingMode,
-            DeveloperRowPrefs(devEnabled, devProfile, devTerminalKeys, devNavigationKeys, devSymbols),
-        )
-        val showTerminalRow = TerminalRowPolicy.shouldShow(
-            terminalKeyRow,
-            editorInstance.activeInfo.packageName,
-            editorInstance.activeInfo.inputAttributes.type == InputAttributes.Type.NULL,
-        )
-        if (showTerminalRow && !state.isActionsOverflowVisible && !toolsOpen && aiPanel == null && clipEditor == null) {
-            val customText by prefs.devrow.customSymbols.observeAsState()
-            val customMode by prefs.devrow.customSymbolsMode.observeAsState()
+        val terminalRow = rememberTerminalRowPlan()
+        if (terminalRow.visible && !state.isActionsOverflowVisible && !toolsOpen && aiPanel == null && clipEditor == null) {
             val size by prefs.devrow.size.observeAsState()
             val holdMs by prefs.devrow.holdDelayMs.observeAsState()
             val repeatMs by prefs.devrow.repeatIntervalMs.observeAsState()
             val haptics by prefs.devrow.haptics.observeAsState()
-            val custom = remember(customText) { CustomSymbols.parse(customText).keys }
             DeveloperRowBar(
-                profile = developerRow.profile,
-                options = RowOptions(
-                    terminalKeys = true,
-                    navigationKeys = true,
-                    symbols = devSymbols,
-                    custom = custom,
-                    customMode = customMode,
-                ),
+                profile = terminalRow.profile,
+                options = terminalRow.options,
                 style = DeveloperRowStyle(
                     heightScale = size.scale,
                     holdMs = DeveloperRowTiming.hold(holdMs),
@@ -137,26 +103,10 @@ fun TextInputLayout(
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()
         } else if (toolsOpen && aiPanel == null && clipEditor == null) {
+            // The terminal row is hidden while the panel is open; its height goes to the panel so the window keeps
+            // its size and the app behind the keyboard does not jump.
             ToolsPanel(
-                onAction = { id ->
-                    keyboardManager.setToolsOpen(false)
-                    keyboardManager.performToolbarAction(id)
-                },
-                onClose = { keyboardManager.setToolsOpen(false) },
-                fleet = fleetSnapshot.panel(),
-                onAsk = { packageName ->
-                    keyboardManager.setToolsOpen(false)
-                    keyboardManager.askFleet(packageName)
-                },
-                onFleetAction = { packageName, action ->
-                    keyboardManager.setToolsOpen(false)
-                    keyboardManager.askFleet(packageName, action)
-                },
-                onSnippet = { packageName, snippet ->
-                    keyboardManager.setToolsOpen(false)
-                    keyboardManager.insertFleetSnippet(packageName, snippet)
-                },
-                modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight()),
+                modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight() + rememberDeveloperRowExtraHeight()),
             )
         } else {
             Box {

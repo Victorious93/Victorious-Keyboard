@@ -46,6 +46,7 @@ import dev.patrickgold.florisboard.ime.slash.SlashTemplate
 import dev.patrickgold.florisboard.ime.slash.SlashVars
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -70,16 +71,14 @@ class StripSlashTest : FunSpec({
         TerminalRowPolicy.shouldShow(TerminalKeyRow.NEVER, "com.termux", typeNull = true) shouldBe false
     }
 
-    test("tools grid has the requested groups and no page tabs or attack seeds") {
+    test("tools panel has its tabs and no page tabs on the strip or attack seeds") {
         ToolsCatalog.pageTabsOnStrip shouldBe false
-        ToolsCatalog.groups.map { it.title } shouldBe listOf(
-            "Clipboard",
-            "Clip editor",
-            "Vault",
-            "AI",
-            "Terminal keys",
-            "Code",
-            "Privacy",
+        ToolsCatalog.tabs.keys.toList() shouldBe listOf(
+            ToolsTab.CLIPBOARD,
+            ToolsTab.AI,
+            ToolsTab.TERMINAL,
+            ToolsTab.CODE,
+            ToolsTab.QUICK,
         )
         val ids = ToolsCatalog.actionIds()
         ids shouldContain ToolbarActionId.EDIT_CLIP

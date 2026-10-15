@@ -43,6 +43,8 @@ class TextTransformsTest : FunSpec({
         TextTransforms.apply(TextTransform.HEX_DECODE, "41").text() shouldBe "A"
         TextTransforms.apply(TextTransform.HEX_DECODE, "4").shouldBeInstanceOf<TransformResult.Failed>()
         TextTransforms.apply(TextTransform.URL_ENCODE, "a b").text() shouldContain "a"
+        TextTransforms.apply(TextTransform.URL_ENCODE, "a b&c=\u00fc").text() shouldBe "a+b%26c%3D%C3%BC"
+        TextTransforms.apply(TextTransform.URL_DECODE, "a+b%26c%3D%C3%BC").text() shouldBe "a b&c=\u00fc"
         TextTransforms.apply(TextTransform.REGEX_ESCAPE, "a.b").text() shouldBe "a\\.b"
         val pretty = TextTransforms.apply(TextTransform.JSON_PRETTY, """{"b":1}""")
         pretty.shouldBeInstanceOf<TransformResult.Ok>()

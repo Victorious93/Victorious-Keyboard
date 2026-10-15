@@ -25,12 +25,12 @@
 ## Overview
 
 Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.com/florisboard/florisboard)
-(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine and layouts. The default look is Victorious Black: a near-black background, charcoal keys, light legends, and a small corner radius. Victorious Neon stays in the theme list and in the color presets. The older FlorisBoard themes stay selectable. Settings are grouped under Look, Typing, Tools, and About. It adds:
+(Apache-2.0, based on upstream tag `v0.6.0-alpha02`). It keeps FlorisBoard's typing engine and layouts. The default look is Victorious Black: a near-black background, charcoal keys, light legends, and a small corner radius. Victorious Neon stays in the theme list and in the color presets. The older FlorisBoard themes stay selectable. Settings Home is grouped under Look, Typing, Tools, Developer, Data, and About, and every entry has a one-line summary. It adds:
 
 * **Keyboard colors** — Settings → Look → Keyboard colors. Background, key, key text, accent, highlight, and suggestion pills, with presets and a reset. The choice is saved and painted over Victorious Neon.
 * **Word prediction** — current word, next word, and a close correction from the bundled dictionaries. A word that is already in the dictionary, your dictionary, or learned words is never replaced. Autocorrect is Off, Mild, or Normal. *Learn from my typing* is off until you turn it on.
 * **Clipboard manager** — up to 500 items with search, pinning (pinned items are kept), filters, and AES-256-GCM encrypted storage (Android Keystore–wrapped key). A separate **Vault** tab holds sensitive clips.
-* **Developer row and operating modes** — off until you enable it. Esc, Tab, Ctrl, Alt and arrows; Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
+* **Terminal key row and operating modes** — Settings → Developer & terminal. Esc, Tab, Ctrl, Alt and arrows, shown automatically in terminal apps and in Developer or Termux mode (or Always / Never); Standard / Developer / Termux modes with optional auto-detect for Termux and ConnectBot.
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
@@ -74,9 +74,9 @@ Details: [CLIPBOARD.md](CLIPBOARD.md), [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
 ### Suggestion strip and tools
 
-While you type, the top strip shows word suggestions only. It scrolls sideways when there are more candidates than fit, and the primary suggestion is underlined. When you are not typing, a recent clipboard chip can still appear. A single tools button on the left opens a panel in place of the keys: Clipboard, Clip editor, Vault, AI, Terminal keys, Code, and Privacy. The old page tabs (Terminal, Ctrl, Alt, Esc, …) are not on the strip.
+While you type, the top strip shows word suggestions only. It scrolls sideways when there are more candidates than fit, and the primary suggestion is underlined. When you are not typing, a recent clipboard chip can still appear. A single tools button on the left opens the **tools panel** in place of the keys. It has five tabs: **Clipboard** (history, paste, copy, cut, select all, undo, redo, snippets, clip editor, paste pinned, vault, ZIP backup), **AI**, **Terminal** (Ctrl, Alt, Esc, Tab, arrows, Home, End, PgUp, PgDn, ^C ^D ^Z ^L ^R, the key-row setting, and your own commands), **Code**, and **Quick** (incognito, learning, emoji, voice, one-handed, bottom gap, colors, settings). Each button is an icon with a translatable label; switches such as Incognito show On or Off. The panel is drawn with the keyboard theme's own tile and chip elements, so every theme and Keyboard colors apply to it. The panel takes the height of the keys plus the terminal key row, so opening it does not move the app behind the keyboard. Settings → Smartbar → **Tools panel** hides or reorders buttons per tab and adds your own commands; commands are inserted as text and never run. The AI panel and the clip editor take their colors from the keyboard theme too. None of this has been rendered on a device.
 
-The extra Esc/Tab/Ctrl/Alt/arrow row is hidden in ordinary apps. Settings → Keyboard → **Show terminal key row** is Auto, Always, or Never. Auto shows it in Termux, ConnectBot, JuiceSSH, NetHunter Terminal and similar packages, and in `TYPE_NULL` fields. Keys still send real key events. This has not been rendered on a device.
+The extra Esc/Tab/Ctrl/Alt/arrow row is hidden in ordinary apps. Settings → Developer & terminal → **Show terminal key row** is Auto, Always, or Never. Auto shows it in Termux, ConnectBot, JuiceSSH, NetHunter Terminal and similar packages, in `TYPE_NULL` fields, and while Developer or Termux mode is active. The *Terminal keys* and *Navigation keys* switches now change what the row draws. The row and the height that full-height panels reserve for it come from one decision (`TerminalRowPolicy.plan`), so they cannot disagree. Keys still send real key events. This has not been rendered on a device.
 
 ### My suggestions
 
@@ -90,7 +90,7 @@ Type `/` at the start of a word and the strip lists matching commands. Tap one t
 
 The keyboard stays standalone. It does not request the Internet permission. It does not ship a list of fleet apps. It discovers every installed app that exports the shared service action, holds the shared signature permission, and is signed with this keyboard's certificate. If none are installed, or the fleet switch is off, every fleet feature stays hidden. The action (`com.victorious.fleet.KEYBOARD_PROVIDER`) and permission (`com.victorious.fleet.PERMISSION`) are still placeholders, marked `TODO-confirm-with-hub` in `fleet-keyboard-api`.
 
-Each connected app can advertise a name, an icon, slash commands, snippets, and actions. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel gets a section per app under Terminal keys, and Ask sends the selection to the app you tap. The status row lists each trusted app. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. Text that comes back is inserted and never run. Adding or removing an app rescans.
+Each connected app can advertise a name, an icon, slash commands, snippets, and actions. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel then shows a **Fleet** tab beside the five theme tabs. Each trusted app is a section there, with its icon and a status dot; Ask, advertised actions, and snippets are tiles under that app, drawn with the same theme tiles as the other tabs. Settings → Tools → **Fleet link** is the switch. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. Text that comes back is inserted and never run. Adding or removing an app rescans.
 
 Details: [docs/FLEET.md](docs/FLEET.md). Not run on a device.
 
@@ -102,7 +102,7 @@ Details: [TERMINAL.md](TERMINAL.md), [docs/DEVELOPER_KEYBOARD.md](docs/DEVELOPER
 
 ### Snippets
 
-Template language: `{{selection}}`, `{{cursor}}`, `{{clipboard}}`, `{{date}}`, `{{time}}`, `{{datetime}}` (optional formats) — ✅ renderer. Space expansion is opt-in and never in password fields (✅ rules · 🟦 wiring). Enter and Tab expansion is each off until you turn it on; a key that matches nothing still does its normal action (✅ rules · 🟦 wiring). Library of up to 500 snippets with unique abbreviations and versioned JSON import/export (✅ logic · 🟦 settings screen). In-keyboard picker: quick action, panel, insert at the cursor (✅ insertion rules · 🟦 panel). Typed search in the picker and encrypted export are ⬜. Shell/exec/env templates are **not** implemented (placeholders stay literal).
+Template language: `{{selection}}`, `{{cursor}}`, `{{clipboard}}`, `{{date}}`, `{{time}}`, `{{datetime}}` (optional formats) — ✅ renderer. Space expansion is opt-in and never in password fields (✅ rules · 🟦 wiring). Enter and Tab expansion is each off until you turn it on; a key that matches nothing still does its normal action (✅ rules · 🟦 wiring). Library of up to 500 snippets with unique abbreviations and versioned JSON import/export (✅ logic · 🟦 settings screen: Settings → Tools → Snippets; expansion settings are under Snippets → Expansion). In-keyboard picker: quick action, panel, insert at the cursor (✅ insertion rules · 🟦 panel). Typed search in the picker and encrypted export are ⬜. Shell/exec/env templates are **not** implemented (placeholders stay literal).
 
 Details: [SNIPPETS.md](SNIPPETS.md).
 
@@ -143,15 +143,15 @@ These pictures are drawn from the shipped theme colors and the keyboard-colors s
 |---|---|
 | <img src="docs/screenshots/local-ai-settings.png" alt="Layout render of Settings, Local AI" width="280"> | <img src="docs/screenshots/local-ai-panel.png" alt="Layout render of the on-keyboard AI panel" width="420"> |
 
-| Suggestion strip | Tools panel |
-|---|---|
-| <img src="docs/screenshots/suggestion-strip.png" alt="Layout render of the suggestion strip with a tools button" width="420"> | <img src="docs/screenshots/tools-panel.png" alt="Layout render of the tools panel" width="420"> |
+| Suggestion strip |
+|---|
+| <img src="docs/screenshots/suggestion-strip.png" alt="Layout render of the suggestion strip with a tools button" width="420"> |
 
 | My suggestions | Slash commands |
 |---|---|
 | <img src="docs/screenshots/my-suggestions.png" alt="Layout render of My suggestions" width="280"> | <img src="docs/screenshots/slash-commands.png" alt="Layout render of slash commands in the strip" width="420"> |
 
-The strip, tools, suggestions, and slash pictures are layout renders. They are not photographs of a device.
+The strip, suggestions, and slash pictures are layout renders. They are not photographs of a device. There is no picture of the tabbed tools panel yet: it has not been rendered anywhere, and the earlier layout render showed the previous single-list panel, so it was removed.
 
 These two Local AI pictures are layout renders of the screen structure. They are not photographs of a device.
 

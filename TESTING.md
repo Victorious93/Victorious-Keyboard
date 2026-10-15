@@ -8,6 +8,7 @@
 | 5 (`workflow_dispatch`, branch `ccr-08db99f8-cdmjq6`, commit `c92c878`) | **build + unit tests passed**; job red only at "Upload unit test reports": artifact storage quota hit; APK artifact skipped |
 | PR #10 (`38353170157`) and its merge to `main` (`38357539442`) | **build + unit tests passed**; job red only at "Upload debug APK": "Artifact storage quota has been hit". No review comments |
 | Merge of PR #11 to `main` (`38368541837`) | **fully green**, including both artifact uploads |
+| PR #29, UI pass (`38668379528`, commit `029e087`) | **green**: `assembleDebug`, `testDebugUnitTest`, `:lib:kotlin:test` and `lintDebug` (`main` had been red at `lintDebug` since PRs #23/#25/#26) |
 
 Not yet seen on GitHub: a run of the workflow that also executes `lintDebug` and `:lib:kotlin:test` (added after the inherited lint errors were fixed). Instrumented tests are still not run anywhere.
 
@@ -15,10 +16,10 @@ Not yet seen on GitHub: a run of the workflow that also executes `lintDebug` and
 
 | Layer | Tooling | Status |
 |---|---|---|
-| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run**: 730 tests, 0 failures, 0 errors (`:app` 513 + `:lib:snygg` 106 via `testDebugUnitTest`, plus `:lib:kotlin` 111 via `:lib:kotlin:test`, which `testDebugUnitTest` does not run; counted from the `TEST-*.xml` result files). 176 were measured on the unmodified baseline (`AUDIT.md` §6, `:app` + `:lib:snygg` only), so 452 are ours (336 below + 9 `curlyFormat` regression tests + 57 snippet picker/insertion/preview/caret/quick-action/UI-mode tests + 34 dictionary pack reader/parser/planner/asset tests + 14 Enter/Tab expansion tests + 2 stored-locale tag tests): clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55), operating modes (12), advanced developer settings (36), Enter/Tab expansion decision (14) |
-| Compile / package | `./gradlew assembleDebug` | **Run**, success |
+| JVM unit tests | kotest + JUnit platform, `./gradlew testDebugUnitTest` | **Run (2026-10-15, UI pass)**: 854 tests, 0 failures, 0 errors (`:app` 637 + `:lib:snygg` 106 via `testDebugUnitTest`, plus `:lib:kotlin` 111 via `:lib:kotlin:test`, which `testDebugUnitTest` does not run; counted from the `TEST-*.xml` result files). `main` at `a6356e5` measured 823 (`:app` 606) in the same environment just before; the UI pass adds 31 (`TerminalRowPlanTest` 13, `ToolsCatalogTest` 11, `PanelPaletteTest` 7). The older breakdown that follows dates from 730 total and was not re-derived for the PRs in between. 176 were measured on the unmodified baseline (`AUDIT.md` §6, `:app` + `:lib:snygg` only), so 452 are ours (336 below + 9 `curlyFormat` regression tests + 57 snippet picker/insertion/preview/caret/quick-action/UI-mode tests + 34 dictionary pack reader/parser/planner/asset tests + 14 Enter/Tab expansion tests + 2 stored-locale tag tests): clipboard core (history policy, search, classifier, sensitive-data detector, backup crypto/format/hostile files, import planner, 500-entry round trip), `PayloadCipher`, backup library, password-field detection, Phase 4 terminal/developer core and key resolver (49), Phase 5 snippets core (55), operating modes (12), advanced developer settings (36), Enter/Tab expansion decision (14) |
+| Compile / package | `./gradlew assembleDebug` | Last local success before the llama.cpp step. On 2026-10-15 the sandbox could compile all Kotlin but not package: the native step downloads `ggml-org/llama.cpp` `b11624` as a GitHub tarball, which the session's egress policy refused (HTTP 403). CI downloads it directly |
 | Release (minified) build | `assembleRelease` | see `AUDIT.md`/phase report for the latest result |
-| Lint | `./gradlew lintDebug` | **Run, 0 errors, 212 warnings, 2 hints** (`app/build/reports/lint-results-debug.txt`). The former errors are fixed (`AUDIT.md` §8). The task is a CI gate. Warnings do not fail the build |
+| Lint | `./gradlew lintDebug` | **Run (2026-10-15, UI pass): 0 errors, 225 warnings, 2 hints** (`app/build/reports/lint-results-debug.txt`). `main` at `a6356e5` had 3 `NewApi` errors from earlier PRs (`InputStream.readNBytes` in `AiFiles`, `URLEncoder`/`URLDecoder` with a `Charset` in `TextTransforms`; all API 33, minSdk 26); the UI pass fixes them. The task is a CI gate. Warnings do not fail the build |
 | Instrumented tests (`androidTest`) | one upstream example test | **Not run** (no device/emulator) |
 | Manual device matrix | below | **Not run** |
 
@@ -58,12 +59,23 @@ Install the debug APK → enable in *Settings → System → Keyboard* → selec
 - [ ] Password field: no suggestions, nothing enters clipboard history, no expansion.
 - [ ] Rotate to landscape and back mid-typing; switch apps; lock/unlock.
 - [ ] Shift / caps lock, long-press alternates, key repeat, haptics, number row.
-- [ ] Developer row (enable in Settings → Keyboard → Developer mode): it appears above the keyboard, the keyboard is not
+- [ ] Terminal key row (Settings → Developer & terminal → Show terminal key row): Auto shows it in Termux and in Developer
+  mode, not in a notes app; Always and Never do what they say; it appears above the keyboard, the keyboard is not
   clipped, rotate and switch fields; scroll the row (must not type); Ctrl/Alt tap → pressed look, double tap → locked
-  (CAPITALS), tap → off; hold an arrow (repeats); switch profile and check the symbols; turn the pref off (row gone).
+  (CAPITALS), tap → off; hold an arrow (repeats); switch profile and check the symbols; turn *Terminal keys* off (Esc/Tab/
+  Ctrl/Alt gone) and Advanced → *Navigation keys* off (arrows gone).
+- [ ] Tools panel (tools button left of the suggestions): five tabs, tab switch keeps the panel height, the app behind the
+  keyboard does not move when it opens (also in Termux with the row showing); every tile has an icon and a readable
+  label in Victorious Black, Neon Light and a Floris day theme, and after picking Keyboard colors presets; Incognito,
+  Learn words, Key row and Bottom gap show their state; Terminal tab scrolls to its last row; a saved command from
+  Settings → Smartbar → Tools panel appears under "My commands" and is inserted, not run; hiding and reordering a button
+  in that screen shows on the keyboard; the Tune button opens that screen; TalkBack reads each tile's label and state.
+- [ ] AI panel and clip editor in a light theme: light background, dark readable text, visible selection.
+- [ ] Settings Home: all groups and summaries fit without truncation on a small phone; Developer & terminal and
+  Snippets → Expansion open and change the same settings the keyboard uses.
 - [ ] Termux: Esc, Tab, Ctrl+C / D / L / Z / A / E / R / W / U / K, Ctrl+\\, Alt+key, arrows with Ctrl, Home/End, a locked
   Ctrl across several keys, a lock must not survive an app switch (`TERMINAL.md`).
-- [ ] Snippet picker (add 3 snippets in Settings → Keyboard → Developer mode → Snippets, one with a tag, one with
+- [ ] Snippet picker (add 3 snippets in Settings → Tools → Snippets, one with a tag, one with
   `{{cursor}}`, one with `{{selection}}`): the "Snippets" quick action is present (after an update from an older build it
   is in the overflow panel); the panel opens at the same height as the text view (also with the developer row on, and from
   the overflow panel), shows the list and the tag chips, scrolls without inserting; tap inserts at the caret and returns

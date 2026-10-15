@@ -24,13 +24,13 @@ Package add, remove, and replace rescan. Opening the tools panel and changing fi
 
 ## When features show
 
-| State | Strip commands | Ask, actions, snippets | Status row |
+| State | Strip commands | Fleet tab | Status |
 |---|---|---|---|
-| Switch off, or no trusted provider | Hidden | Hidden | Hidden |
-| Trusted app installed, `ping()` false or bind failed | Hidden for that app | Hidden for that app | That app, grey dot |
-| `ping()` true | Advertised names, namespaced on a clash | A section per connected app under Terminal keys | That app, green dot |
+| Switch off, or no trusted provider | Hidden | Hidden. The five tools tabs stay | Hidden |
+| Trusted app installed, `ping()` false or bind failed | Hidden for that app | The tab is shown. That app has a grey dot and no tiles | Grey dot |
+| `ping()` true | Advertised names, namespaced on a clash | A section for that app: Ask, actions, and snippets as theme tiles | Green dot |
 
-Settings → Fleet link is the switch (`fleet__enabled`, default on). The default does not connect to anything until some same-signed app exports the service and holds the permission. If nobody has defined the permission yet, `checkPermission` is denied and every fleet feature stays hidden.
+The Fleet tab uses the same chips and tiles as Clipboard, AI, Terminal, Code, and Quick. It is not one of those five persisted tabs, so hiding it does not change saved button order. Settings → Tools → Fleet link is the switch (`fleet__enabled`, default on). The default does not connect to anything until some same-signed app exports the service and holds the permission. If nobody has defined the permission yet, `checkPermission` is denied and every fleet feature stays hidden.
 
 Slash names match `[a-z][a-z0-9_-]{0,31}`. A namespace matches `[a-z][a-z0-9]{0,15}`, taken from `getNamespace()`, otherwise a slug of the display name, otherwise the package suffix. A second app that wants the same token gets a numeric suffix (`edl`, then `edl2`).
 

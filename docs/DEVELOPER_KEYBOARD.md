@@ -20,15 +20,19 @@ for a mode that is not available falls back to Standard.
 ## How it is built
 
 * `ime.mode.OperatingMode`: the enum, its availability, and `ModePresets` that turn a mode plus the user's
-  developer-row preferences into the effective row (visible, profile, terminal keys). Pure Kotlin.
+  developer-row preferences into the row's content (profile, terminal keys, navigation keys, symbols). Pure Kotlin.
+* `ime.mode.TerminalRowPolicy.plan`: whether the terminal key row shows (Auto / Always / Never; Auto includes terminal
+  apps, `TYPE_NULL` fields, and Developer or Termux mode) and exactly which keys it draws. The row and the height that
+  full-height panels reserve both use it. Pure Kotlin, JVM-tested (`TerminalRowPlanTest`).
 * `ime.mode.ModeSuggester` / `ActiveMode`: pick the mode for the current app. Pure Kotlin.
 * `KeyboardManager.activeMode` (a `StateFlow`) combines the default-mode preference, the auto-detect preference and the
   current editor's package name. Switching is a state change: the keyboard is not restarted and typed text is untouched.
 * One IME, one set of preferences: `modes__default`, `modes__auto_detect` (new) next to the existing `devrow__*` keys.
   The enum names are persisted, so they must never be renamed (a test guards this).
 
-Settings: Settings → Keyboard → **Developer mode**: *Keyboard mode*, *Switch mode in terminal apps*, *Developer row*,
-*Symbols for*, *Terminal keys*.
+Settings: Settings → **Developer & terminal** (a Home entry since the UI pass): *Keyboard mode*, *Switch mode in
+terminal apps*, *Show terminal key row*, *Terminal keys*, *Symbols for*, and the link to the advanced settings. The old
+*Developer row* switch is gone; *Show terminal key row* replaced it.
 
 ## Automatic mode for terminal apps (off by default)
 
@@ -40,7 +44,7 @@ have no UI yet.
 
 ## Advanced settings
 
-Settings → Keyboard → Developer mode → **Advanced developer settings** (compiled, never run or rendered on a device):
+Settings → Developer & terminal → **Advanced developer settings** (compiled, never run or rendered on a device):
 
 | Group | Options |
 |---|---|

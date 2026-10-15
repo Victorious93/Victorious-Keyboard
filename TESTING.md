@@ -8,6 +8,7 @@
 | 5 (`workflow_dispatch`, branch `ccr-08db99f8-cdmjq6`, commit `c92c878`) | **build + unit tests passed**; job red only at "Upload unit test reports": artifact storage quota hit; APK artifact skipped |
 | PR #10 (`38353170157`) and its merge to `main` (`38357539442`) | **build + unit tests passed**; job red only at "Upload debug APK": "Artifact storage quota has been hit". No review comments |
 | Merge of PR #11 to `main` (`38368541837`) | **fully green**, including both artifact uploads |
+| PR #29, UI pass (`38668379528`, commit `029e087`) | **green**: `assembleDebug`, `testDebugUnitTest`, `:lib:kotlin:test` and `lintDebug` (`main` had been red at `lintDebug` since PRs #23/#25/#26) |
 
 Not yet seen on GitHub: a run of the workflow that also executes `lintDebug` and `:lib:kotlin:test` (added after the inherited lint errors were fixed). Instrumented tests are still not run anywhere.
 

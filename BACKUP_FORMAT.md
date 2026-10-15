@@ -57,8 +57,10 @@ reason for an existing id and marks a new row `IMPORTED`.
 
 ## ZIP layout
 
-A plain ZIP has `manifest.json` and `entries.json`. A password ZIP has `manifest.json` and `content.vkbk` (the
-encrypted container below; its plaintext is a plain ZIP). A file that contains both `entries.json` and `content.vkbk`
+A plain ZIP has `manifest.json` and `entries.json`. When the user has custom suggestions, it also has
+`suggestions.json`. That member is not part of `entriesSha256`. It is omitted when the list is empty, so older ZIPs
+stay valid. A password ZIP has `manifest.json` and `content.vkbk` (the
+encrypted container below; its plaintext is a plain ZIP, including `suggestions.json` when present). A file that contains both `entries.json` and `content.vkbk`
 is rejected. Other members are ignored and never extracted (nothing is ever written to disk during import). Member
 names containing `..`, a leading `/`, `\`, `:` or NUL are rejected. Timestamps inside the ZIP are fixed so identical
 plaintext input gives identical bytes. The password ZIP is not byte-identical across runs, because the container uses

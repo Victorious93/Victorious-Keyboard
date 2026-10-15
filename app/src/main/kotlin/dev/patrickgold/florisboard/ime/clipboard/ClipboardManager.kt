@@ -23,6 +23,7 @@ import dev.patrickgold.florisboard.BuildConfig
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
+import dev.patrickgold.florisboard.customSuggestions
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.editor.isPasswordLike
 import dev.patrickgold.florisboard.ime.clipboard.backup.BackupException
@@ -842,6 +843,8 @@ class ClipboardManager(
         appVersion = BuildConfig.VERSION_NAME,
         policy = ::currentPolicy,
         vault = vaultRepository,
+        suggestionsExport = { appContext.customSuggestions().value.exportDocumentOrNull() },
+        suggestionsImport = { document, mode -> appContext.customSuggestions().value.importDocument(document, mode) },
     )
 
     /**

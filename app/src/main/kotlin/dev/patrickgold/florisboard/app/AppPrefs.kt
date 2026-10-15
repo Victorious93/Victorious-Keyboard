@@ -40,6 +40,7 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiHistory
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSkinTone
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
+import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
 import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectLevel
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
@@ -396,11 +397,23 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
     }
 
+    val slash = Slash()
+    inner class Slash {
+        val enabled = boolean(
+            key = "slash__enabled",
+            default = true,
+        )
+    }
+
     val devrow = Devrow()
     inner class Devrow {
         val enabled = boolean(
             key = "devrow__enabled",
             default = false,
+        )
+        val terminalKeyRow = enum(
+            key = "devrow__terminal_key_row",
+            default = TerminalKeyRow.AUTO,
         )
         val profile = enum(
             key = "devrow__profile",

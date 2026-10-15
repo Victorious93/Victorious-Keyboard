@@ -185,6 +185,8 @@ class ClipboardBackupService(
     private val policy: () -> HistoryPolicy = { HistoryPolicy() },
     private val clock: () -> Long = System::currentTimeMillis,
     private val vault: VaultEntryRepository? = null,
+    private val suggestionsExport: () -> String? = { null },
+    private val suggestionsImport: (document: String, mode: ImportMode) -> Unit = { _, _ -> },
 ) {
     /** The default file name offered in the system file picker. */
     fun suggestedFileName(format: ExportFormat): String =
@@ -268,10 +270,11 @@ class ClipboardBackupService(
         val now = clock()
         val meta = ExportMeta(now, appVersion, skippedUnsupported = unsupported)
         val encrypted = pw != null
+        val suggestions = suggestionsExport()?.takeIf { it.isNotBlank() }?.toByteArray(Charsets.UTF_8)
         val bytes = if (pw == null) {
-            BackupWriter.writeZip(regularOut + vaultOut, meta, lanes)
+            BackupWriter.writeZip(regularOut + vaultOut, meta, lanes, suggestions)
         } else {
-            BackupWriter.writePasswordZip(regularOut + vaultOut, meta, lanes, pw, random, iterations)
+            BackupWriter.writePasswordZip(regularOut + vaultOut, meta, lanes, pw, random, iterations, suggestions)
         }
         ZipExportResult(
             bytes = bytes,
@@ -341,6 +344,9 @@ class ClipboardBackupService(
         // Each store commits on its own. The vault goes first so a failure there leaves regular history as it was.
         planned.vault?.let { vault!!.apply(it) }
         repo.apply(planned.regular)
+        inspection.parsed.suggestionsDocument?.takeIf { it.isNotBlank() }?.let {
+            suggestionsImport(it, mode)
+        }
         onStage(RestoreStage.DONE)
         val vaultPlan = planned.vault
         return RestoreResult(

@@ -157,6 +157,57 @@ data class ClipboardSuggestionCandidate(
  *
  * @see SuggestionCandidate
  */
+/**
+ * A phrase the user saved. It is not auto-committed. Long-press deletes it.
+ */
+data class CustomSuggestionCandidate(
+    override val text: CharSequence,
+    val suggestionId: String,
+    override val secondaryText: CharSequence? = null,
+    override val confidence: Double = 1.0,
+    override val isEligibleForAutoCommit: Boolean = false,
+    override val isEligibleForUserRemoval: Boolean = true,
+    override val sourceProvider: SuggestionProvider? = null,
+) : SuggestionCandidate {
+    override val icon: ImageVector? = null
+}
+
+/**
+ * The current selection, offered so a long-press can save it. Tapping does not insert it.
+ * [phrase] is the full selection; [text] is only the chip label.
+ */
+data class AddToSuggestionsCandidate(
+    val phrase: String,
+    override val sourceProvider: SuggestionProvider? = null,
+) : SuggestionCandidate {
+    override val text: CharSequence = if (phrase.length > 32) phrase.take(32) + "…" else phrase
+    override val secondaryText: CharSequence? = null
+    override val confidence: Double = 1.0
+    override val isEligibleForAutoCommit: Boolean = false
+    override val isEligibleForUserRemoval: Boolean = true
+    override val icon: ImageVector? = null
+}
+
+/**
+ * A slash command chip. [text] is the command name, never clipboard or prompt contents.
+ * Tapping expands it; the label is not inserted as-is.
+ */
+data class SlashSuggestionCandidate(
+    val commandName: String,
+    val builtinName: String?,
+    val customId: String?,
+    val argument: String,
+    val replaceLength: Int,
+    override val secondaryText: CharSequence? = null,
+    override val confidence: Double = 1.0,
+    override val isEligibleForAutoCommit: Boolean = false,
+    override val isEligibleForUserRemoval: Boolean = false,
+    override val sourceProvider: SuggestionProvider? = null,
+) : SuggestionCandidate {
+    override val text: CharSequence = if (argument.isEmpty()) "/$commandName" else "/$commandName …"
+    override val icon: ImageVector? = null
+}
+
 data class EmojiSuggestionCandidate(
     val emoji: Emoji,
     val showName: Boolean,

@@ -72,9 +72,23 @@ The keyboard clipboard panel has two tabs, **Clipboard** and **Vault**, using th
 
 Details: [CLIPBOARD.md](CLIPBOARD.md), [BACKUP_FORMAT.md](BACKUP_FORMAT.md).
 
+### Suggestion strip and tools
+
+While you type, the top strip shows word suggestions only. It scrolls sideways when there are more candidates than fit, and the primary suggestion is underlined. When you are not typing, a recent clipboard chip can still appear. A single tools button on the left opens a panel in place of the keys: Clipboard, Clip editor, Vault, AI, Terminal keys, Code, and Privacy. The old page tabs (Terminal, Ctrl, Alt, Esc, …) are not on the strip.
+
+The extra Esc/Tab/Ctrl/Alt/arrow row is hidden in ordinary apps. Settings → Keyboard → **Show terminal key row** is Auto, Always, or Never. Auto shows it in Termux, ConnectBot, JuiceSSH, NetHunter Terminal and similar packages, and in `TYPE_NULL` fields. Keys still send real key events. This has not been rendered on a device.
+
+### My suggestions
+
+Settings → Typing → Suggestions → **My suggestions** stores words and phrases on this device (`noBackupFilesDir/suggestions/custom.json`). An optional shortcut shows the phrase when you type that shortcut; otherwise the phrase matches what you have started typing, ahead of the dictionary. Long-press a strip word, or selected text, to add it. Long-press a saved phrase to delete it. They are editable in that screen. A clipboard ZIP includes them as `suggestions.json` when the list is not empty. That member is not part of the entries hash, and a password ZIP encrypts it with the clips. Password fields are not saved. Not run on a device.
+
+### Slash commands
+
+Type `/` at the start of a word and the strip lists matching commands. Tap one to expand it. Built-ins: `/date`, `/time`, `/clip` (latest non-sensitive clip), `/snip name`, `/ai prompt` (Local AI, inserts the reply), `/fix`, `/rewrite`, `/sum`, `/translate`, `/shell description` (inserts one command and never runs it), `/edit` (clip editor), `/vault` (unlock). Settings → **Slash commands** adds, edits, deletes, and reorders custom commands. Output text can use `{date}`, `{time}`, `{clipboard}`, `{selection}`, and `{cursor}`. A global switch turns them off. They stay off in password fields. Custom commands live in `noBackupFilesDir/slash/commands.json`. Not run on a device.
+
 ### Developer and terminal
 
-The developer row is off until you turn it on (Settings → Keyboard → Developer mode). It adds Esc, Tab, Ctrl, Alt, arrows, Home/End/PgUp/PgDn. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet. The row itself is compiled and has not been rendered on a device.
+The terminal key row follows **Show terminal key row** (Auto / Always / Never), described above. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet. The row itself is compiled and has not been rendered on a device.
 
 Details: [TERMINAL.md](TERMINAL.md), [docs/DEVELOPER_KEYBOARD.md](docs/DEVELOPER_KEYBOARD.md).
 
@@ -98,7 +112,7 @@ Settings → Local AI imports a `.gguf` file with the system file picker and cop
 
 The model loads the first time you use it, on a background thread, and unloads after two idle minutes or when Android reports memory pressure. Tokens stream into a panel with Cancel. With no model, or on a device without the native library, the keyboard still works and the action explains how to import one.
 
-The AI toolbar page can rewrite, fix grammar, continue, summarize, translate, or draft one shell command from the selection, the current field, a clipboard item, or the clip editor. Clipboard and vault text are used only after you tap that source. A vault result can be inserted, not copied. The shell reply is text; it is not executed, and the prompt forbids exploit steps, wordlists, and attack procedures. Ask is a free-form box in the keyboard itself. AI suggestions in the strip are off until you turn them on, and they also require *Learn from my typing*. They stay off for passwords, incognito, no-personalized-learning, and a vault paste, and they never auto-commit.
+The tools panel (and `/ai`, `/fix`, `/rewrite`, `/sum`, `/translate`, `/shell`) can rewrite, fix grammar, continue, summarize, translate, or draft one shell command from the selection, the current field, a clipboard item, or the clip editor. `/shell` inserts that text and does not run it. Clipboard and vault text are used only after you tap that source. A vault result can be inserted, not copied. The shell reply is text; it is not executed, and the prompt forbids exploit steps, wordlists, and attack procedures. Ask is a free-form box in the keyboard itself. AI suggestions in the strip are off until you turn them on, and they also require *Learn from my typing*. They stay off for passwords, incognito, no-personalized-learning, and a vault paste, and they never auto-commit.
 
 The engine is llama.cpp `b11624` (MIT), built for `arm64-v8a` and `x86_64` with the CPU backend only. The rules are unit-tested. Loading a real model and drawing this panel have not been run on a device.
 
@@ -120,6 +134,16 @@ These pictures are drawn from the shipped theme colors and the keyboard-colors s
 | Local AI settings | AI toolbar panel |
 |---|---|
 | <img src="docs/screenshots/local-ai-settings.png" alt="Layout render of Settings, Local AI" width="280"> | <img src="docs/screenshots/local-ai-panel.png" alt="Layout render of the on-keyboard AI panel" width="420"> |
+
+| Suggestion strip | Tools panel |
+|---|---|
+| <img src="docs/screenshots/suggestion-strip.png" alt="Layout render of the suggestion strip with a tools button" width="420"> | <img src="docs/screenshots/tools-panel.png" alt="Layout render of the tools panel" width="420"> |
+
+| My suggestions | Slash commands |
+|---|---|
+| <img src="docs/screenshots/my-suggestions.png" alt="Layout render of My suggestions" width="280"> | <img src="docs/screenshots/slash-commands.png" alt="Layout render of slash commands in the strip" width="420"> |
+
+The strip, tools, suggestions, and slash pictures are layout renders. They are not photographs of a device.
 
 These two Local AI pictures are layout renders of the screen structure. They are not photographs of a device.
 

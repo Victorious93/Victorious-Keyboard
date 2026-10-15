@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
@@ -143,6 +144,12 @@ fun HomeScreen() = FlorisScreen {
                 icon = Icons.Default.Spellcheck,
                 title = stringRes(R.string.settings__typing__title),
                 onClick = { navController.navigate(Routes.Settings.Typing) },
+            )
+            Preference(
+                icon = Icons.Default.FlashOn,
+                title = stringRes(R.string.settings__slash__title),
+                summary = stringRes(R.string.settings__slash__summary),
+                onClick = { navController.navigate(Routes.Settings.SlashCommands) },
             )
             Preference(
                 icon = Icons.Default.Memory,

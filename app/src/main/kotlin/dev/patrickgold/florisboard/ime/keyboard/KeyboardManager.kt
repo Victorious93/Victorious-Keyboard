@@ -20,7 +20,9 @@ import android.content.Context
 import android.icu.lang.UCharacter
 import android.os.SystemClock
 import java.text.BreakIterator
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -49,7 +51,10 @@ import dev.patrickgold.florisboard.ime.input.InputShiftState
 import dev.patrickgold.florisboard.ime.dictionary.DictionaryManager
 import dev.patrickgold.florisboard.ime.dictionary.FREQUENCY_DEFAULT
 import dev.patrickgold.florisboard.ime.dictionary.UserDictionaryEntry
+import dev.patrickgold.florisboard.ime.nlp.AddToSuggestionsCandidate
 import dev.patrickgold.florisboard.ime.nlp.ClipboardSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.CustomSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.SlashSuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.PunctuationRule
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectReplacement
@@ -74,6 +79,7 @@ import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
 import dev.patrickgold.florisboard.nlpManager
+import dev.patrickgold.florisboard.slashCommands
 import dev.patrickgold.florisboard.snippetManager
 import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
@@ -81,6 +87,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
 import dev.patrickgold.florisboard.ime.ai.AiFieldSnapshot
+import dev.patrickgold.florisboard.ime.ai.AiPanel
+import dev.patrickgold.florisboard.ime.ai.AiPhase
 import dev.patrickgold.florisboard.ime.ai.AiRefusal
 import dev.patrickgold.florisboard.ime.ai.AiSource
 import dev.patrickgold.florisboard.ime.ai.AiTask
@@ -162,6 +170,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val localAi by context.localAiManager()
     private val subtypeManager by context.subtypeManager()
     private val snippetManager by context.snippetManager()
+    private val slashCommands by context.slashCommands()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val layoutManager = LayoutManager(context)
@@ -178,6 +187,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     /** Which clipboard tab to show the next time the clipboard panel opens. */
     val clipLaneRequest = MutableStateFlow<ClipLane?>(null)
+
+    /** Tools panel replaces the key area. It is not an [ImeUiMode], so clipboard and emoji stay as they are. */
+    val toolsOpen = MutableStateFlow(false)
+
+    fun setToolsOpen(open: Boolean) {
+        toolsOpen.value = open
+    }
 
     /**
      * Set when vault text is pasted into the host field. Learning and shell history stay off until the
@@ -278,6 +294,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             }
             editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
+                toolsOpen.value = false
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
                     vaultLearningHold = false
@@ -287,6 +304,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             }
             editorInstance.activeContentFlow.collectIn(scope) { content ->
                 resetSuggestions(content)
+            }
+            localAi.panel.collectIn(scope) { panel ->
+                if (panel != null && panel.insertWhenReady && panel.phase == dev.patrickgold.florisboard.ime.ai.AiPhase.RESULT) {
+                    insertSlashAiResult(panel)
+                }
             }
             prefs.devtools.enabled.asFlow().collectLatestIn(scope) {
                 reevaluateDebugFlags()
@@ -405,13 +427,21 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitCandidate(candidate: SuggestionCandidate) {
+        when (candidate) {
+            is SlashSuggestionCandidate -> {
+                expandSlash(candidate)
+                return
+            }
+            is AddToSuggestionsCandidate -> return
+            else -> Unit
+        }
         val editing = clipEditor.value
         if (editing != null) {
             if (candidate is ClipboardSuggestionCandidate && candidate.clipboardItem.isSensitive) return
             insertAtTarget(candidate.text.toString())
             return
         }
-        if (candidate !is ClipboardSuggestionCandidate) {
+        if (candidate !is ClipboardSuggestionCandidate && candidate !is CustomSuggestionCandidate) {
             nlpManager.noteTypedOrCommitted(candidate.text.toString())
         }
         scope.launch {
@@ -419,8 +449,172 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         }
         when (candidate) {
             is ClipboardSuggestionCandidate -> editorInstance.commitClipboardItem(candidate.clipboardItem)
+            is CustomSuggestionCandidate -> commitCustomPhrase(candidate.text.toString())
             else -> editorInstance.commitCompletion(candidate)
         }
+    }
+
+    /** Replaces the word being typed with a saved phrase. The phrase is not learned as a new dictionary word. */
+    private fun commitCustomPhrase(text: String) {
+        val content = editorInstance.activeContent
+        if (content.composing.isValid) {
+            editorInstance.commitCompletion(CustomSuggestionCandidate(text, suggestionId = ""))
+            return
+        }
+        val prefix = content.textBeforeSelection.takeLastWhile { !it.isWhitespace() }
+        if (prefix.isNotEmpty() && prefix.length <= 200) {
+            repeat(graphemeCount(prefix)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
+        }
+        editorInstance.commitText(text)
+    }
+
+    /**
+     * Expands a slash chip. Password fields return before the argument is read.
+     * Inserted text is never executed, including `/shell`.
+     */
+    private fun expandSlash(candidate: SlashSuggestionCandidate) {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
+        if (!prefs.slash.enabled.get()) return
+        val commands = slashCommands.snapshot()
+        val offer = if (candidate.customId != null) {
+            dev.patrickgold.florisboard.ime.slash.SlashOffer(candidate.commandName, "", null, candidate.customId)
+        } else {
+            val builtin = dev.patrickgold.florisboard.ime.slash.SlashCatalog.builtins
+                .firstOrNull { it.name == candidate.commandName } ?: return
+            dev.patrickgold.florisboard.ime.slash.SlashOffer(builtin.name, builtin.description, builtin.kind, null)
+        }
+        val action = dev.patrickgold.florisboard.ime.slash.SlashActions.resolve(
+            offer,
+            candidate.argument,
+            commands,
+            Instant.now(),
+            ZoneId.systemDefault(),
+        )
+        when (action) {
+            is dev.patrickgold.florisboard.ime.slash.SlashAction.Insert ->
+                replaceSlashToken(candidate.replaceLength, action.text, action.cursorBackCodePoints)
+            is dev.patrickgold.florisboard.ime.slash.SlashAction.Custom -> {
+                val template = action.command.template
+                val content = editorInstance.activeContent
+                val vars = dev.patrickgold.florisboard.ime.slash.SlashVars(
+                    date = dev.patrickgold.florisboard.ime.slash.SlashClock.date(Instant.now(), ZoneId.systemDefault()),
+                    time = dev.patrickgold.florisboard.ime.slash.SlashClock.time(Instant.now(), ZoneId.systemDefault()),
+                    clipboard = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "clipboard")) {
+                        currentClipboardText().orEmpty()
+                    } else {
+                        ""
+                    },
+                    selection = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "selection")) {
+                        content.selectedText
+                    } else {
+                        ""
+                    },
+                )
+                val rendered = dev.patrickgold.florisboard.ime.slash.SlashTemplate.render(template, vars)
+                replaceSlashToken(candidate.replaceLength, rendered.text, rendered.cursorBackCodePoints)
+            }
+            dev.patrickgold.florisboard.ime.slash.SlashAction.PasteClip -> {
+                val text = currentClipboardText()
+                if (text.isNullOrEmpty()) {
+                    appContext.showShortToastSync(R.string.slash__empty_clip)
+                } else {
+                    replaceSlashToken(candidate.replaceLength, text, null)
+                }
+            }
+            is dev.patrickgold.florisboard.ime.slash.SlashAction.Snippet -> expandSlashSnippet(candidate.replaceLength, action.name)
+            is dev.patrickgold.florisboard.ime.slash.SlashAction.Ai -> {
+                toolsOpen.value = false
+                val token = editorInstance.activeContent.textBeforeSelection.takeLast(candidate.replaceLength)
+                when (localAi.open(
+                    task = action.task,
+                    snapshot = aiSnapshot(),
+                    askPrefill = action.prompt,
+                    insertWhenReady = true,
+                    replaceToken = token,
+                    systemOverride = action.systemOverride,
+                )) {
+                    AiRefusal.NO_MODEL, AiRefusal.NATIVE_MISSING ->
+                        appContext.showShortToastSync(R.string.local_ai__unavailable)
+                    AiRefusal.PASSWORD -> appContext.showShortToastSync(R.string.local_ai__password)
+                    else -> Unit
+                }
+            }
+            dev.patrickgold.florisboard.ime.slash.SlashAction.OpenEditor -> {
+                deleteSlashToken(candidate.replaceLength)
+                openLatestClipEditor()
+            }
+            dev.patrickgold.florisboard.ime.slash.SlashAction.UnlockVault -> {
+                deleteSlashToken(candidate.replaceLength)
+                val minutes = prefs.clipboard.vaultLockAfterMinutes.get()
+                appContext.startActivity(
+                    android.content.Intent(appContext, dev.patrickgold.florisboard.ime.clipboard.VaultUnlockActivity::class.java).apply {
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        putExtra(
+                            dev.patrickgold.florisboard.ime.clipboard.VaultUnlockActivity.EXTRA_TIMEOUT_MS,
+                            minutes.coerceIn(1, 60) * 60_000L,
+                        )
+                    },
+                )
+            }
+            dev.patrickgold.florisboard.ime.slash.SlashAction.Unknown ->
+                appContext.showShortToastSync(R.string.slash__unknown)
+        }
+    }
+
+    private fun expandSlashSnippet(replaceLength: Int, name: String) {
+        if (name.isEmpty()) {
+            deleteSlashToken(replaceLength)
+            activeState.imeUiMode = ImeUiMode.SNIPPETS
+            return
+        }
+        val snippet = snippetManager.state.value.library.snippets.firstOrNull {
+            it.enabled && (it.abbreviation.equals(name, ignoreCase = true) || it.title.equals(name, ignoreCase = true))
+        }
+        if (snippet == null) {
+            appContext.showShortToastSync(R.string.slash__snippet_missing)
+            return
+        }
+        when (val plan = SnippetInsertion.plan(
+            InsertionRequest(
+                snippet = snippet,
+                now = LocalDateTime.now(),
+                clipboardText = if (SnippetTemplate.usesPlaceholder(snippet.body, "clipboard")) currentClipboardText() else null,
+                selectionText = editorInstance.activeContent.selectedText,
+                sensitiveField = false,
+                datePattern = prefs.snippets.dateFormat.get().pattern,
+                timePattern = prefs.snippets.timeFormat.get().pattern,
+            ),
+        )) {
+            is InsertionPlan.Insert -> replaceSlashToken(replaceLength, plan.text, plan.cursorBackCodePoints)
+            else -> appContext.showShortToastSync(R.string.slash__snippet_missing)
+        }
+    }
+
+    private fun deleteSlashToken(replaceLength: Int) {
+        val before = editorInstance.activeContent.textBeforeSelection
+        val token = before.takeLast(replaceLength.coerceAtMost(before.length))
+        if (!token.startsWith("/")) return
+        repeat(graphemeCount(token)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
+    }
+
+    private fun replaceSlashToken(replaceLength: Int, text: String, cursorBackCodePoints: Int?) {
+        deleteSlashToken(replaceLength)
+        if (text.isEmpty()) return
+        editorInstance.commitText(text)
+        if (cursorBackCodePoints != null) {
+            moveCaretLeft(InsertionPlan.Insert(text, cursorBackCodePoints))
+        }
+    }
+
+    private fun insertSlashAiResult(panel: AiPanel) {
+        if (panel.output.isBlank()) return
+        if (panel.fromVault) vaultLearningHold = true
+        val before = editorInstance.activeContent.textBeforeSelection
+        if (panel.replaceToken.isNotEmpty() && before.endsWith(panel.replaceToken)) {
+            repeat(graphemeCount(panel.replaceToken)) { editorInstance.deleteBackwards(OperationUnit.CHARACTERS) }
+        }
+        insertAtTarget(panel.output)
+        localAi.close()
     }
 
     fun commitGesture(word: String) {
@@ -1339,8 +1533,16 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.EMOJI -> activeState.imeUiMode = ImeUiMode.MEDIA
             ToolbarActionId.SETTINGS -> FlorisImeService.launchSettings()
             ToolbarActionId.DEVROW -> scope.launch {
-                val pref = prefs.devrow.enabled
-                pref.set(!pref.get())
+                val pref = prefs.devrow.terminalKeyRow
+                val next = when (pref.get()) {
+                    dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.AUTO ->
+                        dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.ALWAYS
+                    dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.ALWAYS ->
+                        dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.NEVER
+                    dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.NEVER ->
+                        dev.patrickgold.florisboard.ime.mode.TerminalKeyRow.AUTO
+                }
+                pref.set(next)
             }
             ToolbarActionId.COUNT -> showCounts()
             ToolbarActionId.PASTE_CODE -> {

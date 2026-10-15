@@ -510,6 +510,44 @@
     <!-- Typing strings -->
     <string name="settings__typing__title" comment="Title of Typing screen">Typing</string>
     <string name="pref__suggestion__title" comment="Preference group title">Suggestions</string>
+    <string name="settings__my_suggestions__title">My suggestions</string>
+    <string name="settings__my_suggestions__summary">Words and phrases you add, shown first in the strip</string>
+    <string name="settings__my_suggestions__info">These phrases are stored on this device only and are included when you export a clipboard ZIP. A shortcut is optional: type it to see the phrase. Long-press a suggestion, or selected text, to add it. Password fields are skipped.</string>
+    <string name="settings__my_suggestions__add">Add a suggestion</string>
+    <string name="settings__my_suggestions__edit">Edit suggestion</string>
+    <string name="settings__my_suggestions__empty">No saved suggestions yet.</string>
+    <string name="settings__my_suggestions__phrase">Word or phrase</string>
+    <string name="settings__my_suggestions__trigger">Shortcut (optional)</string>
+    <string name="settings__my_suggestions__no_trigger">Matches the start of the phrase</string>
+    <string name="settings__my_suggestions__rejected">That phrase or shortcut cannot be saved. It may be empty, too long, or already in the list.</string>
+    <string name="settings__slash__title">Slash commands</string>
+    <string name="settings__slash__summary">Type / at the start of a word to expand a command</string>
+    <string name="settings__slash__enabled">Slash commands</string>
+    <string name="settings__slash__enabled_summary">Off in password fields even when this is on</string>
+    <string name="settings__slash__info">Type / at the start of a word. Tap a match to expand it. /shell inserts a command and never runs it. Custom output can use {date} {time} {clipboard} {selection} {cursor}.</string>
+    <string name="settings__slash__builtins">Built-in commands</string>
+    <string name="settings__slash__custom">My commands</string>
+    <string name="settings__slash__add">Add a command</string>
+    <string name="settings__slash__edit">Edit command</string>
+    <string name="settings__slash__empty">No custom commands yet.</string>
+    <string name="settings__slash__name">Name</string>
+    <string name="settings__slash__description">Description</string>
+    <string name="settings__slash__output">Output text</string>
+    <string name="settings__slash__variables">{date} {time} {clipboard} {selection} {cursor}</string>
+    <string name="settings__slash__disable">Disable this command</string>
+    <string name="settings__slash__enable_one">Enable this command</string>
+    <string name="settings__slash__rejected">That command cannot be saved. Names must be letters, cannot match a built-in, and must be unique.</string>
+    <string name="slash__empty_clip">No clip to paste</string>
+    <string name="slash__snippet_missing">No matching snippet</string>
+    <string name="slash__unknown">That command is not available</string>
+    <string name="pref__devrow__terminal_key_row__label">Show terminal key row</string>
+    <string name="pref__devrow__terminal_key_row__summary">Esc, Tab, Ctrl, Alt and arrows. Auto shows them in terminal apps</string>
+    <string name="enum__terminal_key_row__auto">Auto</string>
+    <string name="enum__terminal_key_row__auto__description">Show the row in Termux, ConnectBot, JuiceSSH, NetHunter Terminal and similar apps, and in TYPE_NULL fields</string>
+    <string name="enum__terminal_key_row__always">Always</string>
+    <string name="enum__terminal_key_row__always__description">Show the row in every app</string>
+    <string name="enum__terminal_key_row__never">Never</string>
+    <string name="enum__terminal_key_row__never__description">Keep the row hidden, including in terminal apps</string>
     <string name="pref__suggestion__enabled__label" comment="Preference title">Display suggestions</string>
     <string name="pref__suggestion__enabled__summary" comment="Preference summary">Provides suggestions while you type</string>
     <string name="pref__suggestion__prediction_enabled__label" comment="Preference title">Word prediction</string>
@@ -662,7 +700,7 @@
     <string name="about__project_license__error_reason_asset_manager_null" comment="Error text if asset manager is null">Asset manager reference is null</string>
     <string name="pref__devrow__group_label" comment="Preference group title">Developer mode</string>
     <string name="pref__devrow__enabled__label" comment="Preference title">Developer row</string>
-    <string name="pref__devrow__enabled__summary" comment="Preference summary">Show a row with Esc, Tab, Ctrl, Alt, arrows and programming symbols above the keyboard. Developer and Termux modes always show it</string>
+    <string name="pref__devrow__enabled__summary" comment="Preference summary">The terminal key row follows Show terminal key row: Auto, Always, or Never</string>
     <string name="pref__modes__default__label" comment="Preference title">Keyboard mode</string>
     <string name="pref__modes__auto_detect__label" comment="Preference title">Switch mode in terminal apps</string>
     <string name="pref__modes__auto_detect__summary" comment="Preference summary">Use Termux mode when typing in Termux or ConnectBot. Only the app name Android gives every keyboard is used; nothing is monitored</string>

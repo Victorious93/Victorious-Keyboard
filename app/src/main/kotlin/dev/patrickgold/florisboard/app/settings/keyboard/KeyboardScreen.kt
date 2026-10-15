@@ -36,6 +36,7 @@ import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
+import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
@@ -136,16 +137,16 @@ fun KeyboardScreen() = FlorisScreen {
                 title = stringRes(R.string.pref__modes__auto_detect__label),
                 summary = stringRes(R.string.pref__modes__auto_detect__summary),
             )
-            SwitchPreference(
-                prefs.devrow.enabled,
-                title = stringRes(R.string.pref__devrow__enabled__label),
-                summary = stringRes(R.string.pref__devrow__enabled__summary),
+            ListPreference(
+                prefs.devrow.terminalKeyRow,
+                title = stringRes(R.string.pref__devrow__terminal_key_row__label),
+                entries = enumDisplayEntriesOf(TerminalKeyRow::class),
             )
             ListPreference(
                 prefs.devrow.profile,
                 title = stringRes(R.string.pref__devrow__profile__label),
                 entries = enumDisplayEntriesOf(LanguageProfile::class),
-                visibleIf = { prefs.devrow.enabled isEqualTo true },
+                visibleIf = { prefs.devrow.terminalKeyRow isNotEqualTo TerminalKeyRow.NEVER },
             )
             Preference(
                 title = stringRes(R.string.devadv__title),

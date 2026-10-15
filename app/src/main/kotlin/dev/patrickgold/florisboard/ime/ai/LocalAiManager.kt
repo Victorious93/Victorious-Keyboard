@@ -52,6 +52,10 @@ data class AiPanel(
     val output: String = "",
     val fromVault: Boolean = false,
     val notice: AiRefusal? = null,
+    /** When set, the keyboard inserts [output] once and removes [replaceToken] if it is still before the caret. */
+    val insertWhenReady: Boolean = false,
+    val replaceToken: String = "",
+    val systemOverride: String? = null,
 )
 
 /**
@@ -153,7 +157,14 @@ class LocalAiManager(context: Context) {
         }
     }
 
-    fun open(task: AiTask, snapshot: AiFieldSnapshot): AiRefusal? {
+    fun open(
+        task: AiTask,
+        snapshot: AiFieldSnapshot,
+        askPrefill: String = "",
+        insertWhenReady: Boolean = false,
+        replaceToken: String = "",
+        systemOverride: String? = null,
+    ): AiRefusal? {
         val source = AiPrompt.chooseDefault(
             snapshot.selection,
             snapshot.fieldText,
@@ -162,17 +173,26 @@ class LocalAiManager(context: Context) {
             snapshot.editorOpen,
             snapshot.editorIsVault,
         )
+        val prefill = askPrefill.take(2000)
+        val askNow = task == AiTask.ASK && prefill.isNotEmpty()
         val panel = AiPanel(
             task = task,
             source = source ?: AiSource.SELECTION,
             explicitVault = false,
-            askFocused = task == AiTask.ASK,
-            phase = if (task == AiTask.ASK) AiPhase.COMPOSING else AiPhase.RUNNING,
-            notice = if (source == null && task != AiTask.ASK) AiRefusal.EMPTY else null,
+            ask = if (prefill.isEmpty()) EditorBuffer() else EditorBuffer.of(prefill),
+            askFocused = task == AiTask.ASK && prefill.isEmpty(),
+            phase = if (task == AiTask.ASK && prefill.isEmpty()) AiPhase.COMPOSING else AiPhase.RUNNING,
+            notice = if (source == null && !askNow) AiRefusal.EMPTY else null,
+            insertWhenReady = insertWhenReady,
+            replaceToken = replaceToken,
+            systemOverride = systemOverride,
         )
+        if (source == null && !askNow) {
+            _panel.value = panel.copy(phase = AiPhase.FAILED, notice = AiRefusal.EMPTY, insertWhenReady = false)
+            return AiRefusal.EMPTY
+        }
         _panel.value = panel
-        if (task == AiTask.ASK) return null
-        if (source == null) return null
+        if (task == AiTask.ASK && prefill.isEmpty()) return null
         return run(panel, snapshot)
     }
 
@@ -274,7 +294,7 @@ class LocalAiManager(context: Context) {
             clipboard = snapshot.clipboard,
             editorText = snapshot.editorText,
             askText = panel.ask.text,
-            systemPrompt = config.systemPrompt,
+            systemPrompt = panel.systemOverride ?: config.systemPrompt,
             translateLanguage = config.translateLanguage,
             modelSelected = config.selectedModelId != null && _models.value.any { it.id == config.selectedModelId },
             nativeAvailable = LlamaNative.available,

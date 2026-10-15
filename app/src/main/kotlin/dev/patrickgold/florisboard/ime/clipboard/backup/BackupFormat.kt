@@ -147,7 +147,12 @@ object BackupWriter {
     }
 
     /** ZIP with `manifest.json` + `entries.json`; the manifest carries the SHA-256 of `entries.json`. */
-    fun writeZip(entries: List<ClipEntry>, meta: ExportMeta, lanes: Map<String, String> = emptyMap()): ByteArray {
+    fun writeZip(
+        entries: List<ClipEntry>,
+        meta: ExportMeta,
+        lanes: Map<String, String> = emptyMap(),
+        suggestionsJson: ByteArray? = null,
+    ): ByteArray {
         val sorted = packed(entries, lanes)
         val entriesBytes = json.encodeToString(BackupEntries.serializer(), BackupEntries(sorted))
             .toByteArray(Charsets.UTF_8)
@@ -161,7 +166,12 @@ object BackupWriter {
                 sorted.vaultCount(),
             ),
         ).toByteArray(Charsets.UTF_8)
-        return zipMembers(MANIFEST_NAME to manifestBytes, ENTRIES_NAME to entriesBytes)
+        val members = ArrayList<Pair<String, ByteArray>>(3)
+        members.add(MANIFEST_NAME to manifestBytes)
+        members.add(ENTRIES_NAME to entriesBytes)
+        val extra = suggestionsJson?.takeIf { it.isNotEmpty() }
+        if (extra != null) members.add(SUGGESTIONS_NAME to extra)
+        return zipMembers(*members.toTypedArray())
     }
 
     /**
@@ -175,9 +185,10 @@ object BackupWriter {
         password: CharArray,
         random: SecureRandom = SecureRandom(),
         iterations: Int = BackupCrypto.DEFAULT_ITERATIONS,
+        suggestionsJson: ByteArray? = null,
     ): ByteArray {
         val sorted = packed(entries, lanes)
-        val cipher = BackupCrypto.encrypt(writeZip(entries, meta, lanes), password, random, iterations)
+        val cipher = BackupCrypto.encrypt(writeZip(entries, meta, lanes, suggestionsJson), password, random, iterations)
         val manifestBytes = json.encodeToString(
             BackupManifest.serializer(),
             manifest(
@@ -267,6 +278,8 @@ object BackupWriter {
     internal const val ENTRIES_NAME = "entries.json"
     /** Password container (see [BackupCrypto]) stored inside a user-facing ZIP. */
     internal const val CONTENT_NAME = "content.vkbk"
+    /** Optional custom-suggestion list. Omitted when empty. Not included in [entriesSha256]. */
+    internal const val SUGGESTIONS_NAME = "suggestions.json"
 }
 
 /**
@@ -381,7 +394,9 @@ object BackupReader {
             throw BackupException.Corrupt("entries do not match the manifest hash")
         }
         val upgraded = BackupMigrations.upgradeEntries(manifest.formatVersion, parseObject(plain))
-        return finish(manifest, decodeElement(BackupEntries.serializer(), upgraded).entries, limits)
+        val parsed = finish(manifest, decodeElement(BackupEntries.serializer(), upgraded).entries, limits)
+        val suggestions = members[BackupWriter.SUGGESTIONS_NAME]?.toString(Charsets.UTF_8)?.takeIf { it.isNotEmpty() }
+        return if (suggestions == null) parsed else parsed.copy(suggestionsDocument = suggestions)
     }
 
     private fun validateManifest(m: BackupManifest) {
@@ -474,7 +489,12 @@ object BackupReader {
         throw BackupException.Malformed("invalid JSON structure")
     }
 
-    private val WANTED = setOf(BackupWriter.MANIFEST_NAME, BackupWriter.ENTRIES_NAME, BackupWriter.CONTENT_NAME)
+    private val WANTED = setOf(
+        BackupWriter.MANIFEST_NAME,
+        BackupWriter.ENTRIES_NAME,
+        BackupWriter.CONTENT_NAME,
+        BackupWriter.SUGGESTIONS_NAME,
+    )
 
     private fun isUnsafeName(n: String): Boolean =
         n.isEmpty() || n.startsWith("/") || n.contains('\\') || n.contains(':') || n.contains('\u0000') ||

@@ -36,7 +36,11 @@ import dev.patrickgold.florisboard.ime.nlp.latin.LatinLanguageProvider
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
+import dev.patrickgold.florisboard.customSuggestions
+import dev.patrickgold.florisboard.ime.smartbar.StripPlan
+import dev.patrickgold.florisboard.ime.smartbar.StripPlanner
 import dev.patrickgold.florisboard.keyboardManager
+import dev.patrickgold.florisboard.slashCommands
 import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.florisboard.lib.util.NetworkUtils
 import dev.patrickgold.florisboard.subtypeManager
@@ -62,6 +66,8 @@ class NlpManager(context: Context) {
 
     private val prefs by FlorisPreferenceStore
     private val clipboardManager by context.clipboardManager()
+    private val customSuggestions by context.customSuggestions()
+    private val slashCommands by context.slashCommands()
     private val editorInstance by context.editorInstance()
     private val keyboardManager by context.keyboardManager()
     private val localAi by context.localAiManager()
@@ -112,6 +118,15 @@ class NlpManager(context: Context) {
             assembleCandidates()
         }
         prefs.emoji.suggestionEnabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        prefs.slash.enabled.asFlow().collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        customSuggestions.items.collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        slashCommands.items.collectLatestIn(scope) {
             assembleCandidates()
         }
         subtypeManager.activeSubtypeFlow.collectLatestIn(scope) { subtype ->
@@ -333,6 +348,14 @@ class NlpManager(context: Context) {
         return activeCandidates.firstOrNull { it.isEligibleForAutoCommit }
     }
 
+    /** Saves a phrase the user long-pressed. Password fields are refused before the text is stored. */
+    fun addCustomSuggestion(text: String, trigger: String = ""): Boolean {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return false
+        return customSuggestions.add(text, trigger)
+    }
+
+    fun removeCustomSuggestion(id: String): Boolean = customSuggestions.delete(id)
+
     fun removeSuggestion(subtype: Subtype, candidate: SuggestionCandidate): Boolean {
         return runBlocking { candidate.sourceProvider?.removeSuggestion(subtype, candidate) == true }.also { result ->
             if (result) {
@@ -358,47 +381,69 @@ class NlpManager(context: Context) {
 
     private fun assembleCandidates() {
         runBlocking {
-            val candidates = when {
-                isSuggestionOn() -> {
-                    clipboardSuggestionProvider.suggest(
-                        subtype = Subtype.DEFAULT,
-                        content = editorInstance.activeContent,
-                        maxCandidateCount = 8,
-                        allowPossiblyOffensive = !prefs.suggestion.blockPossiblyOffensive.get(),
-                        isPrivateSession = keyboardManager.activeState.isIncognitoMode,
-                    ).ifEmpty {
-                        buildList {
-                            internalSuggestionsGuard.withLock {
-                                addAll(internalSuggestions.second)
-                            }
-                        }
-                    }
-                }
-                else -> emptyList()
+            val content = editorInstance.activeContent
+            val passwordLike = editorInstance.activeInfo.inputAttributes.isPasswordLike()
+            val suggestionsOn = isSuggestionOn()
+            val clipboard = if (suggestionsOn && !passwordLike) {
+                clipboardSuggestionProvider.suggest(
+                    subtype = Subtype.DEFAULT,
+                    content = content,
+                    maxCandidateCount = 8,
+                    allowPossiblyOffensive = !prefs.suggestion.blockPossiblyOffensive.get(),
+                    isPrivateSession = keyboardManager.activeState.isIncognitoMode,
+                )
+            } else {
+                emptyList()
             }
-            activeCandidates = candidates
-            autoExpandCollapseSmartbarActions(candidates, NlpInlineAutofill.suggestions.value)
+            val dictionary = if (suggestionsOn) {
+                internalSuggestionsGuard.withLock { internalSuggestions.second }
+            } else {
+                emptyList()
+            }
+            val plan = StripPlanner.plan(
+                passwordLike = passwordLike,
+                slashEnabled = prefs.slash.enabled.get(),
+                textBeforeCursor = content.textBeforeSelection,
+                selection = content.selectedText,
+                custom = if (passwordLike) emptyList() else customSuggestions.snapshot(),
+                commands = if (passwordLike) emptyList() else slashCommands.snapshot(),
+                clipboardAvailable = clipboard.isNotEmpty(),
+            )
+            activeCandidates = when (plan) {
+                is StripPlan.Slash -> plan.offers.map { offer ->
+                    SlashSuggestionCandidate(
+                        commandName = offer.name,
+                        builtinName = offer.builtin?.name,
+                        customId = offer.customId,
+                        argument = plan.argument,
+                        replaceLength = plan.replaceLength,
+                    )
+                }
+                is StripPlan.Words -> buildList {
+                    plan.selection?.let { add(AddToSuggestionsCandidate(it)) }
+                    for (item in plan.custom) {
+                        add(
+                            CustomSuggestionCandidate(
+                                text = item.text,
+                                suggestionId = item.id,
+                            ),
+                        )
+                    }
+                    if (plan.showClipboard) addAll(clipboard)
+                    if (plan.showDictionary) addAll(dictionary)
+                }
+            }
+            autoExpandCollapseSmartbarActions(activeCandidates, NlpInlineAutofill.suggestions.value)
         }
     }
 
     fun autoExpandCollapseSmartbarActions(list1: List<*>?, list2: List<*>?) {
-        if (!prefs.smartbar.enabled.get()) {// || !prefs.smartbar.sharedActionsAutoExpandCollapse.get()) {
-            return
-        }
-        // TODO: this is a mess and needs to be cleaned up in v0.5 with the NLP development
-        /*if (keyboardManager.inputEventDispatcher.isRepeatableCodeLastDown()
-            && !keyboardManager.inputEventDispatcher.isPressed(KeyCode.DELETE)
-            && !keyboardManager.inputEventDispatcher.isPressed(KeyCode.FORWARD_DELETE)
-            || keyboardManager.activeState.isActionsOverflowVisible
-        ) {
-            return // We do not auto switch if a repeatable action key was last pressed or if the actions overflow
-                   // menu is visible to prevent annoying UI changes
-        }*/
-        val isSelection = editorInstance.activeContent.selection.isSelectionMode
-        val isExpanded = list1.isNullOrEmpty() && list2.isNullOrEmpty() || isSelection
+        // The strip stays on suggestions. The tools panel is a separate button, so an empty
+        // candidate list must not expand the old page-tab toolbar over the strip.
+        if (!prefs.smartbar.enabled.get()) return
+        if (!prefs.smartbar.sharedActionsExpanded.get()) return
         scope.launch {
-            prefs.smartbar.sharedActionsExpandWithAnimation.set(false)
-            prefs.smartbar.sharedActionsExpanded.set(isExpanded)
+            prefs.smartbar.sharedActionsExpanded.set(false)
         }
     }
 

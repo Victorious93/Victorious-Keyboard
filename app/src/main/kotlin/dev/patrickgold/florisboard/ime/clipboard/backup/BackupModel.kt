@@ -99,6 +99,11 @@ data class ParsedBackup(
     val lanes: Map<String, String> = emptyMap(),
     /** True when the file was a password container (raw `.vkbk` or a ZIP with `content.vkbk`). */
     val passwordProtected: Boolean = false,
+    /**
+     * Optional `suggestions.json` member. It is not part of `entriesSha256`.
+     * Null when the member was absent. A present member is still untrusted until the suggestion codec accepts it.
+     */
+    val suggestionsDocument: String? = null,
 ) {
     fun laneOf(id: String): String = lanes[id] ?: LANE_REGULAR
 }

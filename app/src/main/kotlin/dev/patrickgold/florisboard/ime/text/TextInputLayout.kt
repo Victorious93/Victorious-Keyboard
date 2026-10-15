@@ -19,6 +19,7 @@ package dev.patrickgold.florisboard.ime.text
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,8 +37,13 @@ import dev.patrickgold.florisboard.ime.developer.DeveloperRowTiming
 import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowBar
 import dev.patrickgold.florisboard.ime.developer.ui.DeveloperRowStyle
+import dev.patrickgold.florisboard.ime.editor.InputAttributes
+import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.mode.DeveloperRowPrefs
 import dev.patrickgold.florisboard.ime.mode.ModePresets
+import dev.patrickgold.florisboard.ime.mode.TerminalRowPolicy
+import dev.patrickgold.florisboard.ime.toolbar.ui.ToolsPanel
+import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.clipedit.ui.ClipEditorPanel
@@ -58,6 +64,7 @@ fun TextInputLayout(
 ) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
+    val editorInstance by context.editorInstance()
     val localAi by context.localAiManager()
 
     val prefs by FlorisPreferenceStore
@@ -83,16 +90,23 @@ fun TextInputLayout(
             ClipEditorPanel()
         }
         val operatingMode by keyboardManager.activeMode.collectAsState()
+        val toolsOpen by keyboardManager.toolsOpen.collectAsState()
         val devEnabled by prefs.devrow.enabled.observeAsState()
         val devProfile by prefs.devrow.profile.observeAsState()
         val devTerminalKeys by prefs.devrow.terminalKeys.observeAsState()
         val devNavigationKeys by prefs.devrow.navigationKeys.observeAsState()
         val devSymbols by prefs.devrow.symbols.observeAsState()
+        val terminalKeyRow by prefs.devrow.terminalKeyRow.observeAsState()
         val developerRow = ModePresets.developerRow(
             operatingMode,
             DeveloperRowPrefs(devEnabled, devProfile, devTerminalKeys, devNavigationKeys, devSymbols),
         )
-        if (developerRow.visible && !state.isActionsOverflowVisible) {
+        val showTerminalRow = TerminalRowPolicy.shouldShow(
+            terminalKeyRow,
+            editorInstance.activeInfo.packageName,
+            editorInstance.activeInfo.inputAttributes.type == InputAttributes.Type.NULL,
+        )
+        if (showTerminalRow && !state.isActionsOverflowVisible && !toolsOpen && aiPanel == null && clipEditor == null) {
             val customText by prefs.devrow.customSymbols.observeAsState()
             val customMode by prefs.devrow.customSymbolsMode.observeAsState()
             val size by prefs.devrow.size.observeAsState()
@@ -103,9 +117,9 @@ fun TextInputLayout(
             DeveloperRowBar(
                 profile = developerRow.profile,
                 options = RowOptions(
-                    terminalKeys = developerRow.terminalKeys,
-                    navigationKeys = developerRow.navigationKeys,
-                    symbols = developerRow.symbols,
+                    terminalKeys = true,
+                    navigationKeys = true,
+                    symbols = devSymbols,
                     custom = custom,
                     customMode = customMode,
                 ),
@@ -119,6 +133,15 @@ fun TextInputLayout(
         }
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()
+        } else if (toolsOpen && aiPanel == null && clipEditor == null) {
+            ToolsPanel(
+                onAction = { id ->
+                    keyboardManager.setToolsOpen(false)
+                    keyboardManager.performToolbarAction(id)
+                },
+                onClose = { keyboardManager.setToolsOpen(false) },
+                modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight()),
+            )
         } else {
             Box {
                 val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.observeAsState()

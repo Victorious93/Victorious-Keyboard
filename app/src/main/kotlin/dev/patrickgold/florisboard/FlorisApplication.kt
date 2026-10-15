@@ -70,6 +70,8 @@ class FlorisApplication : Application() {
     val extensionManager = lazy { ExtensionManager(this) }
     val glideTypingManager = lazy { GlideTypingManager(this) }
     val snippetManager = lazy { SnippetManager(this) }
+    val customSuggestions = lazy { dev.patrickgold.florisboard.ime.nlp.custom.CustomSuggestionManager(this) }
+    val slashCommands = lazy { dev.patrickgold.florisboard.ime.slash.SlashCommandManager(this) }
     val keyboardManager = lazy { KeyboardManager(this) }
     val localAi = lazy { dev.patrickgold.florisboard.ime.ai.LocalAiManager(this) }
     val nlpManager = lazy { NlpManager(this) }
@@ -117,6 +119,8 @@ class FlorisApplication : Application() {
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)
         snippetManager.value.ensureLoaded() // loads the snippet file off the main thread (also after a Direct Boot start)
+        customSuggestions.value
+        slashCommands.value
         localAi.value
         DictionaryManager.init(this)
     }
@@ -171,6 +175,10 @@ fun Context.localAiManager() = this.florisApplication().localAi
 fun Context.nlpManager() = this.florisApplication().nlpManager
 
 fun Context.snippetManager() = this.florisApplication().snippetManager
+
+fun Context.customSuggestions() = this.florisApplication().customSuggestions
+
+fun Context.slashCommands() = this.florisApplication().slashCommands
 
 fun Context.subtypeManager() = this.florisApplication().subtypeManager
 

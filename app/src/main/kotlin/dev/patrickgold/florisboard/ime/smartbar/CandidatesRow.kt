@@ -16,12 +16,17 @@
 
 package dev.patrickgold.florisboard.ime.smartbar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -34,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
@@ -43,7 +49,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.nlp.AddToSuggestionsCandidate
 import dev.patrickgold.florisboard.ime.nlp.ClipboardSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.CustomSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.SlashSuggestionCandidate
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
@@ -78,7 +87,7 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
         elementName = FlorisImeUi.SmartbarCandidatesRow.elementName,
         modifier = modifier
             .fillMaxSize()
-            .conditional(displayMode == CandidatesDisplayMode.DYNAMIC_SCROLLABLE && candidates.size > 1) {
+            .conditional(candidates.size > 1) {
                 florisHorizontalScroll(scrollbarHeight = CandidatesRowScrollbarHeight)
             },
         horizontalArrangement = if (candidates.size > 1) {
@@ -102,10 +111,13 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                         wrapContentWidth().widthIn(max = 160.dp)
                     }
             }
-            val list = when (displayMode) {
-                CandidatesDisplayMode.CLASSIC -> candidates.subList(0, 3.coerceAtMost(candidates.size))
-                else -> candidates
-            }
+            val list = candidates
+            val highlight = CandidateHighlight.indexOf(
+                autoCommit = list.map { it.isEligibleForAutoCommit && it !is ClipboardSuggestionCandidate },
+                word = list.map {
+                    it is dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate || it is CustomSuggestionCandidate
+                },
+            )
             for ((n, candidate) in list.withIndex()) {
                 if (n > 0) {
                     SnyggSpacer(
@@ -120,17 +132,22 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                     modifier = candidateModifier,
                     candidate = candidate,
                     displayMode = displayMode,
+                    highlighted = n == highlight,
                     onClick = {
                         // Can't use candidate directly
                         keyboardManager.commitCandidate(candidates[n])
                     },
                     onLongPress = {
                         // Can't use candidate directly
-                        val candidateItem = candidates[n]
-                        if (candidateItem.isEligibleForUserRemoval) {
-                            nlpManager.removeSuggestion(subtypeManager.activeSubtype, candidateItem)
-                        } else {
-                            false
+                        when (val candidateItem = candidates[n]) {
+                            is ClipboardSuggestionCandidate ->
+                                nlpManager.removeSuggestion(subtypeManager.activeSubtype, candidateItem)
+                            is CustomSuggestionCandidate ->
+                                nlpManager.removeCustomSuggestion(candidateItem.suggestionId)
+                            is AddToSuggestionsCandidate ->
+                                nlpManager.addCustomSuggestion(candidateItem.phrase)
+                            is SlashSuggestionCandidate -> false
+                            else -> nlpManager.addCustomSuggestion(candidateItem.text.toString())
                         }
                     },
                     longPressDelay = prefs.keyboard.longPressDelay.get().toLong(),
@@ -144,6 +161,7 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
 private fun CandidateItem(
     candidate: SuggestionCandidate,
     displayMode: CandidatesDisplayMode,
+    highlighted: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = { },
     onLongPress: () -> Boolean = { false },
@@ -159,11 +177,12 @@ private fun CandidateItem(
     val attributes = mapOf("auto-commit" to if (candidate.isEligibleForAutoCommit) 1 else 0)
     val selector = if (isPressed) SnyggSelector.PRESSED else SnyggSelector.NONE
 
+    Column(modifier = modifier) {
     SnyggRow(
         elementName = elementName,
         attributes = attributes,
         selector = selector,
-        modifier = modifier
+        modifier = Modifier.weight(1f, fill = false).fillMaxHeight()
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
@@ -236,5 +255,12 @@ private fun CandidateItem(
                 )
             }
         }
+    }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(if (highlighted) Color(0xFFE8E8E8) else Color.Transparent),
+        )
     }
 }

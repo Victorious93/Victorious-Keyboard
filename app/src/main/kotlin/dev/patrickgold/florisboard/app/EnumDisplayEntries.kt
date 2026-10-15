@@ -36,6 +36,7 @@ import dev.patrickgold.florisboard.ime.media.emoji.EmojiHistory
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSkinTone
 import dev.patrickgold.florisboard.ime.media.emoji.EmojiSuggestionType
 import dev.patrickgold.florisboard.ime.nlp.SpellingLanguageMode
+import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
 import dev.patrickgold.florisboard.ime.nlp.prediction.AutocorrectLevel
 import dev.patrickgold.florisboard.ime.smartbar.CandidatesDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
@@ -397,6 +398,28 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
             for (p in SnippetPrefix.entries) {
                 entry(key = p, label = p.text)
             }
+        }
+    },
+    TerminalKeyRow::class to DEFAULT to {
+        listPrefEntries {
+            entry(
+                key = TerminalKeyRow.AUTO,
+                label = stringRes(R.string.enum__terminal_key_row__auto),
+                description = stringRes(R.string.enum__terminal_key_row__auto__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = TerminalKeyRow.ALWAYS,
+                label = stringRes(R.string.enum__terminal_key_row__always),
+                description = stringRes(R.string.enum__terminal_key_row__always__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = TerminalKeyRow.NEVER,
+                label = stringRes(R.string.enum__terminal_key_row__never),
+                description = stringRes(R.string.enum__terminal_key_row__never__description),
+                showDescriptionOnlyIfSelected = true,
+            )
         }
     },
     OperatingMode::class to DEFAULT to {

@@ -71,6 +71,11 @@ fun TypingScreen() = FlorisScreen {
 
     content {
         PreferenceGroup(title = stringRes(R.string.pref__suggestion__title)) {
+            Preference(
+                title = stringRes(R.string.settings__my_suggestions__title),
+                summary = stringRes(R.string.settings__my_suggestions__summary),
+                onClick = { navController.navigate(Routes.Settings.MySuggestions) },
+            )
             SwitchPreference(
                 prefs.suggestion.predictionEnabled,
                 icon = Icons.Default.AutoAwesome,

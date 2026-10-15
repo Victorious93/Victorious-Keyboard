@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.runtime.Composable
@@ -61,7 +62,6 @@ import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionButton
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsRow
-import dev.patrickgold.florisboard.ime.toolbar.ui.AdvancedToolbar
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.ToggleOverflowPanelAction
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
@@ -155,164 +155,14 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
     }
     val shouldShowInlineSuggestionsUi = AndroidVersion.ATLEAST_API30_R && inlineSuggestions.isNotEmpty()
 
-    val smartbarLayout by prefs.smartbar.layout.observeAsState()
-    val flipToggles by prefs.smartbar.flipToggles.observeAsState()
-    val sharedActionsExpanded by prefs.smartbar.sharedActionsExpanded.observeAsState()
-    val extendedActionsExpanded by prefs.smartbar.extendedActionsExpanded.observeAsState()
-
-    val shouldAnimate by prefs.smartbar.sharedActionsExpandWithAnimation.observeAsState()
-
-    @Composable
-    fun SharedActionsToggle() {
-        SnyggIconButton(
-            elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
-            onClick = {
-                if (/* was */ sharedActionsExpanded) {
-                    keyboardManager.activeState.isActionsOverflowVisible = false
-                }
-                scope.launch {
-                    prefs.smartbar.sharedActionsExpanded.set(!sharedActionsExpanded)
-                }
-            },
-            modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f)
-        ) {
-            val transition = updateTransition(sharedActionsExpanded, label = "sharedActionsExpandedToggleBtn")
-            val rotation by transition.animateFloat(
-                transitionSpec = {
-                    if (shouldAnimate) AnimationTween else NoAnimationTween
-                },
-                label = "rotation",
-            ) {
-                if (it) 180f else 0f
-            }
-            val arrowIcon = if (flipToggles) {
-                Icons.AutoMirrored.Default.KeyboardArrowLeft
-            } else {
-                Icons.AutoMirrored.Default.KeyboardArrowRight
-            }
-            val incognitoIcon = ImageVector.vectorResource(id = R.drawable.ic_incognito)
-            val incognitoDisplayMode = prefs.keyboard.incognitoDisplayMode.observeAsState()
-            val isIncognitoMode = keyboardManager.activeState.isIncognitoMode
-            val icon = if (isIncognitoMode) {
-                when (incognitoDisplayMode.value) {
-                    IncognitoDisplayMode.REPLACE_SHARED_ACTIONS_TOGGLE -> incognitoIcon
-                    IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD -> arrowIcon
-                }
-            } else {
-                arrowIcon
-            }
-            SnyggIcon(
-                modifier = Modifier.rotate(if (incognitoDisplayMode.value == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD) rotation else 0f),
-                imageVector = icon,
-            )
-        }
-    }
-
-    @Composable
-    fun RowScope.CenterContent() {
-        val expanded = sharedActionsExpanded && smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        ) {
-            val enterTransition = if (shouldAnimate) HorizontalEnterTransition else NoEnterTransition
-            val exitTransition = if (shouldAnimate) HorizontalExitTransition else NoExitTransition
-            this@CenterContent.AnimatedVisibility(
-                visible = !expanded,
-                enter = enterTransition,
-                exit = exitTransition,
-            ) {
-                if (shouldShowInlineSuggestionsUi) {
-                    InlineSuggestionsUi(inlineSuggestions)
-                } else {
-                    CandidatesRow()
-                }
-            }
-            this@CenterContent.AnimatedVisibility(
-                visible = expanded,
-                enter = enterTransition,
-                exit = exitTransition,
-            ) {
-                AdvancedToolbar(modifier = modifier.fillMaxSize())
-            }
-        }
-    }
-
-    @Composable
-    fun ExtendedActionsToggle() {
-        SnyggIconButton(
-            FlorisImeUi.SmartbarExtendedActionsToggle.elementName,
-            onClick = {
-                if (/* was */ extendedActionsExpanded) {
-                    keyboardManager.activeState.isActionsOverflowVisible = false
-                }
-                scope.launch {
-                    prefs.smartbar.extendedActionsExpanded.set(!extendedActionsExpanded)
-                }
-            },
-            modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f)
-        ) {
-            val transition = updateTransition(extendedActionsExpanded, label = "smartbarSecondaryRowToggleBtn")
-            val alpha by transition.animateFloat(label = "alpha") { if (it) 1f else 0f }
-            val rotation by transition.animateFloat(label = "rotation") { if (it) 180f else 0f }
-            // Expanded icon
-            SnyggIcon(
-                FlorisImeUi.SmartbarExtendedActionsToggle.elementName,
-                modifier = Modifier
-                    .alpha(alpha)
-                    .rotate(rotation),
-                imageVector = Icons.Default.UnfoldLess,
-            )
-            // Not expanded icon
-            SnyggIcon(
-                FlorisImeUi.SmartbarExtendedActionsToggle.elementName,
-                modifier = Modifier
-                    .alpha(1f - alpha)
-                    .rotate(rotation - 180f),
-                imageVector = Icons.Default.UnfoldMore,
-            )
-        }
-    }
-
-    @Composable
-    fun StickyAction() {
-        val actionArrangement by prefs.smartbar.actionArrangement.observeAsState()
-        val evaluator by keyboardManager.activeSmartbarEvaluator.collectAsState()
-
-        val action = when {
-            actionArrangement.stickyAction != null -> {
-                actionArrangement.stickyAction
-            }
-
-            smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && sharedActionsExpanded -> {
-                ToggleOverflowPanelAction
-            }
-
-            else -> null
-        }
-
-        if (action != null) {
-            QuickActionButton(
-                modifier = Modifier.padding(horizontal = 4.dp),
-                action = action,
-                evaluator = evaluator,
-            )
-        } else {
-            Spacer(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .aspectRatio(1f),
-            )
-        }
-    }
-
-    SideEffect {
-        if (!shouldAnimate) {
-            scope.launch {
-                prefs.smartbar.sharedActionsExpandWithAnimation.set(true)
-            }
-        }
+    val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.observeAsState()
+    val toolsIcon = if (
+        keyboardManager.activeState.isIncognitoMode &&
+        incognitoDisplayMode == IncognitoDisplayMode.REPLACE_SHARED_ACTIONS_TOGGLE
+    ) {
+        ImageVector.vectorResource(id = R.drawable.ic_incognito)
+    } else {
+        Icons.Filled.Apps
     }
 
     SnyggRow(
@@ -320,46 +170,18 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .height(FlorisImeSizing.smartbarHeight),
     ) {
-        when (smartbarLayout) {
-            SmartbarLayout.SUGGESTIONS_ONLY -> {
-                if (shouldShowInlineSuggestionsUi) {
-                    InlineSuggestionsUi(inlineSuggestions)
-                } else {
-                    CandidatesRow()
-                }
-            }
-
-            SmartbarLayout.ACTIONS_ONLY -> {
-                if (shouldShowInlineSuggestionsUi) {
-                    InlineSuggestionsUi(inlineSuggestions)
-                } else {
-                    AdvancedToolbar()
-                }
-            }
-
-            SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED -> {
-                if (!flipToggles) {
-                    SharedActionsToggle()
-                    CenterContent()
-                    StickyAction()
-                } else {
-                    StickyAction()
-                    CenterContent()
-                    SharedActionsToggle()
-                }
-            }
-
-            SmartbarLayout.SUGGESTIONS_ACTIONS_EXTENDED -> {
-                if (!flipToggles) {
-                    ExtendedActionsToggle()
-                    CenterContent()
-                    StickyAction()
-                } else {
-                    StickyAction()
-                    CenterContent()
-                    ExtendedActionsToggle()
-                }
-            }
+        // The strip is suggestions plus one tools button. Page tabs stay in the tools panel.
+        SnyggIconButton(
+            elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
+            onClick = { keyboardManager.setToolsOpen(!keyboardManager.toolsOpen.value) },
+            modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f),
+        ) {
+            SnyggIcon(imageVector = toolsIcon)
+        }
+        if (shouldShowInlineSuggestionsUi) {
+            InlineSuggestionsUi(inlineSuggestions)
+        } else {
+            CandidatesRow(Modifier.weight(1f))
         }
     }
 }

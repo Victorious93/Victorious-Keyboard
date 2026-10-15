@@ -5,7 +5,9 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, in-keyboard picker) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run.**
+**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, in-keyboard picker) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run. UI pass (tabbed tools panel,
+one terminal-row decision, theme-following panels, regrouped Settings Home) JVM-tested where pure, compiled, never
+rendered.**
 Status table: `ROADMAP.md`. Update it with every phase. Phase 4 details/limits: `TERMINAL.md`.
 
 ## Verified environment
@@ -32,9 +34,11 @@ Version: `gradle.properties` (`projectVersionCode=123`, `0.1.0-alpha01`, minSdk 
 Gradle wrapper, then runs `./gradlew --no-daemon assembleDebug testDebugUnitTest :lib:kotlin:test lintDebug` on JDK 21.
 Dependency checksums are enforced by `gradle/verification-metadata.xml` (update it when adding dependencies). Test
 reports and the debug APK are uploaded best-effort (artifact quota must not fail the job).
-**Known red (checked 2026-10-15):** `main` CI has failed since PR #23/#25/#26 were merged: `:app:lintDebug` reports
-`NewApi` at `app/src/main/kotlin/dev/patrickgold/florisboard/ime/ai/AiFiles.kt:142` (`InputStream#readNBytes` needs
-API 33, minSdk is 26). Any PR branched from `main` will fail CI until that is fixed.
+**Lint red on `main`, fixed by PR #29:** `main` CI failed after PRs #23/#25/#26 because `:app:lintDebug` reported 3
+`NewApi` errors (API 33 calls, minSdk 26): `InputStream#readNBytes` in `ime/ai/AiFiles.kt`, and the `Charset`
+overloads of `URLEncoder`/`URLDecoder` in `ime/toolbar/TextTransforms.kt`. PR #29 replaces them with API-26 calls; its CI
+run on `029e087` passed (assembleDebug, unit tests, `:lib:kotlin:test`, lintDebug). Until #29 is merged, other PRs
+branched from `main` still fail lint.
 Long builds: run in the background with `--no-parallel --max-workers=2`, log to a file, wait for it.
 
 ## Architecture boundaries

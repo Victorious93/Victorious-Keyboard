@@ -39,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -52,16 +51,11 @@ import androidx.compose.ui.platform.LocalContext
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.clipedit.ClipEditorSession
 import dev.patrickgold.florisboard.ime.clipedit.EditorField
+import dev.patrickgold.florisboard.ime.theme.rememberPanelColors
 import dev.patrickgold.florisboard.ime.toolbar.TextTransforms
 import dev.patrickgold.florisboard.keyboardManager
 import org.florisboard.lib.compose.stringRes
 
-private val EditorBg = Color(0xFF050505)
-private val EditorKey = Color(0xFF161616)
-private val EditorText = Color(0xFFE8E8E8)
-private val EditorMuted = Color(0xFFBDBDBD)
-private val EditorLine = Color(0xFF3A3A3A)
-private val EditorSelect = Color(0xFF3A3A3A)
 
 /**
  * Multi-line editor drawn above the keys. Keys are redirected by the keyboard manager, so this
@@ -69,6 +63,7 @@ private val EditorSelect = Color(0xFF3A3A3A)
  */
 @Composable
 fun ClipEditorPanel(modifier: Modifier = Modifier) {
+    val colors = rememberPanelColors()
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     val session by keyboardManager.clipEditor.collectAsState()
@@ -76,7 +71,7 @@ fun ClipEditorPanel(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(EditorBg)
+            .background(colors.background)
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -97,7 +92,7 @@ fun ClipEditorPanel(modifier: Modifier = Modifier) {
                     "words" to counts.words.toString(),
                     "tokens" to counts.tokens.toString(),
                 ),
-                style = androidx.compose.ui.text.TextStyle(color = EditorMuted, fontSize = 11.sp),
+                style = androidx.compose.ui.text.TextStyle(color = colors.muted, fontSize = 11.sp),
                 modifier = Modifier.padding(start = 4.dp),
             )
         }
@@ -161,6 +156,7 @@ fun ClipEditorPanel(modifier: Modifier = Modifier) {
 
 @Composable
 private fun EditorBody(session: ClipEditorSession) {
+    val colors = rememberPanelColors()
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -170,7 +166,7 @@ private fun EditorBody(session: ClipEditorSession) {
         val to = body.selectionMax
         append(body.text.substring(0, from))
         if (from != to) {
-            withStyle(SpanStyle(background = EditorSelect, color = EditorText)) {
+            withStyle(SpanStyle(background = colors.selected, color = colors.ink)) {
                 append(body.text.substring(from, to))
             }
         }
@@ -181,8 +177,8 @@ private fun EditorBody(session: ClipEditorSession) {
         modifier = Modifier
             .fillMaxWidth()
             .height(132.dp)
-            .background(EditorKey)
-            .border(1.dp, if (session.focus == EditorField.BODY) EditorText else EditorLine)
+            .background(colors.surface)
+            .border(1.dp, if (session.focus == EditorField.BODY) colors.ink else colors.line)
             .verticalScroll(rememberScrollState())
             .pointerInput(session.revision) {
                 detectTapGestures(
@@ -203,7 +199,7 @@ private fun EditorBody(session: ClipEditorSession) {
     ) {
         BasicText(
             text = if (body.text.isEmpty()) buildAnnotatedString { append(" ") } else styled,
-            style = androidx.compose.ui.text.TextStyle(color = EditorText, fontSize = 15.sp),
+            style = androidx.compose.ui.text.TextStyle(color = colors.ink, fontSize = 15.sp),
             onTextLayout = { layout = it },
         )
     }
@@ -211,12 +207,13 @@ private fun EditorBody(session: ClipEditorSession) {
 
 @Composable
 private fun EditorChip(label: String, onClick: () -> Unit) {
+    val colors = rememberPanelColors()
     BasicText(
         text = label,
-        style = androidx.compose.ui.text.TextStyle(color = EditorText, fontSize = 12.sp),
+        style = androidx.compose.ui.text.TextStyle(color = colors.ink, fontSize = 12.sp),
         modifier = Modifier
-            .background(EditorKey)
-            .border(1.dp, EditorLine)
+            .background(colors.surface)
+            .border(1.dp, colors.line)
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     )
@@ -224,15 +221,16 @@ private fun EditorChip(label: String, onClick: () -> Unit) {
 
 @Composable
 private fun FieldChip(label: String, value: String, focused: Boolean, onClick: () -> Unit) {
+    val colors = rememberPanelColors()
     val shown = if (value.isEmpty()) label else value
     BasicText(
         text = shown,
-        style = androidx.compose.ui.text.TextStyle(color = if (value.isEmpty()) EditorMuted else EditorText, fontSize = 12.sp),
+        style = androidx.compose.ui.text.TextStyle(color = if (value.isEmpty()) colors.muted else colors.ink, fontSize = 12.sp),
         maxLines = 1,
         modifier = Modifier
             .heightIn(min = 24.dp)
-            .background(EditorKey)
-            .border(1.dp, if (focused) EditorText else EditorLine)
+            .background(colors.surface)
+            .border(1.dp, if (focused) colors.ink else colors.line)
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     )

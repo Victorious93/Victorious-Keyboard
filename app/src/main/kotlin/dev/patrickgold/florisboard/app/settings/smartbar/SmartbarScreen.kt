@@ -46,7 +46,7 @@ fun SmartbarScreen() = FlorisScreen {
         )
         Preference(
             title = stringRes(R.string.settings__smartbar__toolbar),
-            summary = stringRes(R.string.settings__toolbar__title),
+            summary = stringRes(R.string.settings__smartbar__toolbar__summary),
             onClick = { navController.navigate(Routes.Settings.Toolbar) },
             enabledIf = { prefs.smartbar.enabled isEqualTo true },
         )

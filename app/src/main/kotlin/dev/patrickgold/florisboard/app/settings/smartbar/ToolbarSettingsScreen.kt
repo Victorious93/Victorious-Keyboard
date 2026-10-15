@@ -17,7 +17,6 @@
 package dev.patrickgold.florisboard.app.settings.smartbar
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,16 +35,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandDto
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandRules
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
-import dev.patrickgold.florisboard.ime.toolbar.ToolbarPage
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
+import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
+import dev.patrickgold.florisboard.ime.toolbar.ui.ToolsPanelItems
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import org.florisboard.lib.compose.stringRes
 
+/**
+ * Settings for the tools panel: clip-editor switches, the user's own commands (shown on the Terminal tab, inserted as
+ * text and never run), and which buttons each tab shows and in what order.
+ */
 @Composable
 fun ToolbarSettingsScreen() = FlorisScreen {
     title = stringRes(R.string.settings__toolbar__title)
@@ -60,63 +66,145 @@ fun ToolbarSettingsScreen() = FlorisScreen {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
+
+        GroupTitle(stringRes(R.string.settings__toolbar__group_editor))
         ToggleRow(stringRes(R.string.settings__toolbar__shell_history), config.shellHistoryEnabled) {
             ToolbarRuntime.update(context) { it.copy(shellHistoryEnabled = !it.shellHistoryEnabled) }
         }
         ToggleRow(stringRes(R.string.settings__toolbar__bracket_pairing), config.bracketPairing) {
             ToolbarRuntime.update(context) { it.copy(bracketPairing = !it.bracketPairing) }
         }
-        TextButton(onClick = { ToolbarRuntime.update(context) { it.copy(hidden = emptyList(), order = emptyMap()) } }) {
-            Text(stringRes(R.string.settings__toolbar__restore))
-        }
-        TextButton(onClick = { ToolbarRuntime.update(context) { it.copy(recentCommands = emptyList()) } }) {
+        TextButton(
+            onClick = { ToolbarRuntime.update(context) { it.copy(recentCommands = emptyList()) } },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
             Text(stringRes(R.string.settings__toolbar__clear_history))
+        }
+
+        GroupTitle(stringRes(R.string.settings__toolbar__group_commands))
+        for (command in config.extraCommands()) {
+            val hiddenId = ToolbarCatalog.commandId(command.id)
+            val hidden = hiddenId in config.hiddenSet()
+            ItemRow(
+                text = command.label + "  ·  " + command.text.lineSequence().first(),
+                hidden = hidden,
+            ) {
+                TextButton(onClick = { ToolbarRuntime.update(context) { it.hiding(hiddenId) } }) {
+                    Text(if (hidden) stringRes(R.string.settings__toolbar__show) else stringRes(R.string.settings__toolbar__hide))
+                }
+                TextButton(onClick = {
+                    ToolbarRuntime.update(context) { current ->
+                        current.copy(
+                            commands = current.commands.filter { it.id != command.id },
+                            hidden = current.hidden - hiddenId,
+                        )
+                    }
+                }) {
+                    Text(stringRes(R.string.settings__toolbar__delete))
+                }
+            }
         }
         var label by remember { mutableStateOf("") }
         var command by remember { mutableStateOf("") }
         var tag by remember { mutableStateOf("") }
-        OutlinedTextField(value = label, onValueChange = { label = it }, label = { Text(stringRes(R.string.settings__toolbar__label)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-        OutlinedTextField(value = command, onValueChange = { command = it }, label = { Text(stringRes(R.string.settings__toolbar__command)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp))
-        OutlinedTextField(value = tag, onValueChange = { tag = it }, label = { Text(stringRes(R.string.settings__toolbar__tag)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-        TextButton(onClick = {
-            val next = SavedCommandRules.normalize(label, command, tag) ?: return@TextButton
-            ToolbarRuntime.update(context) { current ->
-                if (current.commands.size >= SavedCommandRules.MAX_COMMANDS) current
-                else current.copy(commands = current.commands + SavedCommandDto(next.id, next.label, next.text, next.tag))
-            }
-            label = ""
-            command = ""
-            tag = ""
-        }) {
+        OutlinedTextField(
+            value = label,
+            onValueChange = { label = it },
+            label = { Text(stringRes(R.string.settings__toolbar__label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        )
+        OutlinedTextField(
+            value = command,
+            onValueChange = { command = it },
+            label = { Text(stringRes(R.string.settings__toolbar__command)) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+        OutlinedTextField(
+            value = tag,
+            onValueChange = { tag = it },
+            label = { Text(stringRes(R.string.settings__toolbar__tag)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        )
+        TextButton(
+            onClick = {
+                val next = SavedCommandRules.normalize(label, command, tag) ?: return@TextButton
+                ToolbarRuntime.update(context) { current ->
+                    if (current.commands.size >= SavedCommandRules.MAX_COMMANDS || current.commands.any { it.id == next.id }) {
+                        current
+                    } else {
+                        current.copy(commands = current.commands + SavedCommandDto(next.id, next.label, next.text, next.tag))
+                    }
+                }
+                label = ""
+                command = ""
+                tag = ""
+            },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
             Text(stringRes(R.string.settings__toolbar__add))
         }
-        for (page in ToolbarPage.entries) {
+
+        GroupTitle(stringRes(R.string.settings__toolbar__group_buttons))
+        TextButton(
+            onClick = { ToolbarRuntime.update(context) { it.withDefaultTools() } },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(stringRes(R.string.settings__toolbar__restore))
+        }
+        for (tab in ToolsTab.entries) {
             Text(
-                text = page.title,
+                text = stringRes(ToolsPanelItems.tabLabel(tab)),
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
             )
-            val shown = ToolbarCatalog.visible(page, config.hiddenSet(), config.pageOrder(page))
-            for (action in ToolbarCatalog.actions.filter { it.page == page }) {
-                val hidden = action.id.name in config.hiddenSet()
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = action.label + if (hidden) " · " + stringRes(R.string.settings__toolbar__hidden) else "",
-                        modifier = Modifier.weight(1f).padding(start = 8.dp),
-                    )
-                    TextButton(onClick = { ToolbarRuntime.update(context) { it.movingEarlier(page, action.id.name) } }, enabled = !hidden && shown.indexOf(action) > 0) {
+            val shown = ToolsCatalog.visible(tab, config.hiddenSet(), config.tabOrder(tab))
+            val listed = shown + ToolsCatalog.actions(tab).filter { it !in shown }
+            for (id in listed) {
+                val hidden = id !in shown
+                val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
+                ItemRow(text = name, hidden = hidden) {
+                    TextButton(
+                        onClick = { ToolbarRuntime.update(context) { it.movingEarlier(tab, id) } },
+                        enabled = !hidden && shown.indexOf(id) > 0,
+                    ) {
                         Text(stringRes(R.string.settings__toolbar__earlier))
                     }
-                    TextButton(onClick = { ToolbarRuntime.update(context) { it.hiding(action.id.name) } }) {
+                    TextButton(onClick = { ToolbarRuntime.update(context) { it.hiding(id.name) } }) {
                         Text(if (hidden) stringRes(R.string.settings__toolbar__show) else stringRes(R.string.settings__toolbar__hide))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GroupTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun ItemRow(text: String, hidden: Boolean, actions: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = if (hidden) text + " · " + stringRes(R.string.settings__toolbar__hidden) else text,
+            color = if (hidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
+        )
+        actions()
     }
 }
 

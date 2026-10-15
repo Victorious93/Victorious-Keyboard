@@ -140,6 +140,7 @@ import dev.patrickgold.florisboard.ime.toolbar.TextTransforms
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
+import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -193,6 +194,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
+    }
+
+    /** The tools panel tab shown when it opens. Kept in memory only: switching tabs never writes to disk. */
+    val toolsTab = MutableStateFlow(ToolsTab.CLIPBOARD)
+
+    fun setToolsTab(tab: ToolsTab) {
+        toolsTab.value = tab
     }
 
     /**
@@ -1505,7 +1513,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.OPEN_SNIPPETS -> activeState.imeUiMode = ImeUiMode.SNIPPETS
             ToolbarActionId.EDIT_CLIP -> openLatestClipEditor()
             ToolbarActionId.PINNED -> pastePinned()
-            ToolbarActionId.ZIP -> FlorisImeService.launchSettings()
+            ToolbarActionId.ZIP -> FlorisImeService.launchSettingsAt("settings/clipboard/zip")
             ToolbarActionId.INCOGNITO -> inputEventDispatcher.sendDownUp(TextKeyData.TOGGLE_INCOGNITO_MODE)
             ToolbarActionId.LEARNING -> scope.launch {
                 val pref = prefs.suggestion.learnFromTyping

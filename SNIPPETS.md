@@ -5,10 +5,11 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
 
 ## Using it (as built, unverified on a device)
 
-* Settings → Keyboard → Developer mode → **Snippets**: add, edit, delete, search, import and export. Snippets live in
-  `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at app start.
-* Same group: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\` `;;` `::`),
-  **Case-sensitive abbreviations**.
+* Settings → Tools → **Snippets** (a Home entry since the UI pass): add, edit, delete, search, import and export.
+  Snippets live in `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at
+  app start. The tools panel's Clipboard tab also opens the in-keyboard picker.
+* Snippets → **Expansion**: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\`
+  `;;` `::`), **Case-sensitive abbreviations**, and the Enter and Tab switches below.
 * With expansion on, typing `;sig` and then **space** replaces `;sig` with the rendered snippet and keeps the space,
   unless the snippet contains `{{cursor}}`: then the space is consumed and the caret is placed at `{{cursor}}`.
 * **Enter** and **Tab** do the same only if you turn on "Also expand on Enter" / "Also expand on Tab" (both off by

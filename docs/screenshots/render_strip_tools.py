@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Layout renders for the suggestion strip, tools panel, and slash commands. Not device photos."""
+"""Layout renders for the suggestion strip, My suggestions, and slash commands. Not device photos.
+
+The tabbed tools panel has no render here: it has not been drawn by the app yet.
+"""
 
 from pathlib import Path
 
@@ -60,35 +63,6 @@ def strip(path):
     img.save(path)
 
 
-def tools(path):
-    img = Image.new("RGB", (560, 640), BG)
-    draw = ImageDraw.Draw(img)
-    label(draw, (16, 8), "Layout render, not a device photo", MUTED, 14)
-    draw.rounded_rectangle((8, 36, 56, 84), 6, fill=KEY)
-    label(draw, (16, 48), "▦", LEGEND, 20)
-    label(draw, (70, 50), "github", LEGEND, 18)
-    y = 100
-    groups = [
-        ("Clipboard", ["Clips", "Paste", "Copy", "Cut"]),
-        ("Clip editor", ["Edit"]),
-        ("Vault", ["Vault"]),
-        ("AI", ["Rewrite", "Grammar", "Brief", "Ask"]),
-        ("Terminal keys", ["Ctrl", "Alt", "Esc", "Tab"]),
-        ("Privacy", ["Incog", "Learn", "Theme", "Settings"]),
-    ]
-    for title, tiles in groups:
-        label(draw, (16, y), title, MUTED, 14)
-        y += 22
-        x = 16
-        for tile in tiles:
-            draw.rounded_rectangle((x, y, x + 120, y + 44), 6, fill=KEY)
-            label(draw, (x + 10, y + 12), tile, LEGEND, 16)
-            x += 128
-        y += 56
-    label(draw, (420, 48), "Keyboard", LEGEND, 16)
-    img.save(path)
-
-
 def suggestions(path):
     img = Image.new("RGB", (420, 640), (12, 12, 14))
     draw = ImageDraw.Draw(img)
@@ -125,7 +99,6 @@ def slash(path):
 
 if __name__ == "__main__":
     strip(OUT / "suggestion-strip.png")
-    tools(OUT / "tools-panel.png")
     suggestions(OUT / "my-suggestions.png")
     slash(OUT / "slash-commands.png")
     print("wrote", OUT)

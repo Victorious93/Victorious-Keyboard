@@ -34,10 +34,6 @@ import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
-import dev.patrickgold.florisboard.ime.developer.LanguageProfile
-import dev.patrickgold.florisboard.ime.mode.OperatingMode
-import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
-import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.input.CapitalizationBehavior
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
 import dev.patrickgold.florisboard.ime.landscapeinput.LandscapeInputUiMode
@@ -126,73 +122,6 @@ fun KeyboardScreen() = FlorisScreen {
             entries = enumDisplayEntriesOf(IncognitoDisplayMode::class),
         )
 
-        PreferenceGroup(title = stringRes(R.string.pref__devrow__group_label)) {
-            ListPreference(
-                prefs.modes.defaultMode,
-                title = stringRes(R.string.pref__modes__default__label),
-                entries = enumDisplayEntriesOf(OperatingMode::class),
-            )
-            SwitchPreference(
-                prefs.modes.autoDetect,
-                title = stringRes(R.string.pref__modes__auto_detect__label),
-                summary = stringRes(R.string.pref__modes__auto_detect__summary),
-            )
-            ListPreference(
-                prefs.devrow.terminalKeyRow,
-                title = stringRes(R.string.pref__devrow__terminal_key_row__label),
-                entries = enumDisplayEntriesOf(TerminalKeyRow::class),
-            )
-            ListPreference(
-                prefs.devrow.profile,
-                title = stringRes(R.string.pref__devrow__profile__label),
-                entries = enumDisplayEntriesOf(LanguageProfile::class),
-                visibleIf = { prefs.devrow.terminalKeyRow isNotEqualTo TerminalKeyRow.NEVER },
-            )
-            Preference(
-                title = stringRes(R.string.devadv__title),
-                summary = stringRes(R.string.devadv__link_summary),
-                onClick = { navController.navigate(Routes.Settings.AdvancedDeveloper) },
-            )
-            Preference(
-                title = stringRes(R.string.snippets__title),
-                summary = stringRes(R.string.snippets__link_summary),
-                onClick = { navController.navigate(Routes.Settings.Snippets) },
-            )
-            SwitchPreference(
-                prefs.snippets.expansionEnabled,
-                title = stringRes(R.string.pref__snippets__expansion__label),
-                summary = stringRes(R.string.pref__snippets__expansion__summary),
-            )
-            ListPreference(
-                prefs.snippets.prefix,
-                title = stringRes(R.string.pref__snippets__prefix__label),
-                entries = enumDisplayEntriesOf(SnippetPrefix::class),
-                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
-            )
-            SwitchPreference(
-                prefs.snippets.caseSensitive,
-                title = stringRes(R.string.pref__snippets__case_sensitive__label),
-                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
-            )
-            SwitchPreference(
-                prefs.snippets.expandOnEnter,
-                title = stringRes(R.string.pref__snippets__expand_on_enter__label),
-                summary = stringRes(R.string.pref__snippets__expand_on_enter__summary),
-                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
-            )
-            SwitchPreference(
-                prefs.snippets.expandOnTab,
-                title = stringRes(R.string.pref__snippets__expand_on_tab__label),
-                summary = stringRes(R.string.pref__snippets__expand_on_tab__summary),
-                visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
-            )
-            SwitchPreference(
-                prefs.devrow.terminalKeys,
-                title = stringRes(R.string.pref__devrow__terminal_keys__label),
-                summary = stringRes(R.string.pref__devrow__terminal_keys__summary),
-                visibleIf = { prefs.devrow.enabled isEqualTo true },
-            )
-        }
         PreferenceGroup(title = stringRes(R.string.pref__keyboard__group_layout__label)) {
             ListPreference(
                 prefs.keyboard.landscapeInputUiMode,

@@ -137,9 +137,19 @@ class AiFiles(private val root: File) {
         return ImportOutcome.Copied(model)
     }
 
+    /** The first 4 bytes (fewer for a shorter file). `InputStream.readNBytes` needs API 33; minSdk is 26. */
     private fun File.readHeader(): ByteArray {
         return try {
-            inputStream().use { it.readNBytes(4) }
+            inputStream().use { stream ->
+                val header = ByteArray(4)
+                var filled = 0
+                while (filled < header.size) {
+                    val read = stream.read(header, filled, header.size - filled)
+                    if (read < 0) break
+                    filled += read
+                }
+                header.copyOf(filled)
+            }
         } catch (_: IOException) {
             ByteArray(0)
         }

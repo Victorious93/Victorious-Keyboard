@@ -19,6 +19,7 @@ package dev.patrickgold.florisboard.app.settings
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.ShortText
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Gesture
@@ -27,11 +28,14 @@ import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.SmartButton
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,7 +46,6 @@ import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
-import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
 import dev.patrickgold.jetpref.datastore.ui.Preference
 import dev.patrickgold.jetpref.datastore.ui.PreferenceGroup
@@ -61,8 +64,6 @@ fun HomeScreen() = FlorisScreen {
     val context = LocalContext.current
 
     content {
-        val isCollapsed by prefs.internal.homeIsBetaToolboxCollapsed.observeAsState()
-
         val isFlorisBoardEnabled by InputMethodUtils.observeIsFlorisboardEnabled(foregroundOnly = true)
         val isFlorisBoardSelected by InputMethodUtils.observeIsFlorisboardSelected(foregroundOnly = true)
         if (!isFlorisBoardEnabled) {
@@ -81,45 +82,17 @@ fun HomeScreen() = FlorisScreen {
             )
         }
 
-        /*Card(modifier = Modifier.padding(8.dp)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Welcome to the 0.4 alpha series!",
-                        style = MaterialTheme.typography.subtitle1,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(modifier = Modifier.weight(1.0f))
-                    IconButton(onClick = { this@content.prefs.internal.homeIsBetaToolboxCollapsed.set(!isCollapsed) }) {
-                        Icon(
-                            painter = painterResource(if (isCollapsed) {
-                                R.drawable.ic_keyboard_arrow_down
-                            } else {
-                                R.drawable.ic_keyboard_arrow_up
-                            }),
-                            contentDescription = null,
-                        )
-                    }
-                }
-                if (!isCollapsed) {
-                    Text("0.4 will be quite a big release and finally work on adding support for word suggestion and inline autocorrect within the keyboard UI, at first for Latin-based languages. Additionally general improvements and bug fixes will also be made.\n")
-                    Text("Currently the alpha releases are preparations for the suggestions implementation and general improvements and bug fixes.\n")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Note that this release does not contain support for word suggestions (will show the current word plus numbers as a placeholder).", color = Color.Red)
-                    Text("Please DO NOT file an issue for this. It is already more than known and a major goal for implementation in 0.4.0. Thank you!\n")
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            }
-        }*/
         PreferenceGroup(title = stringRes(R.string.settings__home__section_look)) {
             Preference(
                 icon = Icons.Default.Language,
                 title = stringRes(R.string.settings__localization__title),
+                summary = stringRes(R.string.settings__home__localization_summary),
                 onClick = { navController.navigate(Routes.Settings.Localization) },
             )
             Preference(
                 icon = Icons.Outlined.Palette,
                 title = stringRes(R.string.settings__theme__title),
+                summary = stringRes(R.string.settings__home__theme_summary),
                 onClick = { navController.navigate(Routes.Settings.Theme) },
             )
             Preference(
@@ -131,19 +104,42 @@ fun HomeScreen() = FlorisScreen {
             Preference(
                 icon = Icons.Outlined.Keyboard,
                 title = stringRes(R.string.settings__keyboard__title),
+                summary = stringRes(R.string.settings__home__keyboard_summary),
                 onClick = { navController.navigate(Routes.Settings.Keyboard) },
             )
         }
         PreferenceGroup(title = stringRes(R.string.settings__home__section_typing)) {
             Preference(
+                icon = Icons.Default.Spellcheck,
+                title = stringRes(R.string.settings__typing__title),
+                summary = stringRes(R.string.settings__home__typing_summary),
+                onClick = { navController.navigate(Routes.Settings.Typing) },
+            )
+            Preference(
                 icon = Icons.Default.SmartButton,
                 title = stringRes(R.string.settings__smartbar__title),
+                summary = stringRes(R.string.settings__home__smartbar_summary),
                 onClick = { navController.navigate(Routes.Settings.Smartbar) },
             )
             Preference(
-                icon = Icons.Default.Spellcheck,
-                title = stringRes(R.string.settings__typing__title),
-                onClick = { navController.navigate(Routes.Settings.Typing) },
+                icon = Icons.Default.Gesture,
+                title = stringRes(R.string.settings__gestures__title),
+                summary = stringRes(R.string.settings__home__gestures_summary),
+                onClick = { navController.navigate(Routes.Settings.Gestures) },
+            )
+        }
+        PreferenceGroup(title = stringRes(R.string.settings__home__section_tools)) {
+            Preference(
+                icon = Icons.AutoMirrored.Outlined.Assignment,
+                title = stringRes(R.string.settings__clipboard__title),
+                summary = stringRes(R.string.settings__home__clipboard_summary),
+                onClick = { navController.navigate(Routes.Settings.Clipboard) },
+            )
+            Preference(
+                icon = Icons.AutoMirrored.Outlined.ShortText,
+                title = stringRes(R.string.snippets__title),
+                summary = stringRes(R.string.snippets__link_summary),
+                onClick = { navController.navigate(Routes.Settings.Snippets) },
             )
             Preference(
                 icon = Icons.Default.FlashOn,
@@ -158,37 +154,51 @@ fun HomeScreen() = FlorisScreen {
                 onClick = { navController.navigate(Routes.Settings.LocalAi) },
             )
             Preference(
-                icon = Icons.Default.Gesture,
-                title = stringRes(R.string.settings__gestures__title),
-                onClick = { navController.navigate(Routes.Settings.Gestures) },
-            )
-        }
-        PreferenceGroup(title = stringRes(R.string.settings__home__section_tools)) {
-            Preference(
-                icon = Icons.AutoMirrored.Outlined.Assignment,
-                title = stringRes(R.string.settings__clipboard__title),
-                onClick = { navController.navigate(Routes.Settings.Clipboard) },
-            )
-            Preference(
                 icon = Icons.Default.SentimentSatisfiedAlt,
                 title = stringRes(R.string.settings__media__title),
+                summary = stringRes(R.string.settings__home__media_summary),
                 onClick = { navController.navigate(Routes.Settings.Media) },
             )
+        }
+        PreferenceGroup(title = stringRes(R.string.settings__home__section_developer)) {
             Preference(
-                icon = Icons.Default.Extension,
-                title = stringRes(R.string.ext__home__title),
-                onClick = { navController.navigate(Routes.Ext.Home) },
+                icon = Icons.Outlined.Terminal,
+                title = stringRes(R.string.settings__developer__title),
+                summary = stringRes(R.string.settings__home__developer_summary),
+                onClick = { navController.navigate(Routes.Settings.Developer) },
+            )
+        }
+        PreferenceGroup(title = stringRes(R.string.settings__home__section_data)) {
+            Preference(
+                icon = Icons.Outlined.Archive,
+                title = stringRes(R.string.backup_and_restore__back_up__title),
+                summary = stringRes(R.string.backup_and_restore__back_up__summary),
+                onClick = { navController.navigate(Routes.Settings.Backup) },
+            )
+            Preference(
+                icon = Icons.Outlined.SettingsBackupRestore,
+                title = stringRes(R.string.backup_and_restore__restore__title),
+                summary = stringRes(R.string.backup_and_restore__restore__summary),
+                onClick = { navController.navigate(Routes.Settings.Restore) },
             )
         }
         PreferenceGroup(title = stringRes(R.string.settings__home__section_about)) {
             Preference(
+                icon = Icons.Default.Extension,
+                title = stringRes(R.string.ext__home__title),
+                summary = stringRes(R.string.settings__home__extensions_summary),
+                onClick = { navController.navigate(Routes.Ext.Home) },
+            )
+            Preference(
                 icon = Icons.Outlined.Build,
                 title = stringRes(R.string.settings__other__title),
+                summary = stringRes(R.string.settings__home__other_summary),
                 onClick = { navController.navigate(Routes.Settings.Other) },
             )
             Preference(
                 icon = Icons.Outlined.Info,
                 title = stringRes(R.string.about__title),
+                summary = stringRes(R.string.settings__home__about_summary),
                 onClick = { navController.navigate(Routes.Settings.About) },
             )
         }

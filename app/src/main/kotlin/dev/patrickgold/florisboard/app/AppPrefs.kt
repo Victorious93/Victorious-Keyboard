@@ -407,6 +407,10 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
 
     val devrow = Devrow()
     inner class Devrow {
+        /**
+         * Retired: the terminal key row follows [terminalKeyRow] (`TerminalRowPolicy.plan`). Kept so a stored value stays
+         * a known key; nothing reads it.
+         */
         val enabled = boolean(
             key = "devrow__enabled",
             default = false,

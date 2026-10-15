@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,20 +42,17 @@ import dev.patrickgold.florisboard.ime.ai.AiRefusal
 import dev.patrickgold.florisboard.ime.ai.AiSource
 import dev.patrickgold.florisboard.ime.ai.AiTask
 import dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin
+import dev.patrickgold.florisboard.ime.theme.rememberPanelColors
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.localAiManager
 import org.florisboard.lib.compose.stringRes
-
-private val PanelBg = Color(0xFF050505)
-private val Chip = Color(0xFF161616)
-private val Ink = Color(0xFFE8E8E8)
-private val Muted = Color(0xFFBDBDBD)
 
 @Composable
 fun LocalAiPanel(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val localAi by context.localAiManager()
     val keyboardManager by context.keyboardManager()
+    val colors = rememberPanelColors()
     val panel by localAi.panel.collectAsState()
     val current = panel ?: return
     val editor by keyboardManager.clipEditor.collectAsState()
@@ -64,7 +60,7 @@ fun LocalAiPanel(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(PanelBg)
+            .background(colors.background)
             .padding(horizontal = 6.dp, vertical = 4.dp),
     ) {
         Row(
@@ -94,7 +90,7 @@ fun LocalAiPanel(modifier: Modifier = Modifier) {
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 4.dp)
                 .clickable(enabled = current.task == AiTask.ASK) { localAi.focusAsk() },
-            style = androidx.compose.ui.text.TextStyle(color = Ink, fontSize = 14.sp),
+            style = androidx.compose.ui.text.TextStyle(color = colors.ink, fontSize = 14.sp),
         )
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -146,12 +142,13 @@ private fun notice(reason: AiRefusal): String = when (reason) {
 
 @Composable
 private fun ChipText(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = rememberPanelColors()
     BasicText(
         text = label,
         modifier = Modifier
-            .background(if (selected) Color(0xFF3A3A3A) else Chip)
+            .background(if (selected) colors.selected else colors.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        style = androidx.compose.ui.text.TextStyle(color = if (selected) Ink else Muted, fontSize = 12.sp),
+        style = androidx.compose.ui.text.TextStyle(color = if (selected) colors.ink else colors.muted, fontSize = 12.sp),
     )
 }

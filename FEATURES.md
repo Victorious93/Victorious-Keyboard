@@ -15,6 +15,9 @@ possible as specified (reason given).
 | Physical keyboard support | 🔹 | upstream lists it as incomplete |
 | Floating keyboard | ⬜ | not in upstream at this version |
 | Split keyboard / tablet layouts | ⬜ | |
+| Tools panel: five tabs (Clipboard, AI, Terminal, Code, Quick), icon tiles with translatable labels and On/Off state, theme elements only, keeps the window height, per-tab hide/reorder and own commands in Settings → Smartbar → Tools panel | ✅ catalog, order and reset JVM-tested · 🟦 panel and settings compiled, **never rendered or run** |
+| AI panel and clip editor colors follow the keyboard theme (window, key, pressed-key colors; unreadable text replaced) | ✅ palette JVM-tested · 🟦 panels compiled, **never rendered** |
+| Settings Home: Look, Typing, Tools (Clipboard, Snippets, Slash commands, Local AI, Emoji), Developer, Data (back up, restore), About; one-line summaries; Developer & terminal and Snippets → Expansion screens | 🟦 compiled, **never rendered** |
 | Victorious Neon keyboard theme (dark default) and Neon Light, older Floris themes still selectable | 🟦 stylesheet + settings scheme compiled, **not rendered on a device** | Navy `#010619`, amber `#FFC107`, hot pink. Settings app uses the same brand (dark default, light variant). AMOLED and Terminal Green are not separate presets |
 | Keyboard colors: background, key, key text, accent, highlight, suggestion pills, presets, reset | 🟡 mapping and persistence JVM-tested · 🟦 screen compiled, **never run** | Overlay on Victorious Neon / Neon Light only. Text contrast is corrected when it would be hard to read |
 
@@ -37,8 +40,9 @@ possible as specified (reason given).
 
 ## Developer / terminal / productivity (Phases 4–5)
 
-Details, mapping table and limits: `TERMINAL.md`. The developer row is **off by default** (Settings → Keyboard →
-Developer mode); with it off the keyboard behaves like upstream. The UI has not been seen on a screen.
+Details, mapping table and limits: `TERMINAL.md`. The terminal key row follows Settings → Developer & terminal →
+*Show terminal key row* (default Auto: terminal apps, `TYPE_NULL` fields, Developer or Termux mode); in other apps the
+keyboard behaves like upstream. The UI has not been seen on a screen.
 
 | Feature | Status |
 |---|---|
@@ -46,7 +50,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Sticky / double-tap-locked / held Ctrl and Alt state machine | ✅ pure core, JVM-tested |
 | Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
 | `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
-| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; off by default |
+| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; Auto by default |
+| One decision for showing the row and reserving its height (`TerminalRowPolicy.plan`); *Terminal keys* and *Navigation keys* switches honoured; old *Developer row* switch retired | ✅ pure, JVM-tested · 🟦 wiring compiled, **never run** |
 | Advanced developer settings: row size, navigation/symbol toggles, own symbol keys, key repeat and Ctrl/Alt lock timing, vibration, snippet date/time formats, own app-to-mode mappings, reset | ✅ parsers/rows JVM-tested · 🟦 screen and wiring compiled, **never run or rendered** |
 | Per-app automatic profile (language symbols per app) | ⬜ |
 | Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |

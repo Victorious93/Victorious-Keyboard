@@ -54,6 +54,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.app.LocalNavController
+import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.settings.clipboard.BackupIo
 import dev.patrickgold.florisboard.ime.snippets.DecodeResult
 import dev.patrickgold.florisboard.ime.snippets.ImportMode
@@ -69,6 +71,8 @@ import dev.patrickgold.florisboard.ime.snippets.SnippetValidator
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.florisboard.snippetManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
+import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
+import dev.patrickgold.jetpref.datastore.ui.Preference
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -115,7 +119,7 @@ private fun SnippetIssue.messageRes(): Int = when (this) {
 
 private class PendingImport(val snippets: List<Snippet>, val invalid: Int)
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalJetPrefDatastoreUi::class)
 @Composable
 fun SnippetsScreen() = FlorisScreen {
     title = stringRes(R.string.snippets__title)
@@ -131,6 +135,8 @@ fun SnippetsScreen() = FlorisScreen {
     val prefs by FlorisPreferenceStore
     val prefix by prefs.snippets.prefix.observeAsState()
     val prefixText = prefix.text
+    val expansionOn by prefs.snippets.expansionEnabled.observeAsState()
+    val navController = LocalNavController.current
 
     var query by rememberSaveable { mutableStateOf("") }
     var editing by remember { mutableStateOf<Snippet?>(null) }
@@ -186,6 +192,13 @@ fun SnippetsScreen() = FlorisScreen {
                 text = stringRes(R.string.snippets__invalid_banner, "n" to state.invalidOnLoad),
             )
         }
+        Preference(
+            title = stringRes(R.string.snippets__expansion__title),
+            summary = stringRes(
+                if (expansionOn) R.string.snippets__expansion__link_summary_on else R.string.snippets__expansion__link_summary_off,
+            ),
+            onClick = { navController.navigate(Routes.Settings.SnippetExpansion) },
+        )
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

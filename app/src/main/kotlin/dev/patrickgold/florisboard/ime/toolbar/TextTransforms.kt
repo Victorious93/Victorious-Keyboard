@@ -68,8 +68,9 @@ object TextTransforms {
             TextTransform.REGEX_ESCAPE -> TransformResult.Ok(regexEscape(input))
             TextTransform.BASE64_ENCODE -> TransformResult.Ok(Base64.getEncoder().encodeToString(input.toByteArray(Charsets.UTF_8)))
             TextTransform.BASE64_DECODE -> decodeBase64(input)
-            TextTransform.URL_ENCODE -> TransformResult.Ok(URLEncoder.encode(input, Charsets.UTF_8))
-            TextTransform.URL_DECODE -> TransformResult.Ok(URLDecoder.decode(input, Charsets.UTF_8))
+            // The String-charset overloads: the Charset ones need API 33 and minSdk is 26.
+            TextTransform.URL_ENCODE -> TransformResult.Ok(URLEncoder.encode(input, "UTF-8"))
+            TextTransform.URL_DECODE -> TransformResult.Ok(URLDecoder.decode(input, "UTF-8"))
             TextTransform.HEX_ENCODE -> TransformResult.Ok(input.toByteArray(Charsets.UTF_8).toHex())
             TextTransform.HEX_DECODE -> decodeHex(input)
             TextTransform.JSON_PRETTY -> pretty(input)

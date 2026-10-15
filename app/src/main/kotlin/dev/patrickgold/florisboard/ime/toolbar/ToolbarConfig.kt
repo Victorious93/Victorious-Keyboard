@@ -58,6 +58,20 @@ data class ToolbarConfig(
         swapped[index] = previous
         return copy(order = order + (page.name to swapped))
     }
+
+    /** The user's order for a tools-panel tab (button names), empty for the default order. */
+    fun tabOrder(tab: ToolsTab): List<String> = order[ToolsCatalog.orderKey(tab)].orEmpty()
+
+    fun movingEarlier(tab: ToolsTab, id: ToolbarActionId): ToolbarConfig {
+        val next = ToolsCatalog.movingEarlier(tab, hiddenSet(), tabOrder(tab), id)
+        return copy(order = order + (ToolsCatalog.orderKey(tab) to next))
+    }
+
+    /** Hidden buttons shown again and every tab back in its default order. Saved commands and switches are kept. */
+    fun withDefaultTools(): ToolbarConfig = copy(
+        hidden = hidden.filter { name -> ToolsCatalog.actionIds().none { it.name == name } && !name.startsWith("cmd:") },
+        order = order.filterKeys { key -> ToolsTab.entries.none { ToolsCatalog.orderKey(it) == key } },
+    )
 }
 
 @Serializable

@@ -42,7 +42,11 @@ object SlashMatcher {
      * Password fields return before the text is inspected. A slash in the middle of a word is ordinary text.
      * `/snip`, `/ai`, and `/shell` keep their following words; other commands end at the first space.
      */
-    fun token(textBeforeCursor: String, passwordLike: Boolean): SlashToken? {
+    fun token(
+        textBeforeCursor: String,
+        passwordLike: Boolean,
+        argumentNames: Set<String> = emptySet(),
+    ): SlashToken? {
         if (passwordLike) return null
         if (textBeforeCursor.isEmpty()) return null
         var slash = -1
@@ -63,7 +67,8 @@ object SlashMatcher {
         val space = body.indexOf(' ')
         val name = (if (space < 0) body else body.substring(0, space)).lowercase()
         if (name.any { it.isISOControl() }) return null
-        if (space >= 0 && name.isNotEmpty() && name !in argumentNames) return null
+        val allowedArguments = this.argumentNames + argumentNames
+        if (space >= 0 && name.isNotEmpty() && name !in allowedArguments) return null
         val argument = if (space < 0) "" else body.substring(space + 1)
         return SlashToken(name, argument, raw.length)
     }
@@ -89,6 +94,7 @@ data class SlashOffer(
     val description: String,
     val builtin: SlashBuiltin?,
     val customId: String?,
+    val fleet: Boolean = false,
 )
 
 data class CustomSlashCommand(

@@ -248,6 +248,7 @@ dependencies {
     implementation(projects.lib.compose)
     implementation(projects.lib.kotlin)
     implementation(projects.lib.snygg)
+    implementation(projects.lib.fleet)
 
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)

@@ -53,6 +53,7 @@ import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
+import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.localAiManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -66,6 +67,7 @@ fun TextInputLayout(
     val keyboardManager by context.keyboardManager()
     val editorInstance by context.editorInstance()
     val localAi by context.localAiManager()
+    val fleetClient by context.fleetHub()
 
     val prefs by FlorisPreferenceStore
 
@@ -91,6 +93,7 @@ fun TextInputLayout(
         }
         val operatingMode by keyboardManager.activeMode.collectAsState()
         val toolsOpen by keyboardManager.toolsOpen.collectAsState()
+        val fleetSnapshot by fleetClient.snapshot.collectAsState()
         val devEnabled by prefs.devrow.enabled.observeAsState()
         val devProfile by prefs.devrow.profile.observeAsState()
         val devTerminalKeys by prefs.devrow.terminalKeys.observeAsState()
@@ -140,6 +143,15 @@ fun TextInputLayout(
                     keyboardManager.performToolbarAction(id)
                 },
                 onClose = { keyboardManager.setToolsOpen(false) },
+                fleet = fleetSnapshot.panel(),
+                onAskHub = {
+                    keyboardManager.setToolsOpen(false)
+                    keyboardManager.askHub()
+                },
+                onSnippet = { snippet ->
+                    keyboardManager.setToolsOpen(false)
+                    keyboardManager.insertFleetSnippet(snippet)
+                },
                 modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight()),
             )
         } else {

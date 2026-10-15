@@ -18,23 +18,30 @@ package dev.patrickgold.florisboard.ime.toolbar.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
+import dev.patrickgold.florisboard.lib.fleet.FleetPanelState
+import dev.patrickgold.florisboard.lib.fleet.FleetSnippet
+import dev.patrickgold.florisboard.lib.fleet.FleetSnippetKind
 
 /**
  * Replaces the key area. Tiles call the existing toolbar actions. Nothing in this grid is executed
@@ -44,6 +51,9 @@ import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
 fun ToolsPanel(
     onAction: (ToolbarActionId) -> Unit,
     onClose: () -> Unit,
+    fleet: FleetPanelState = FleetPanelState.Hidden,
+    onAskHub: () -> Unit = {},
+    onSnippet: (FleetSnippet) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -62,8 +72,23 @@ fun ToolsPanel(
                 color = Color(0xFFE8E8E8),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f),
             )
+            if (fleet.showDot) {
+                Text(
+                    text = if (fleet.connected) "Hub" else "Hub off",
+                    color = Color(0xFF9A9A9A),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+                Box(
+                    modifier = Modifier
+                        .padding(start = 6.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (fleet.connected) Color(0xFF3DDC84) else Color(0xFF6E6E6E)),
+                )
+            }
+            Box(modifier = Modifier.weight(1f))
             TextButton(onClick = onClose) {
                 Text("Keyboard", color = Color(0xFFE8E8E8))
             }
@@ -92,6 +117,56 @@ fun ToolsPanel(
                                 maxLines = 1,
                             )
                         }
+                    }
+                }
+            }
+            if (group.title == "Terminal keys" && fleet.connected) {
+                HubSnippetBlock(fleet.snippets, onAskHub, onSnippet)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HubSnippetBlock(
+    snippets: List<FleetSnippet>,
+    onAskHub: () -> Unit,
+    onSnippet: (FleetSnippet) -> Unit,
+) {
+    Text(
+        text = "Hub",
+        color = Color(0xFF9A9A9A),
+        fontSize = 12.sp,
+        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+    )
+    TextButton(onClick = onAskHub, modifier = Modifier.fillMaxWidth()) {
+        Text("Ask hub", color = Color(0xFFE8E8E8), fontSize = 13.sp)
+    }
+    for (kind in FleetSnippetKind.entries) {
+        val rows = snippets.filter { it.kind == kind }
+        if (rows.isEmpty()) continue
+        Text(
+            text = kind.name.lowercase(),
+            color = Color(0xFF9A9A9A),
+            fontSize = 11.sp,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        rows.chunked(2).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                for (snippet in row) {
+                    TextButton(
+                        onClick = { onSnippet(snippet) },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(
+                            text = snippet.label,
+                            color = Color(0xFFE8E8E8),
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                        )
                     }
                 }
             }

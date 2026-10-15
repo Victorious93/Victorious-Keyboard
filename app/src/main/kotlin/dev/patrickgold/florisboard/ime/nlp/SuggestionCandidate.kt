@@ -198,6 +198,7 @@ data class SlashSuggestionCandidate(
     val customId: String?,
     val argument: String,
     val replaceLength: Int,
+    val fleet: Boolean = false,
     override val secondaryText: CharSequence? = null,
     override val confidence: Double = 1.0,
     override val isEligibleForAutoCommit: Boolean = false,

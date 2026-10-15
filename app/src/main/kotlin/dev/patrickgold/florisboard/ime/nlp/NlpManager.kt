@@ -37,6 +37,8 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.TypingLearner
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.customSuggestions
+import dev.patrickgold.florisboard.fleetHub
+import dev.patrickgold.florisboard.ime.slash.SlashCatalog
 import dev.patrickgold.florisboard.ime.smartbar.StripPlan
 import dev.patrickgold.florisboard.ime.smartbar.StripPlanner
 import dev.patrickgold.florisboard.keyboardManager
@@ -68,6 +70,7 @@ class NlpManager(context: Context) {
     private val clipboardManager by context.clipboardManager()
     private val customSuggestions by context.customSuggestions()
     private val slashCommands by context.slashCommands()
+    private val fleet by context.fleetHub()
     private val editorInstance by context.editorInstance()
     private val keyboardManager by context.keyboardManager()
     private val localAi by context.localAiManager()
@@ -127,6 +130,9 @@ class NlpManager(context: Context) {
             assembleCandidates()
         }
         slashCommands.items.collectLatestIn(scope) {
+            assembleCandidates()
+        }
+        fleet.snapshot.collectLatestIn(scope) {
             assembleCandidates()
         }
         subtypeManager.activeSubtypeFlow.collectLatestIn(scope) { subtype ->
@@ -400,14 +406,21 @@ class NlpManager(context: Context) {
             } else {
                 emptyList()
             }
+            val savedCommands = if (passwordLike) emptyList() else slashCommands.snapshot()
+            val reserved = buildSet {
+                addAll(SlashCatalog.builtins.map { it.name })
+                addAll(savedCommands.map { it.name.lowercase() })
+            }
+            val fleetCommands = if (passwordLike) emptyList() else fleet.snapshot.value.commands(reserved)
             val plan = StripPlanner.plan(
                 passwordLike = passwordLike,
                 slashEnabled = prefs.slash.enabled.get(),
                 textBeforeCursor = content.textBeforeSelection,
                 selection = content.selectedText,
                 custom = if (passwordLike) emptyList() else customSuggestions.snapshot(),
-                commands = if (passwordLike) emptyList() else slashCommands.snapshot(),
+                commands = savedCommands,
                 clipboardAvailable = clipboard.isNotEmpty(),
+                fleetCommands = fleetCommands,
             )
             activeCandidates = when (plan) {
                 is StripPlan.Slash -> plan.offers.map { offer ->
@@ -417,6 +430,7 @@ class NlpManager(context: Context) {
                         customId = offer.customId,
                         argument = plan.argument,
                         replaceLength = plan.replaceLength,
+                        fleet = offer.fleet,
                     )
                 }
                 is StripPlan.Words -> buildList {

@@ -79,6 +79,7 @@ import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
 import dev.patrickgold.florisboard.nlpManager
+import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.slashCommands
 import dev.patrickgold.florisboard.snippetManager
 import dev.patrickgold.florisboard.subtypeManager
@@ -148,6 +149,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.florisboard.lib.android.AndroidKeyguardManager
@@ -171,6 +173,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val subtypeManager by context.subtypeManager()
     private val snippetManager by context.snippetManager()
     private val slashCommands by context.slashCommands()
+    private val fleet by context.fleetHub()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val layoutManager = LayoutManager(context)
@@ -193,6 +196,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
+        if (open) fleet.refresh()
     }
 
     /**
@@ -295,6 +299,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
                 toolsOpen.value = false
+                fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
                     vaultLearningHold = false
@@ -475,6 +480,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private fun expandSlash(candidate: SlashSuggestionCandidate) {
         if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
         if (!prefs.slash.enabled.get()) return
+        if (candidate.fleet) {
+            expandFleetSlash(candidate)
+            return
+        }
         val commands = slashCommands.snapshot()
         val offer = if (candidate.customId != null) {
             dev.patrickgold.florisboard.ime.slash.SlashOffer(candidate.commandName, "", null, candidate.customId)
@@ -558,6 +567,86 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             }
             dev.patrickgold.florisboard.ime.slash.SlashAction.Unknown ->
                 appContext.showShortToastSync(R.string.slash__unknown)
+        }
+    }
+
+    private fun expandFleetSlash(candidate: SlashSuggestionCandidate) {
+        if (!prefs.fleet.enabled.get()) return
+        val argument = dev.patrickgold.florisboard.lib.fleet.FleetPolicy.slashText(
+            candidate.argument,
+            passwordLike = false,
+        ) ?: return
+        val token = editorInstance.activeContent.textBeforeSelection.takeLast(candidate.replaceLength)
+        scope.launch {
+            val reply = fleet.ask(candidate.commandName, argument)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (reply.isNullOrBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                    return@withContext
+                }
+                val before = editorInstance.activeContent.textBeforeSelection
+                if (token.isNotEmpty() && before.endsWith(token)) {
+                    replaceSlashToken(token.length, reply, null)
+                }
+            }
+        }
+    }
+
+    /** Sends only the current selection. Vault text is included because the tap is an explicit pick. */
+    fun askHub() {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
+            appContext.showShortToastSync(R.string.fleet__password)
+            return
+        }
+        val session = clipEditor.value
+        val selection = if (session != null) {
+            if (session.body.hasSelection) session.body.selectedText else ""
+        } else {
+            editorInstance.activeContent.selectedText
+        }
+        val fromVault = session?.origin == dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin.VAULT ||
+            session?.sensitive == true
+        val text = dev.patrickgold.florisboard.lib.fleet.FleetPolicy.askText(
+            selection = selection,
+            passwordLike = false,
+            selectionIsVault = fromVault,
+            explicitVaultPick = true,
+        )
+        if (text == null) {
+            appContext.showShortToastSync(R.string.fleet__need_selection)
+            return
+        }
+        scope.launch {
+            val reply = fleet.ask(dev.patrickgold.florisboard.lib.fleet.FleetHubContract.ACTION_ASK, text)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (reply.isNullOrBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                } else {
+                    if (fromVault) vaultLearningHold = true
+                    insertAtTarget(reply)
+                }
+            }
+        }
+    }
+
+    /** Inserts hub snippet text. A command name asks the hub for text and does not run it. */
+    fun insertFleetSnippet(snippet: dev.patrickgold.florisboard.lib.fleet.FleetSnippet) {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
+            appContext.showShortToastSync(R.string.fleet__password)
+            return
+        }
+        scope.launch {
+            val outcome = fleet.insertSnippet(snippet)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (outcome == null || outcome.execute || outcome.text.isBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                } else {
+                    insertAtTarget(outcome.text)
+                }
+            }
         }
     }
 

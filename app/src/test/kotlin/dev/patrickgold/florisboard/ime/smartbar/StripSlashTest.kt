@@ -38,6 +38,9 @@ import dev.patrickgold.florisboard.ime.slash.SlashCommandCodec
 import dev.patrickgold.florisboard.ime.slash.SlashCommandList
 import dev.patrickgold.florisboard.ime.slash.SlashDocument
 import dev.patrickgold.florisboard.ime.slash.SlashMatcher
+import dev.patrickgold.florisboard.lib.fleet.FleetCommand
+import dev.patrickgold.florisboard.lib.fleet.FleetHubContract
+import java.io.File
 import dev.patrickgold.florisboard.ime.slash.SlashOffer
 import dev.patrickgold.florisboard.ime.slash.SlashTemplate
 import dev.patrickgold.florisboard.ime.slash.SlashVars
@@ -218,6 +221,54 @@ class StripSlashTest : FunSpec({
         val opened = BackupReader.read(locked, "correct horse".toCharArray())
         opened.passwordProtected shouldBe true
         opened.suggestionsDocument shouldBe doc
+    }
+
+    test("hub slash commands join the strip only when the hub is connected") {
+        SlashMatcher.token("/note hello", passwordLike = false) shouldBe null
+        val connected = listOf(
+            FleetCommand("build", "build"),
+            FleetCommand("status", "status"),
+            FleetCommand("note", "note"),
+            FleetCommand("deploy", "deploy"),
+        )
+        val token = SlashMatcher.token("/note hello", passwordLike = false, argumentNames = connected.map { it.name }.toSet())
+        token!!.name shouldBe "note"
+        token.argument shouldBe "hello"
+        val plan = StripPlanner.plan(
+            passwordLike = false,
+            slashEnabled = true,
+            textBeforeCursor = "/b",
+            selection = "",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+            fleetCommands = connected,
+        )
+        plan.shouldBeInstanceOf<StripPlan.Slash>()
+        plan.offers.map { it.name } shouldBe listOf("build")
+        plan.offers.single().fleet shouldBe true
+        val hidden = StripPlanner.plan(
+            passwordLike = true,
+            slashEnabled = true,
+            textBeforeCursor = "/note hello",
+            selection = "vault",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+            fleetCommands = connected,
+        )
+        hidden.shouldBeInstanceOf<StripPlan.Words>()
+    }
+
+    test("manifest queries the unconfirmed hub and does not request internet") {
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        val contract = File("../lib/fleet/src/main/kotlin/dev/patrickgold/florisboard/lib/fleet/FleetHubContract.kt").readText()
+        contract shouldContain "TODO-confirm-with-hub"
+        manifest shouldContain "TODO-confirm-with-hub"
+        manifest shouldContain "android:name=\"${FleetHubContract.PACKAGE_NAME}\""
+        manifest shouldContain "android:name=\"${FleetHubContract.SERVICE_ACTION}\""
+        manifest shouldContain "android:name=\"${FleetHubContract.PERMISSION}\""
+        manifest.contains("android.permission.INTERNET") shouldBe false
     }
 
     test("primary candidate is the auto-commit word") {

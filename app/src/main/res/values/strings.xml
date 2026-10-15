@@ -520,6 +520,14 @@
     <string name="settings__my_suggestions__trigger">Shortcut (optional)</string>
     <string name="settings__my_suggestions__no_trigger">Matches the start of the phrase</string>
     <string name="settings__my_suggestions__rejected">That phrase or shortcut cannot be saved. It may be empty, too long, or already in the list.</string>
+    <string name="settings__fleet__title">Fleet link</string>
+    <string name="settings__fleet__summary">Optional Droidcommand-AI hub. Hidden when that app is not installed</string>
+    <string name="settings__fleet__enabled">Droidcommand-AI fleet</string>
+    <string name="settings__fleet__enabled_summary">Connects only while the hub app is installed. Replies are inserted and never run</string>
+    <string name="settings__fleet__info">The hub package, service, and signature permission are not confirmed yet. Until they match an installed hub, every fleet feature stays hidden and the keyboard stays standalone. Password fields are never sent. Vault text is sent only when you tap Ask hub. No Internet permission is used.</string>
+    <string name="fleet__unavailable">The hub did not answer</string>
+    <string name="fleet__need_selection">Select text, then tap Ask hub</string>
+    <string name="fleet__password">Fleet actions stay off in password fields</string>
     <string name="settings__slash__title">Slash commands</string>
     <string name="settings__slash__summary">Type / at the start of a word to expand a command</string>
     <string name="settings__slash__enabled">Slash commands</string>

@@ -1,0 +1,2 @@
+-keep class dev.patrickgold.florisboard.lib.fleet.IFleetHub { *; }
+-keep class dev.patrickgold.florisboard.lib.fleet.IFleetHub$Stub { *; }

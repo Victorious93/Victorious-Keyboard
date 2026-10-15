@@ -86,6 +86,14 @@ Settings → Typing → Suggestions → **My suggestions** stores words and phra
 
 Type `/` at the start of a word and the strip lists matching commands. Tap one to expand it. Built-ins: `/date`, `/time`, `/clip` (latest non-sensitive clip), `/snip name`, `/ai prompt` (Local AI, inserts the reply), `/fix`, `/rewrite`, `/sum`, `/translate`, `/shell description` (inserts one command and never runs it), `/edit` (clip editor), `/vault` (unlock). Settings → **Slash commands** adds, edits, deletes, and reorders custom commands. Output text can use `{date}`, `{time}`, `{clipboard}`, `{selection}`, and `{cursor}`. A global switch turns them off. They stay off in password fields. Custom commands live in `noBackupFilesDir/slash/commands.json`. Not run on a device.
 
+### Droidcommand-AI fleet
+
+The keyboard stays standalone. It does not request the Internet permission. An optional link binds to the Droidcommand-AI hub with a signature-level permission and a `<queries>` package entry. If that app is not installed, or the fleet switch is off, every fleet feature stays hidden. The hub's package name, service action, and permission are still placeholders (`todo.confirm.with.hub`, marked `TODO-confirm-with-hub` in `FleetHubContract`) until the hub publishes them.
+
+When the hub is connected, `/build`, `/status`, `/note`, and any command the hub advertises appear with the other slash commands. Ask hub sends the current selection. ADB, fastboot, and Termux snippets from the hub appear in the tools panel under Terminal keys, with a connection dot in the header. Password fields are never sent. Vault text is sent only when you tap Ask hub. Text that comes back is inserted and never run.
+
+Details: [docs/FLEET.md](docs/FLEET.md). Not run on a device.
+
 ### Developer and terminal
 
 The terminal key row follows **Show terminal key row** (Auto / Always / Never), described above. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet. The row itself is compiled and has not been rendered on a device.
@@ -250,7 +258,7 @@ Settings → Theme → the extension list opens the theme editor shipped with th
 |---|---|
 | [FEATURES.md](FEATURES.md) · [ROADMAP.md](ROADMAP.md) | Feature status and phases |
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [BUILD.md](BUILD.md) · [TESTING.md](TESTING.md) | Structure, build, tests |
-| [CLIPBOARD.md](CLIPBOARD.md) · [SNIPPETS.md](SNIPPETS.md) · [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md) · [TERMINAL.md](TERMINAL.md) | Feature design docs |
+| [CLIPBOARD.md](CLIPBOARD.md) · [SNIPPETS.md](SNIPPETS.md) · [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md) · [TERMINAL.md](TERMINAL.md) · [docs/FLEET.md](docs/FLEET.md) | Feature design docs |
 | [PRIVACY.md](PRIVACY.md) · [SECURITY.md](SECURITY.md) | Data handling and vulnerability reports |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Contribution rules |
 | [LICENSES.md](LICENSES.md) · [docs/upstream/](docs/upstream/) | Licences and upstream attribution |

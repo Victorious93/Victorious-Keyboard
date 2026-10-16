@@ -57,13 +57,18 @@ object StripPlanner {
         clipboardAvailable: Boolean,
     ): StripPlan {
         if (!passwordLike) {
-            val token = SlashMatcher.token(textBeforeCursor, passwordLike = false)
+            val known = commands.filter { it.enabled }.map { it.name }.toSet()
+            val token = SlashMatcher.token(textBeforeCursor, passwordLike = false, knownNames = known)
             if (token != null && slashEnabled) {
-                return StripPlan.Slash(
-                    offers = SlashCatalog.match(token.name, commands, enabled = true),
-                    replaceLength = token.replaceLength,
-                    argument = token.argument,
-                )
+                val offers = SlashCatalog.match(token.name, commands, enabled = true)
+                // A slash that matches nothing (`cd /usr/bin`) is a path, not a command list.
+                if (token.name.isEmpty() || offers.isNotEmpty()) {
+                    return StripPlan.Slash(
+                        offers = offers,
+                        replaceLength = token.replaceLength,
+                        argument = token.argument,
+                    )
+                }
             }
         }
         val prefix = if (passwordLike) "" else StripPrefix.of(textBeforeCursor)

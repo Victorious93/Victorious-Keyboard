@@ -77,6 +77,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   9 regression tests after.
 - `PayloadCipher.decrypt` rejects non-canonical base64url (an altered last character could decode to identical bytes
   and still authenticate); tamper tests are now deterministic.
+- Code tab case conversion (camelCase, snake_case, kebab-case, PascalCase) treated every non-ASCII letter as a word separator and dropped it (`café au lait` became `caf_au_lait`). It now keeps Unicode letters and digits.
+- Slash commands: a slash followed by a space (`1 / 2`) no longer takes over the suggestion strip, and a later slash inside `/ai`, `/shell` or `/snip` text (`/shell ls /usr/bin`) no longer re-anchors the command on that slash.
+- Tools panel: a tab whose buttons are all hidden now says so (tap to open the toolbar settings) instead of a blank panel, and tiles under 64 dp show one label line so a second line is not clipped in short (landscape) panels. Not rendered.
 
 ### Added
 - Snippet expansion on Enter and Tab. Each key is its own switch, off by default (Settings → Keyboard → Developer mode,

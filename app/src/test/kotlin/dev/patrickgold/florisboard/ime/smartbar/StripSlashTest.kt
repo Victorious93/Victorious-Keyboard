@@ -156,6 +156,34 @@ class StripSlashTest : FunSpec({
         SlashMatcher.token("/date /time", passwordLike = false)!!.name shouldBe "time"
     }
 
+    test("a later real command replaces an argument command, and a path does not") {
+        val date = SlashMatcher.token("/ai hello /date", passwordLike = false)!!
+        date.name shouldBe "date"
+        date.argument shouldBe ""
+        date.replaceLength shouldBe "/date".length
+        val shell = SlashMatcher.token("/ai note /shell ls /usr/bin", passwordLike = false)!!
+        shell.name shouldBe "shell"
+        shell.argument shouldBe "ls /usr/bin"
+        SlashMatcher.token("cd /usr/bin", passwordLike = false) shouldBe null
+        SlashMatcher.token("/shell ls /usr", passwordLike = false)!!.name shouldBe "shell"
+        val custom = SlashMatcher.token("/deploy", passwordLike = false, knownNames = setOf("deploy"))!!
+        custom.name shouldBe "deploy"
+        SlashMatcher.token("/deploy", passwordLike = false) shouldBe null
+    }
+
+    test("a path does not replace the suggestion strip with an empty command list") {
+        val plan = StripPlanner.plan(
+            passwordLike = false,
+            slashEnabled = true,
+            textBeforeCursor = "cd /usr/bin",
+            selection = "",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+        )
+        plan.shouldBeInstanceOf<StripPlan.Words>()
+    }
+
     test("clipboard values are not scanned for slash placeholders") {
         val rendered = SlashTemplate.render(
             "see {clipboard} then {date}{cursor}",

@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceModel
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.app.LocalNavController
+import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
 import dev.patrickgold.florisboard.ime.developer.CustomSymbols
 import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
@@ -73,6 +75,7 @@ fun AdvancedDeveloperScreen() = FlorisScreen {
     previewFieldVisible = true
 
     val prefs by FlorisPreferenceStore
+    val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
     var confirmReset by remember { mutableStateOf(false) }
     val customSymbols by prefs.devrow.customSymbols.observeAsState()
@@ -172,10 +175,10 @@ fun AdvancedDeveloperScreen() = FlorisScreen {
                 title = stringRes(R.string.devadv__keep_tab__label),
                 summary = stringRes(R.string.devadv__keep_tab__summary),
             )
-            SwitchPreference(
-                prefs.snippets.expandInTerminalMode,
+            Preference(
                 title = stringRes(R.string.devadv__expand_terminal__label),
                 summary = stringRes(R.string.devadv__expand_terminal__summary),
+                onClick = { navController.navigate(Routes.Settings.SnippetExpansion) },
             )
         }
         PreferenceGroup(title = stringRes(R.string.devadv__group_modes)) {
@@ -234,7 +237,6 @@ private suspend fun resetAdvanced(prefs: FlorisPreferenceModel) {
     prefs.snippets.keepSpace.set(true)
     prefs.snippets.keepEnter.set(true)
     prefs.snippets.keepTab.set(true)
-    prefs.snippets.expandInTerminalMode.set(false)
     prefs.modes.appOverrides.set("")
 }
 

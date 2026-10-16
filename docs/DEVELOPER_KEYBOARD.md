@@ -50,7 +50,7 @@ Settings → Developer & terminal → **Advanced developer settings** (compiled,
 |---|---|
 | Developer row | Row size (Compact 80 % / Normal / Large 125 % of the Smartbar height); navigation keys on/off (arrows, Home, End, PgUp, PgDn) separately from Esc/Tab/Ctrl/Alt; language symbols on/off; **your own symbol keys**; whether they are added to or replace the language symbols |
 | Timing and feedback | Hold delay before repeating (150-800 ms, default 350); repeat interval (20-200 ms, default 60); double-tap time to lock Ctrl/Alt (200-800 ms, default 400); vibration on developer keys |
-| Snippets | Date format for `{{date}}` (ISO, DD/MM/YYYY, MM/DD/YYYY, DD.MM.YYYY); time format for `{{time}}` (24 h, 24 h with seconds, 12 h); keep the typed space after expanding; expand in Termux mode (off by default) |
+| Snippets | Date format for `{{date}}` (ISO, DD/MM/YYYY, MM/DD/YYYY, DD.MM.YYYY); time format for `{{time}}` (24 h, 24 h with seconds, 12 h); keep the typed space, Enter and Tab after expanding; a link to the per-mode expansion rules (Snippets → Expansion → Per keyboard mode; Termux is off by default) |
 | Keyboard modes | **Your own app-to-mode mappings** used by automatic mode switching |
 | Reset | Puts everything on this screen back to its default; the basic Developer mode settings are untouched |
 
@@ -67,6 +67,7 @@ Free-text settings are validated live with the same pure parsers the keyboard us
 ## Not done
 
 * Quick switching between modes from the keyboard itself (today the default mode is changed in Settings).
-* Per-mode autocorrect/prediction off, per-mode snippet-expansion defaults, bracket auto-pairing, indentation helpers.
+* Per-mode autocorrect/prediction off, bracket auto-pairing, indentation helpers. (Per-mode snippet expansion exists:
+  `SNIPPETS.md`.)
 * The three planned modes and everything they need.
 * Device validation of all of it.

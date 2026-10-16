@@ -14,9 +14,9 @@ pull request per item. Items are listed in the order they should be built; the o
 | # | Item | Status | Notes |
 |---|---|---|---|
 | 1 | Snippets: expansion on Enter and Tab (the core already supports more boundaries, `ExpansionSettings.boundaries`) | done | JVM-tested (`ExpansionAction`). Each key is its own opt-in (both off by default). Never in sensitive fields. A non-match does not swallow Enter/Tab. Keyboard wiring compiled, **not run on a device**. |
-| UI | UI pass (owner request, 2026-10-15, outside the numbered queue): tabbed tools panel on theme elements, one terminal-row decision, theme-following AI and clip-editor panels, Settings Home regrouped with Developer & terminal and Snippets → Expansion screens | in review (its own PR) | Pure parts JVM-tested (31 tests). Compiled; **never rendered or run on a device**. `assembleDebug` could not finish in the sandbox (llama.cpp tarball blocked by egress policy); GitHub CI run `38668379528` on `029e087` passed the full job (APK, unit tests, lint). Next UI steps, not started: a JVM render loop (Paparazzi or Roborazzi) to see Compose screens without a device, responsive/tablet layout, translations of the new strings. |
-| 2 | Snippets: per-mode defaults (e.g. expansion on/off per operating mode) | `next` | Builds on `OperatingMode` and the Advanced developer settings. |
-| 3 | Snippets: encrypted export, reusing the clipboard backup container | queued | Must follow `BACKUP_FORMAT.md` (JCE primitives only, versioned header, no keys in metadata). |
+| UI | UI pass (owner request, 2026-10-15, outside the numbered queue): tabbed tools panel on theme elements, one terminal-row decision, theme-following AI and clip-editor panels, Settings Home regrouped with Developer & terminal and Snippets → Expansion screens | done (PR #29, merged 2026-10-15) | Pure parts JVM-tested (31 tests). Compiled; **never rendered or run on a device**. `assembleDebug` could not finish in the sandbox (llama.cpp tarball blocked by egress policy); GitHub CI run `38668379528` on `029e087` passed the full job (APK, unit tests, lint). Next UI steps, not started: a JVM render loop (Paparazzi or Roborazzi) to see Compose screens without a device, responsive/tablet layout, translations of the new strings. |
+| 2 | Snippets: per-mode defaults (e.g. expansion on/off per operating mode) | in review (its own PR) | `ModeExpansionPolicy` (JVM-tested): per mode Follow / Space only / Off; defaults Standard and Developer Follow, Termux Off; the master switch always wins. The old "Expand snippets in Termux mode" switch migrates to the Termux rule without changing behaviour. Settings: Snippets → Expansion → Per keyboard mode. Keyboard wiring compiled, **not run on a device**. Per-mode prefix or keep-switches are not done. |
+| 3 | Snippets: encrypted export, reusing the clipboard backup container | `next` | Must follow `BACKUP_FORMAT.md` (JCE primitives only, versioned header, no keys in metadata). |
 | 4 | Dictionary packs: device validation and a decision on the word lists (verify against official sources) | blocked on owner | The lists were written from memory; verification needs network access the sandbox does not have. |
 | 5 | Termux `RUN_COMMAND` integration | blocked on owner | Not started. Do not begin unless the owner explicitly asks (see `CLAUDE.md`). |
 
@@ -32,7 +32,7 @@ Completed phases of this queue are recorded in `CHANGELOG.md` and in the status 
 | 5 | Snippets and productivity | 🟡 pure core ✅ JVM-tested; Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, import/export, in-keyboard picker panel) 🟦 compiled, **never run or rendered** (see `SNIPPETS.md`) |
 | 6 | Predictive and gesture typing | 🟡 word prediction (current word, next word, one-edit autocorrect) is JVM-tested and wired into the suggestion bar; learning is off by default and the file is not backed up. Gesture typing is still not done. Nothing has been run on a device (`DICTIONARY_PACKS.md`) |
 | 7 | AI workspace | 🟡 on-device GGUF import and llama.cpp JNI: pure rules JVM-tested, settings and toolbar compiled, **not run on a device**. No `INTERNET` permission. No model is bundled. Network providers are not started. |
-| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Black (day and night); Victorious Neon and Neon Light stay selectable. Settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay those themes and are JVM-tested; the screen is compiled and not run on a device. UI pass (in review): the tools panel uses theme elements and the AI panel and clip editor follow the keyboard theme, so light themes and Keyboard colors reach them; Settings Home regrouped. Never rendered. Responsive/tablet layout not started |
+| 8 | Themes and responsive UI | 🟡 default keyboard theme is Victorious Black (day and night); Victorious Neon and Neon Light stay selectable. Settings use a navy/amber/pink Material scheme, dark by default. Keyboard colors overlay those themes and are JVM-tested; the screen is compiled and not run on a device. UI pass (merged, PR #29): the tools panel uses theme elements and the AI panel and clip editor follow the keyboard theme, so light themes and Keyboard colors reach them; Settings Home regrouped. Never rendered. Responsive/tablet layout not started |
 | 9 | Security and performance | ⬜ |
 | 10 | Release engineering | ⬜ |
 
@@ -112,8 +112,9 @@ non-destructive importer, atomic file store with `.bak`/`.corrupt` safety copies
 
 Android shell compiled, never run: `SnippetManager` (store under `noBackupFilesDir`), expansion on the space key and, each
 opt-in, on Enter and Tab, Snippets settings screen with import/export, in-keyboard picker (quick action, panel,
-`{{selection}}`). Open: per-mode defaults, encrypted export, typed search in the picker, device validation (including
-Enter/Tab expansion, which is compiled and JVM-tested but not run on a device).
+`{{selection}}`), per-mode expansion rules (`ModeExpansionPolicy`, JVM-tested; settings under Snippets → Expansion).
+Open: encrypted export, typed search in the picker, device validation (including Enter/Tab expansion and the per-mode
+rules, which are compiled and JVM-tested but not run on a device).
 
 ## Mapping to the "VictorKeys master brief"
 

@@ -45,6 +45,7 @@ import dev.patrickgold.florisboard.ime.developer.DevRowSize
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansion
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
@@ -398,6 +399,28 @@ private val ENUM_DISPLAY_ENTRIES = mapOf<Pair<KClass<*>, String>, @Composable ()
             for (p in SnippetPrefix.entries) {
                 entry(key = p, label = p.text)
             }
+        }
+    },
+    ModeExpansion::class to DEFAULT to {
+        listPrefEntries {
+            entry(
+                key = ModeExpansion.FOLLOW,
+                label = stringRes(R.string.enum__mode_expansion__follow),
+                description = stringRes(R.string.enum__mode_expansion__follow__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = ModeExpansion.SPACE_ONLY,
+                label = stringRes(R.string.enum__mode_expansion__space_only),
+                description = stringRes(R.string.enum__mode_expansion__space_only__description),
+                showDescriptionOnlyIfSelected = true,
+            )
+            entry(
+                key = ModeExpansion.OFF,
+                label = stringRes(R.string.enum__mode_expansion__off),
+                description = stringRes(R.string.enum__mode_expansion__off__description),
+                showDescriptionOnlyIfSelected = true,
+            )
         }
     },
     TerminalKeyRow::class to DEFAULT to {

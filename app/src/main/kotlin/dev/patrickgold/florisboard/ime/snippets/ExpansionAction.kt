@@ -60,7 +60,11 @@ data class ExpansionAttempt(
     val caseSensitive: Boolean = true,
     val trigger: ExpansionTrigger,
     val textBeforeCursor: String = "",
-    val snippets: Collection<Snippet> = emptyList(),
+    /**
+     * The library to match against. Required on purpose: it once defaulted to empty and the shell stopped passing it,
+     * so typed expansion silently never matched.
+     */
+    val snippets: Collection<Snippet>,
     val sensitiveField: Boolean = false,
     val selectionActive: Boolean = false,
     /**
@@ -68,8 +72,6 @@ data class ExpansionAttempt(
      * unchanged, matching the original space-key behaviour.
      */
     val modifierHeld: Boolean = false,
-    /** Termux mode while "expand in Termux mode" is off. */
-    val blockedInTerminalMode: Boolean = false,
     /** After a successful expansion, perform the trigger key as well. Ignored when the snippet places `{{cursor}}`. */
     val keepTrigger: Boolean = true,
 )
@@ -96,10 +98,11 @@ sealed interface ExpansionOutcome {
 object ExpansionAction {
     /**
      * False when the shell must not read the editor at all: expansion off, this key not opted in, a sensitive field,
-     * a selection, a modified Enter/Tab, or Termux mode with expansion there off.
+     * a selection, or a modified Enter/Tab. The active operating mode is applied before this, by
+     * [ModeExpansionPolicy.triggers], which decides [ExpansionAttempt.enabled] and [ExpansionAttempt.triggers].
      */
     fun shouldConsider(attempt: ExpansionAttempt): Boolean {
-        if (!attempt.enabled || attempt.blockedInTerminalMode || attempt.sensitiveField || attempt.selectionActive) return false
+        if (!attempt.enabled || attempt.sensitiveField || attempt.selectionActive) return false
         if (!attempt.triggers.allows(attempt.trigger)) return false
         if (attempt.trigger != ExpansionTrigger.SPACE && attempt.modifierHeld) return false
         return true

@@ -52,6 +52,8 @@ import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPaletteCodec
 import dev.patrickgold.florisboard.ime.theme.colors.KeyboardPalettes
 import dev.patrickgold.florisboard.ime.snippets.SnippetDateFormat
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansion
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansionPolicy
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.ime.snippets.SnippetTimeFormat
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
@@ -347,9 +349,19 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "snippets__case_sensitive",
             default = true,
         )
-        val expandInTerminalMode = boolean(
-            key = "snippets__expand_in_terminal_mode",
-            default = false,
+        /** Per operating mode, on top of [expansionEnabled] and the Enter/Tab switches (`ModeExpansionPolicy`). */
+        val modeStandard = enum(
+            key = "snippets__mode_standard",
+            default = ModeExpansion.FOLLOW,
+        )
+        val modeDeveloper = enum(
+            key = "snippets__mode_developer",
+            default = ModeExpansion.FOLLOW,
+        )
+        /** Replaces `snippets__expand_in_terminal_mode`, migrated in [migrate]. Off by default: Enter runs the line. */
+        val modeTermux = enum(
+            key = "snippets__mode_termux",
+            default = ModeExpansion.OFF,
         )
         val expandOnEnter = boolean(
             key = "snippets__expand_on_enter",
@@ -959,6 +971,16 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
 
     override fun migrate(entry: PreferenceMigrationEntry): PreferenceMigrationEntry {
         return when (entry.key) {
+
+            // Victorious Keyboard: "Expand snippets in Termux mode" became the Termux row of the per-mode rules.
+            // On kept Enter/Tab as configured (FOLLOW); off stays OFF. Keep this rule until the 1.0 release.
+            "snippets__expand_in_terminal_mode" -> {
+                entry.transform(
+                    type = PreferenceType.string(),
+                    key = "snippets__mode_termux",
+                    rawValue = ModeExpansionPolicy.termuxFromLegacy(entry.rawValue).name,
+                )
+            }
 
             // Migrate media prefs to emoji prefs
             // Keep migration rule until: 0.6 dev cycle

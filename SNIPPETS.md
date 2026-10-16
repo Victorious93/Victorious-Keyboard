@@ -9,7 +9,18 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
   Snippets live in `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at
   app start. The tools panel's Clipboard tab also opens the in-keyboard picker.
 * Snippets → **Expansion**: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\`
-  `;;` `::`), **Case-sensitive abbreviations**, and the Enter and Tab switches below.
+  `;;` `::`), **Case-sensitive abbreviations**, the Enter and Tab switches below, and **Per keyboard mode**.
+* **Per keyboard mode** (Standard, Developer, Termux), each one of: *Space, plus Enter and Tab if on* (follow the
+  switches), *Space only*, or *Off*. Defaults: Standard and Developer follow the switches, Termux is Off. A mode rule
+  can narrow expansion but never turn it on while the master switch is off. Planned modes use Standard's rule. The
+  decision is one pure function, `ModeExpansionPolicy.triggers` (JVM-tested); the keyboard calls it before it reads the
+  field. In a terminal, Enter runs the line, so *Space only* is the safe way to turn expansion on in Termux mode: with
+  *Follow* and Enter expansion on, the expanded text is sent as soon as you press Enter. The group stays visible but
+  greyed out while expansion is off, so the link from Advanced developer settings always lands on it.
+* Scope of the Termux rule (code reading, not run on a device): a `TYPE_NULL` field gives the keyboard no text before
+  the caret (`EditorContent.Unspecified`), so no abbreviation can match there whatever the rule says. Termux's terminal
+  view is believed to declare `TYPE_NULL` (not re-checked against Termux's source), so the rule mainly matters while
+  Termux mode is active in an ordinary text field, for example when it was chosen by hand.
 * With expansion on, typing `;sig` and then **space** replaces `;sig` with the rendered snippet and keeps the space,
   unless the snippet contains `{{cursor}}`: then the space is consumed and the caret is placed at `{{cursor}}`.
 * **Enter** and **Tab** do the same only if you turn on "Also expand on Enter" / "Also expand on Tab" (both off by
@@ -116,9 +127,8 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 * Typed search inside the picker; folders; recently used ordering.
 * A password-like field with selected text and a snippet that uses `{{selection}}`: the selection is replaced like any
   commit would, but its text is (deliberately) not read.
-* Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode). When it
-  is on, Enter and Tab follow the same opt-in switches as other modes.
-* Further per-mode defaults, snippet variables beyond the six above, folders.
+* Per-mode settings beyond expansion (for example a different prefix or Enter/Tab keep-switches per mode), snippet
+  variables beyond the six above, folders.
 * Encrypted export. Translations.
 * Device validation of any of it (expansion timing against the IME's own composing text is the main unknown; for the
   picker: panel height and look, the left-arrow caret placement in real editors and in Termux, and `{{selection}}` in

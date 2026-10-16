@@ -822,8 +822,8 @@
     <string name="devadv__keep_enter__summary" comment="Preference summary">After a snippet expands on Enter, still send Enter. Snippets that place the cursor with {{cursor}} never do</string>
     <string name="devadv__keep_tab__label" comment="Preference title">Keep Tab after expanding</string>
     <string name="devadv__keep_tab__summary" comment="Preference summary">After a snippet expands on Tab, still send Tab. Snippets that place the cursor with {{cursor}} never do</string>
-    <string name="devadv__expand_terminal__label" comment="Preference title">Expand snippets in Termux mode</string>
-    <string name="devadv__expand_terminal__summary" comment="Preference summary">Off by default: terminals rarely want text expansion</string>
+    <string name="devadv__expand_terminal__label" comment="Preference title">Snippet expansion per mode</string>
+    <string name="devadv__expand_terminal__summary" comment="Preference summary">Standard, Developer and Termux each have their own rule. Termux is off by default</string>
     <string name="devadv__overrides__label" comment="Preference title">Your app to mode mappings</string>
     <string name="devadv__overrides__help" comment="Dialog help">One per line: package name, then = and DEVELOPER, TERMUX or STANDARD. Example: com.example.ide=DEVELOPER. Used when automatic switching is on. Lines starting with # are comments.</string>
     <string name="devadv__overrides__count" comment="Summary and live feedback">{n} mappings.</string>
@@ -1745,5 +1745,18 @@
     <string name="snippets__expansion__title">Expansion</string>
     <string name="snippets__expansion__link_summary_on">On. Typing an abbreviation and a trigger key expands it</string>
     <string name="snippets__expansion__link_summary_off">Off. Snippets are inserted from the picker only</string>
+
+    <!-- Snippet expansion per operating mode (phase queue item 2) -->
+    <string name="pref__snippets__mode_group" comment="Preference group title">Per keyboard mode</string>
+    <string name="pref__snippets__mode_hint">Applied on top of the switches above. A mode can narrow expansion but never turn it on while the master switch is off. In a terminal, Enter runs the line, so Termux mode is off by default; Space only is the safe way to turn it on there.</string>
+    <string name="pref__snippets__mode_standard__label" comment="Preference title">Standard mode</string>
+    <string name="pref__snippets__mode_developer__label" comment="Preference title">Developer mode</string>
+    <string name="pref__snippets__mode_termux__label" comment="Preference title">Termux mode</string>
+    <string name="enum__mode_expansion__follow">Space, plus Enter and Tab if on</string>
+    <string name="enum__mode_expansion__follow__description">The keys you chose above</string>
+    <string name="enum__mode_expansion__space_only">Space only</string>
+    <string name="enum__mode_expansion__space_only__description">Enter and Tab never expand in this mode, whatever the switches above say</string>
+    <string name="enum__mode_expansion__off">Off</string>
+    <string name="enum__mode_expansion__off__description">No expansion while this mode is active</string>
 
 </resources>

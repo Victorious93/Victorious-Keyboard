@@ -33,4 +33,8 @@ class TextTransformsUnicodeTest : FunSpec({
         run(TextTransform.SNAKE, "XMLHttpRequest") shouldBe "xml_http_request"
         run(TextTransform.KEBAB, "a.b/c") shouldBe "a-b-c"
     }
+
+    test("a decomposed accent stays attached to its letter") {
+        run(TextTransform.SNAKE, "cafe\u0301 au lait") shouldBe "cafe\u0301_au_lait"
+    }
 })

@@ -45,6 +45,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Slash commands: `/ai`, `/shell`, and `/snip` still keep a path (`/shell ls /usr/bin`), and a later command (`/ai hello /date`) starts that command instead of being swallowed. A path on its own (`cd /usr/bin`) no longer replaces the suggestion strip with an empty command list. Case conversion keeps a decomposed accent attached to its letter. Not run on a device.
 - The *Terminal keys* and *Navigation keys* switches had no effect on the drawn row (it always showed both), and *Terminal keys* could not be reached because it depended on the retired *Developer row* switch.
 - In a terminal app with default settings the row was drawn but no height was reserved for it, so full-height panels (snippet picker) opened one row shorter and the window changed size.
 - Android 8–12 crashes found by lint (`NewApi`, a CI gate that was failing on `main`): importing a GGUF read its header with `InputStream.readNBytes` (API 33), and the URL encode/decode tools used the `Charset` overloads of `URLEncoder`/`URLDecoder` (API 33). Both now use calls available on API 26.

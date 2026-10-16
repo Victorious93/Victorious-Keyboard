@@ -59,10 +59,13 @@ object StripPlanner {
         fleetCommands: List<FleetCommand> = emptyList(),
     ): StripPlan {
         if (!passwordLike) {
+            val known = commands.filter { it.enabled }.map { it.name }.toSet() +
+                fleetCommands.map { it.rawName }
             val token = SlashMatcher.token(
                 textBeforeCursor,
                 passwordLike = false,
                 argumentNames = fleetCommands.map { it.name }.toSet(),
+                knownNames = known,
             )
             if (token != null && slashEnabled) {
                 val local = SlashCatalog.match(token.name, commands, enabled = true)
@@ -80,11 +83,15 @@ object StripPlanner {
                             fleetRawName = it.rawName,
                         )
                     }
-                return StripPlan.Slash(
-                    offers = (local + fleetOffers).take(24),
-                    replaceLength = token.replaceLength,
-                    argument = token.argument,
-                )
+                val offers = (local + fleetOffers).take(24)
+                // A slash that matches nothing (`cd /usr/bin`) is a path, not a command list.
+                if (token.name.isEmpty() || offers.isNotEmpty()) {
+                    return StripPlan.Slash(
+                        offers = offers,
+                        replaceLength = token.replaceLength,
+                        argument = token.argument,
+                    )
+                }
             }
         }
         val prefix = if (passwordLike) "" else StripPrefix.of(textBeforeCursor)

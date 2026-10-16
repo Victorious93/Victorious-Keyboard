@@ -1651,6 +1651,7 @@
     <!-- Tools panel (Victorious UI pass) -->
     <string name="tools__back_to_keyboard">Back to keyboard</string>
     <string name="tools__my_commands">My commands</string>
+    <string name="tools__empty_tab">Every button in this tab is hidden. Tap to choose which to show.</string>
     <string name="tools__tab__clipboard">Clipboard</string>
     <string name="tools__tab__ai">AI</string>
     <string name="tools__tab__terminal">Terminal</string>

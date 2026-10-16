@@ -46,6 +46,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Slash commands: `/ai`, `/shell`, and `/snip` still keep a path (`/shell ls /usr/bin`), and a later command (`/ai hello /date`) starts that command instead of being swallowed. A path on its own (`cd /usr/bin`) no longer replaces the suggestion strip with an empty command list. Case conversion keeps a decomposed accent attached to its letter. Not run on a device.
+- The *Terminal keys* and *Navigation keys* switches had no effect on the drawn row (it always showed both), and *Terminal keys* could not be reached because it depended on the retired *Developer row* switch.
+- In a terminal app with default settings the row was drawn but no height was reserved for it, so full-height panels (snippet picker) opened one row shorter and the window changed size.
+- Android 8–12 crashes found by lint (`NewApi`, a CI gate that was failing on `main`): importing a GGUF read its header with `InputStream.readNBytes` (API 33), and the URL encode/decode tools used the `Charset` overloads of `URLEncoder`/`URLDecoder` (API 33). Both now use calls available on API 26.
+- Settings → Smartbar → Toolbar configured a strip toolbar that was no longer drawn anywhere; it now configures the tools panel. The unused `AdvancedToolbar` was removed.
 - Docked keyboard keys no longer sit in the home-gesture strip. The bottom padding is the largest of the navigation-bar, mandatory system-gesture, tappable-element, and IME caption-bar insets, plus a Bottom gap setting (Settings → Look → Keyboard, 0–48 dp, 16 dp on gesture navigation and 4 dp with buttons). The gap uses the keyboard background and shows in the keyboard preview. Not run on a device.
 - "Search for Updates" on Add-ons & Extensions opens this project's GitHub releases page. Product links (repository, issues, privacy, changelog, spell-checker and theme-editor notes) live in `ProjectUrls` and no longer send people to the FlorisBoard add-on store or wiki. The About screen still links to the upstream FlorisBoard repository as attribution.
 - Suggestion chips: the neon pill's vertical margin and padding were larger than the fixed smartbar row, so Compose clipped the lower half of each word. The chip now uses a short vertical margin, does not clip the glyphs, and shrinks the type size so the line box fits at font scales 0.85×–1.3×. Long words ellipsize. The same spacing is what the color-picker overlay paints over. The developer row scrolls outside its background clip, so the Home key is no longer cut off at the screen edge.
@@ -74,6 +79,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   9 regression tests after.
 - `PayloadCipher.decrypt` rejects non-canonical base64url (an altered last character could decode to identical bytes
   and still authenticate); tamper tests are now deterministic.
+- Code tab case conversion (camelCase, snake_case, kebab-case, PascalCase) treated every non-ASCII letter as a word separator and dropped it (`café au lait` became `caf_au_lait`). It now keeps Unicode letters and digits.
+- Slash commands: a slash followed by a space (`1 / 2`) no longer takes over the suggestion strip, and a later slash inside `/ai`, `/shell` or `/snip` text (`/shell ls /usr/bin`) no longer re-anchors the command on that slash.
+- Tools panel: a tab whose buttons are all hidden now says so (tap to open the toolbar settings) instead of a blank panel, and tiles under 64 dp show one label line so a second line is not clipped in short (landscape) panels. Not rendered.
 
 ### Added
 - Snippet expansion on Enter and Tab. Each key is its own switch, off by default (Settings → Keyboard → Developer mode,

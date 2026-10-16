@@ -41,36 +41,62 @@ object SlashMatcher {
      * A slash command starts at a `/` that is at a word boundary and runs to the caret.
      * Password fields return before the text is inspected. A slash in the middle of a word is ordinary text.
      * `/snip`, `/ai`, and `/shell` keep their following words; other commands end at the first space.
+     *
+     * A path inside those arguments (`/shell ls /usr/bin`) stays part of the argument. A later slash that is itself
+     * a command (`/ai hello /date`) starts that command. [argumentNames] adds commands that keep an argument, the
+     * same way the three built-ins do. [knownNames] adds commands that should be recognized (custom commands).
      */
     fun token(
         textBeforeCursor: String,
         passwordLike: Boolean,
         argumentNames: Set<String> = emptySet(),
+        knownNames: Set<String> = emptySet(),
     ): SlashToken? {
         if (passwordLike) return null
         if (textBeforeCursor.isEmpty()) return null
-        var slash = -1
+        // Word-boundary slashes on the caret's line, left to right.
+        val starts = ArrayList<Int>()
         var i = textBeforeCursor.length - 1
         while (i >= 0) {
             val ch = textBeforeCursor[i]
-            if (ch == '\n') return null
-            if (ch == '/' && (i == 0 || textBeforeCursor[i - 1].isWhitespace())) {
-                slash = i
-                break
-            }
+            if (ch == '\n') break
+            if (ch == '/' && (i == 0 || textBeforeCursor[i - 1].isWhitespace())) starts.add(0, i)
             i--
         }
-        if (slash < 0) return null
+        if (starts.isEmpty()) return null
+        val allowedArguments = this.argumentNames + argumentNames.map { it.lowercase() }
+        val known = HashSet<String>(SlashCatalog.builtins.size + allowedArguments.size + knownNames.size)
+        SlashCatalog.builtins.forEach { known.add(it.name) }
+        known.addAll(allowedArguments)
+        knownNames.forEach { known.add(it.lowercase()) }
+        var chosen: SlashToken? = null
+        for (slash in starts) {
+            val parsed = parseAt(textBeforeCursor, slash, allowedArguments) ?: continue
+            // A path fragment (`/usr`, `/usr/bin`, ` / b`) is not a command, so it does not replace the
+            // argument command that already owns this stretch. A real command name does.
+            if (isCommand(parsed.name, known)) chosen = parsed
+        }
+        return chosen
+    }
+
+    private fun parseAt(textBeforeCursor: String, slash: Int, allowedArguments: Set<String>): SlashToken? {
         val raw = textBeforeCursor.substring(slash)
         if (raw.length > 200) return null
         val body = raw.substring(1)
         val space = body.indexOf(' ')
         val name = (if (space < 0) body else body.substring(0, space)).lowercase()
         if (name.any { it.isISOControl() }) return null
-        val allowedArguments = this.argumentNames + argumentNames
-        if (space >= 0 && name.isNotEmpty() && name !in allowedArguments) return null
+        // `/ x` is a slash used as punctuation, never a command.
+        if (space >= 0 && (name.isEmpty() || name !in allowedArguments)) return null
         val argument = if (space < 0) "" else body.substring(space + 1)
         return SlashToken(name, argument, raw.length)
+    }
+
+    /** Empty is the bare `/` that lists commands. Anything else must be a prefix of a known command, with no `/`. */
+    private fun isCommand(name: String, known: Set<String>): Boolean {
+        if (name.isEmpty()) return true
+        if (name.any { it != ':' && it != '_' && it != '-' && !it.isLetterOrDigit() }) return false
+        return known.any { it.startsWith(name) }
     }
 }
 

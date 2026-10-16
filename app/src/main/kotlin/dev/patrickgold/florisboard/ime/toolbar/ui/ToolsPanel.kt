@@ -77,6 +77,7 @@ import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommand
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolTileFit
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
 import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
@@ -277,6 +278,15 @@ fun ToolsPanelContent(
                             onClick = { onAction(id) },
                         )
                     }
+                    if (!fleetSelected && actions.isEmpty() && commands.isEmpty()) {
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            SnyggText(
+                                elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
+                                text = stringRes(R.string.tools__empty_tab),
+                                modifier = Modifier.fillMaxWidth().clickable(onClick = onCustomize),
+                            )
+                        }
+                    }
                     if (!fleetSelected && commands.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             SnyggText(
@@ -403,7 +413,7 @@ private fun ToolTile(
                 elementName = "$elementName-text",
                 text = if (state == null) label else "$label · $state",
                 fontSize = 12.sp,
-                maxLines = 2,
+                maxLines = ToolTileFit.labelLines(height.value),
                 overflow = TextOverflow.Ellipsis,
             )
         }

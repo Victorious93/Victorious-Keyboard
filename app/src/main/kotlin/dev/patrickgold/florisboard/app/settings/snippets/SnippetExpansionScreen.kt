@@ -16,17 +16,27 @@
 
 package dev.patrickgold.florisboard.app.settings.snippets
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.enumDisplayEntriesOf
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansion
 import dev.patrickgold.florisboard.ime.snippets.SnippetPrefix
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
 import dev.patrickgold.jetpref.datastore.ui.ListPreference
+import dev.patrickgold.jetpref.datastore.ui.PreferenceGroup
 import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.compose.stringRes
 
-/** Snippet expansion as you type. Moved here from the Keyboard screen's developer group, where it did not belong. */
+/**
+ * Snippet expansion as you type, and the per-mode rules applied on top of it (`ModeExpansionPolicy`). Moved here from
+ * the Keyboard screen's developer group, where it did not belong.
+ */
 @OptIn(ExperimentalJetPrefDatastoreUi::class)
 @Composable
 fun SnippetExpansionScreen() = FlorisScreen {
@@ -62,5 +72,32 @@ fun SnippetExpansionScreen() = FlorisScreen {
             summary = stringRes(R.string.pref__snippets__expand_on_tab__summary),
             visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
         )
+        // Greyed out rather than hidden while expansion is off, so the Advanced developer settings link lands on it.
+        PreferenceGroup(
+            title = stringRes(R.string.pref__snippets__mode_group),
+            enabledIf = { prefs.snippets.expansionEnabled isEqualTo true },
+        ) {
+            Text(
+                text = stringRes(R.string.pref__snippets__mode_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+            ListPreference(
+                prefs.snippets.modeStandard,
+                title = stringRes(R.string.pref__snippets__mode_standard__label),
+                entries = enumDisplayEntriesOf(ModeExpansion::class),
+            )
+            ListPreference(
+                prefs.snippets.modeDeveloper,
+                title = stringRes(R.string.pref__snippets__mode_developer__label),
+                entries = enumDisplayEntriesOf(ModeExpansion::class),
+            )
+            ListPreference(
+                prefs.snippets.modeTermux,
+                title = stringRes(R.string.pref__snippets__mode_termux__label),
+                entries = enumDisplayEntriesOf(ModeExpansion::class),
+            )
+        }
     }
 }

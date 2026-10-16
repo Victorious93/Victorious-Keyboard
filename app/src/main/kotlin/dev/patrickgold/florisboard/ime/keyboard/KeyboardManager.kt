@@ -103,6 +103,8 @@ import dev.patrickgold.florisboard.ime.snippets.ExpansionAttempt
 import dev.patrickgold.florisboard.ime.snippets.ExpansionOutcome
 import dev.patrickgold.florisboard.ime.snippets.ExpansionTrigger
 import dev.patrickgold.florisboard.ime.snippets.ExpansionTriggers
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansionPolicy
+import dev.patrickgold.florisboard.ime.snippets.ModeExpansionRules
 import dev.patrickgold.florisboard.ime.snippets.InsertionPlan
 import dev.patrickgold.florisboard.ime.snippets.InsertionRequest
 import dev.patrickgold.florisboard.ime.snippets.Snippet
@@ -998,14 +1000,23 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * sensitive field, and never logs the snippet or the text. A failure before the editor is changed returns false.
      */
     private fun tryExpandSnippet(trigger: ExpansionTrigger): Boolean {
-        if (!prefs.snippets.expansionEnabled.get()) return false
-        // Expansion is off in terminal mode unless the user chose otherwise (a terminal rarely wants it).
-        if (activeMode.value == OperatingMode.TERMUX && !prefs.snippets.expandInTerminalMode.get()) return false
-        when (trigger) {
-            ExpansionTrigger.ENTER -> if (!prefs.snippets.expandOnEnter.get()) return false
-            ExpansionTrigger.TAB -> if (!prefs.snippets.expandOnTab.get()) return false
-            ExpansionTrigger.SPACE -> { /* space is included whenever expansion is on */ }
-        }
+        // The master switch, the Enter/Tab opt-ins and the active mode's rule decide which keys may expand. Termux mode
+        // is off by default there (a terminal rarely wants it, and Enter runs the line).
+        val triggers = ModeExpansionPolicy.triggers(
+            mode = activeMode.value,
+            masterEnabled = prefs.snippets.expansionEnabled.get(),
+            global = ExpansionTriggers(
+                space = true,
+                enter = prefs.snippets.expandOnEnter.get(),
+                tab = prefs.snippets.expandOnTab.get(),
+            ),
+            rules = ModeExpansionRules(
+                standard = prefs.snippets.modeStandard.get(),
+                developer = prefs.snippets.modeDeveloper.get(),
+                termux = prefs.snippets.modeTermux.get(),
+            ),
+        ) ?: return false
+        if (!triggers.allows(trigger)) return false
         // A modified Enter or Tab is a real key (Shift+Enter newline, Ctrl+Tab). Do not read the field for it.
         if (trigger != ExpansionTrigger.SPACE &&
             (inputEventDispatcher.isPressed(KeyCode.SHIFT) || terminalModifiers.anyActive)
@@ -1018,18 +1029,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         }
         val attempt = ExpansionAttempt(
             enabled = true,
-            triggers = ExpansionTriggers(
-                space = true,
-                enter = prefs.snippets.expandOnEnter.get(),
-                tab = prefs.snippets.expandOnTab.get(),
-            ),
+            triggers = triggers,
             prefix = prefs.snippets.prefix.get().text,
             caseSensitive = prefs.snippets.caseSensitive.get(),
             trigger = trigger,
+            snippets = snippetManager.snapshot().snippets,
             sensitiveField = sensitive,
             selectionActive = editorInstance.activeContent.selection.isSelectionMode,
             modifierHeld = inputEventDispatcher.isPressed(KeyCode.SHIFT) || terminalModifiers.anyActive,
-            blockedInTerminalMode = false,
             keepTrigger = keep,
         )
         if (!ExpansionAction.shouldConsider(attempt)) return false

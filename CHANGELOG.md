@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- Snippet expansion per keyboard mode (Snippets → Expansion → Per keyboard mode). Standard, Developer and Termux each choose *Space, plus Enter and Tab if on*, *Space only*, or *Off*. Defaults: Standard and Developer follow the switches; Termux is Off. The master switch still turns expansion off everywhere. The old *Expand snippets in Termux mode* switch is migrated to the Termux rule (on → follow the switches, off → Off), so nothing changes for existing users. Not run on a device.
 - UI pass: the tools panel has five tabs (Clipboard, AI, Terminal, Code, Quick) of icon tiles with translatable labels; Incognito, Learn words, Key row and Bottom gap show their state. It uses the keyboard theme's tile and chip elements, so every theme and Keyboard colors apply. It keeps the window height (keys plus the terminal key row). A Tune button opens Settings → Smartbar → Tools panel, which now hides and reorders buttons per tab and lists your own commands on the Terminal tab (inserted as text, never run). Snippets, select all, undo and redo are reachable from the Clipboard tab. Not rendered or run on a device.
 - Settings → Developer & terminal (operating mode, auto-detect, terminal key row, terminal keys, symbols, advanced settings) and Snippets → Expansion screens. Not rendered.
 - Suggestion strip shows words while typing (swipe for more, primary suggestion highlighted) and a tools button that opens a panel in place of the keys: Clipboard, Clip editor, Vault, AI, Terminal keys, Code, and Privacy. The page-tab row is no longer on the strip. The Esc/Tab/Ctrl/Alt/arrow row is Auto (terminal apps and `TYPE_NULL`), Always, or Never. Not run on a device.
@@ -21,6 +22,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   still a stub, and next-word without learning ranks dictionary frequency only.
 
 ### Changed
+- The keyboard decides snippet expansion for the active mode through one pure function, `ModeExpansionPolicy.triggers`, instead of an inline Termux check. The unused `ExpansionAttempt.blockedInTerminalMode` field is gone. Advanced developer settings now link to the per-mode rules instead of holding the Termux switch.
 - Settings Home: Look, Typing, Tools (Clipboard, Snippets, Slash commands, Local AI, Emoji), Developer, Data (back up, restore), About; every entry has a one-line summary. The developer and snippet-expansion settings left the Keyboard screen. Not rendered.
 - Terminal key row: Auto also shows it in Developer or Termux mode. One pure decision (`TerminalRowPolicy.plan`) now drives both the row and the height that full-height panels reserve for it.
 - The AI panel and the clip editor take their colors from the keyboard theme (window, key and pressed-key colors) instead of fixed near-black values; unreadable text is replaced with a readable ink. Not rendered.
@@ -45,6 +47,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Snippet expansion while typing (Space, and Enter or Tab when on) could not match any snippet. Since the Enter and Tab change (`f514726`, 2026-10-13), the keyboard built the expansion request without the snippet library, and the request's list defaulted to empty. The keyboard now passes the library, and the field is required, so leaving it out no longer compiles. Found by code review; not run on a device.
 - The *Terminal keys* and *Navigation keys* switches had no effect on the drawn row (it always showed both), and *Terminal keys* could not be reached because it depended on the retired *Developer row* switch.
 - In a terminal app with default settings the row was drawn but no height was reserved for it, so full-height panels (snippet picker) opened one row shorter and the window changed size.
 - Android 8–12 crashes found by lint (`NewApi`, a CI gate that was failing on `main`): importing a GGUF read its header with `InputStream.readNBytes` (API 33), and the URL encode/decode tools used the `Charset` overloads of `URLEncoder`/`URLDecoder` (API 33). Both now use calls available on API 26.

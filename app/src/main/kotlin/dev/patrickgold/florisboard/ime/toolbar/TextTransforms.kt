@@ -183,8 +183,8 @@ object TextTransforms {
     }
 
     private fun words(input: String): List<String> {
-        return input.split(Regex("[^A-Za-z0-9]+"))
-            .flatMap { piece -> piece.split(Regex("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")) }
+        return input.split(Regex("[^\\p{L}\\p{N}]+"))
+            .flatMap { piece -> piece.split(Regex("(?<=[\\p{Ll}\\p{N}])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}\\p{Ll})")) }
             .filter { it.isNotEmpty() }
     }
 

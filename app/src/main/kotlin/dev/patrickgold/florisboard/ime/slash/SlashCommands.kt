@@ -45,25 +45,34 @@ object SlashMatcher {
     fun token(textBeforeCursor: String, passwordLike: Boolean): SlashToken? {
         if (passwordLike) return null
         if (textBeforeCursor.isEmpty()) return null
-        var slash = -1
+        // Word-boundary slashes on the caret's line, left to right.
+        val starts = ArrayList<Int>()
         var i = textBeforeCursor.length - 1
         while (i >= 0) {
             val ch = textBeforeCursor[i]
-            if (ch == '\n') return null
-            if (ch == '/' && (i == 0 || textBeforeCursor[i - 1].isWhitespace())) {
-                slash = i
-                break
-            }
+            if (ch == '\n') break
+            if (ch == '/' && (i == 0 || textBeforeCursor[i - 1].isWhitespace())) starts.add(0, i)
             i--
         }
-        if (slash < 0) return null
+        if (starts.isEmpty()) return null
+        // An argument command (`/ai`, `/shell`, `/snip`) owns everything after it, so a slash inside its argument
+        // (`/shell ls /usr/bin`) must not re-anchor the token on that later slash.
+        for (slash in starts) {
+            val token = parseAt(textBeforeCursor, slash) ?: continue
+            if (token.name in argumentNames && token.argument.isNotEmpty()) return token
+        }
+        return parseAt(textBeforeCursor, starts.last())
+    }
+
+    private fun parseAt(textBeforeCursor: String, slash: Int): SlashToken? {
         val raw = textBeforeCursor.substring(slash)
         if (raw.length > 200) return null
         val body = raw.substring(1)
         val space = body.indexOf(' ')
         val name = (if (space < 0) body else body.substring(0, space)).lowercase()
         if (name.any { it.isISOControl() }) return null
-        if (space >= 0 && name.isNotEmpty() && name !in argumentNames) return null
+        // `/ x` is a slash used as punctuation, never a command.
+        if (space >= 0 && (name.isEmpty() || name !in argumentNames)) return null
         val argument = if (space < 0) "" else body.substring(space + 1)
         return SlashToken(name, argument, raw.length)
     }

@@ -137,6 +137,25 @@ class StripSlashTest : FunSpec({
         SlashCatalog.match("s", emptyList(), enabled = false) shouldBe emptyList()
     }
 
+    test("a slash followed by a space is prose or math, not a command") {
+        SlashMatcher.token("1 / 2", passwordLike = false) shouldBe null
+        SlashMatcher.token("a / b / c", passwordLike = false) shouldBe null
+        // A lone slash still opens the command list.
+        SlashMatcher.token("hi /", passwordLike = false)!!.name shouldBe ""
+    }
+
+    test("a later slash inside an argument does not re-anchor an argument command") {
+        val ai = SlashMatcher.token("/ai explain a / b", passwordLike = false)!!
+        ai.name shouldBe "ai"
+        ai.argument shouldBe "explain a / b"
+        ai.replaceLength shouldBe "/ai explain a / b".length
+        val shell = SlashMatcher.token("/shell ls /usr/bin", passwordLike = false)!!
+        shell.name shouldBe "shell"
+        shell.argument shouldBe "ls /usr/bin"
+        // A plain command still ends at its first space, so a later slash starts a new token.
+        SlashMatcher.token("/date /time", passwordLike = false)!!.name shouldBe "time"
+    }
+
     test("clipboard values are not scanned for slash placeholders") {
         val rendered = SlashTemplate.render(
             "see {clipboard} then {date}{cursor}",

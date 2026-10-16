@@ -10,6 +10,7 @@
 | Merge of PR #11 to `main` (`38368541837`) | **fully green**, including both artifact uploads |
 | PR #29, UI pass (`38668379528`, commit `029e087`) | **green**: `assembleDebug`, `testDebugUnitTest`, `:lib:kotlin:test` and `lintDebug` (`main` had been red at `lintDebug` since PRs #23/#25/#26) |
 | PR #30, per-mode snippet expansion (`38875748244` attempt 2, commit `c7efaf2`) | **green**: `assembleDebug` (including the llama.cpp native build), `testDebugUnitTest`, `:lib:kotlin:test`, `lintDebug` and both uploads. Every earlier attempt on this PR (`38835325290`, `38837129992`, and attempt 1 of `38875748244`, 2026-10-16 01:28–08:44Z) failed in 2–3 s with no runner assigned (`runner_id: 0`), as did the push of PR #31's merge to `main` (`38853745308`): an account-level Actions block that the owner fixed; no code ran in those |
+| Merge of PR #30 to `main` (commit `29af3d8`) | **green**: manual run `38961232420` (`workflow_dispatch`, 2026-10-16 20:19–20:41Z) passed every step, including `assembleDebug`, unit tests, lint and both uploads. The push run `38960866613` was cancelled after four minutes because the manual run took over the same `ci-refs/heads/main` concurrency group (`cancel-in-progress: true`), not because anything failed |
 
 PR #29's run was the first on GitHub to execute `lintDebug` and `:lib:kotlin:test` as well. Instrumented tests are still not run anywhere.
 

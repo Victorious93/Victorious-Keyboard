@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.snippets
 
+import dev.patrickgold.florisboard.ime.mode.OperatingMode
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -33,7 +34,6 @@ private fun attempt(
     sensitive: Boolean = false,
     selection: Boolean = false,
     modifier: Boolean = false,
-    terminalBlocked: Boolean = false,
     keep: Boolean = true,
     snippets: List<Snippet> = listOf(sig()),
 ) = ExpansionAttempt(
@@ -45,7 +45,6 @@ private fun attempt(
     sensitiveField = sensitive,
     selectionActive = selection,
     modifierHeld = modifier,
-    blockedInTerminalMode = terminalBlocked,
     keepTrigger = keep,
 )
 
@@ -132,10 +131,23 @@ class ExpansionActionTest : FunSpec({
         decide(attempt(ExpansionTrigger.SPACE, modifier = true)).shouldBeInstanceOf<ExpansionOutcome.Replace>()
     }
 
-    test("expansion off, or off in terminal mode, never takes the key") {
+    test("expansion off, or off in the active mode, never takes the key") {
         decide(attempt(ExpansionTrigger.ENTER, enabled = false)) shouldBe ExpansionOutcome.PassThrough
-        decide(attempt(ExpansionTrigger.TAB, terminalBlocked = true)) shouldBe ExpansionOutcome.PassThrough
-        decide(attempt(ExpansionTrigger.SPACE, terminalBlocked = true)) shouldBe ExpansionOutcome.PassThrough
+        val all = ExpansionTriggers(space = true, enter = true, tab = true)
+        // Termux defaults to off: the shell gets null and never builds an attempt.
+        ModeExpansionPolicy.triggers(OperatingMode.TERMUX, masterEnabled = true, global = all, rules = ModeExpansionRules()) shouldBe null
+    }
+
+    test("a Space-only mode lets Enter and Tab through and still expands on space") {
+        val spaceOnly = ModeExpansionPolicy.triggers(
+            OperatingMode.TERMUX,
+            masterEnabled = true,
+            global = ExpansionTriggers(space = true, enter = true, tab = true),
+            rules = ModeExpansionRules(termux = ModeExpansion.SPACE_ONLY),
+        )!!
+        decide(attempt(ExpansionTrigger.ENTER, triggers = spaceOnly)) shouldBe ExpansionOutcome.PassThrough
+        decide(attempt(ExpansionTrigger.TAB, triggers = spaceOnly)) shouldBe ExpansionOutcome.PassThrough
+        decide(attempt(ExpansionTrigger.SPACE, triggers = spaceOnly)).shouldBeInstanceOf<ExpansionOutcome.Replace>()
     }
 
     test("a snippet that cannot be inserted does not swallow enter or tab") {

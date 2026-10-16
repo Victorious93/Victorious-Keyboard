@@ -1033,6 +1033,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             prefix = prefs.snippets.prefix.get().text,
             caseSensitive = prefs.snippets.caseSensitive.get(),
             trigger = trigger,
+            snippets = snippetManager.snapshot().snippets,
             sensitiveField = sensitive,
             selectionActive = editorInstance.activeContent.selection.isSelectionMode,
             modifierHeld = inputEventDispatcher.isPressed(KeyCode.SHIFT) || terminalModifiers.anyActive,

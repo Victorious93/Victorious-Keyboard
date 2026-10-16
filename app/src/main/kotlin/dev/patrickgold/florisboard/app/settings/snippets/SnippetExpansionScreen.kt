@@ -34,8 +34,8 @@ import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.compose.stringRes
 
 /**
- * Snippet expansion as you type, and the per-mode rules applied on top of it (`ModeExpansionPolicy`). Moved here from the
- * Keyboard screen's developer group, where it did not belong.
+ * Snippet expansion as you type, and the per-mode rules applied on top of it (`ModeExpansionPolicy`). Moved here from
+ * the Keyboard screen's developer group, where it did not belong.
  */
 @OptIn(ExperimentalJetPrefDatastoreUi::class)
 @Composable
@@ -72,9 +72,10 @@ fun SnippetExpansionScreen() = FlorisScreen {
             summary = stringRes(R.string.pref__snippets__expand_on_tab__summary),
             visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
         )
+        // Greyed out rather than hidden while expansion is off, so the Advanced developer settings link lands on it.
         PreferenceGroup(
             title = stringRes(R.string.pref__snippets__mode_group),
-            visibleIf = { prefs.snippets.expansionEnabled isEqualTo true },
+            enabledIf = { prefs.snippets.expansionEnabled isEqualTo true },
         ) {
             Text(
                 text = stringRes(R.string.pref__snippets__mode_hint),

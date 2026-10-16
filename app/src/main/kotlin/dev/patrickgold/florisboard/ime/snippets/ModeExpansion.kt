@@ -27,7 +27,10 @@ enum class ModeExpansion {
     /** The keys the user chose: Space, plus Enter and Tab when those switches are on. */
     FOLLOW,
 
-    /** Space only, whatever the Enter and Tab switches say. In a terminal, Enter runs the line, so this is the safe on. */
+    /**
+     * Space only, whatever the Enter and Tab switches say. In a terminal, Enter runs the line, so this is the safer
+     * choice there.
+     */
     SPACE_ONLY,
 
     /** No expansion while this mode is active. */
@@ -35,15 +38,15 @@ enum class ModeExpansion {
 }
 
 /**
- * One [ModeExpansion] per selectable operating mode. The defaults keep the behaviour from before per-mode rules existed:
- * Standard and Developer follow the switches, Termux is off.
+ * One [ModeExpansion] per selectable operating mode. The defaults keep the behaviour from before per-mode rules
+ * existed: Standard and Developer follow the switches, Termux is off.
  */
 data class ModeExpansionRules(
     val standard: ModeExpansion = ModeExpansion.FOLLOW,
     val developer: ModeExpansion = ModeExpansion.FOLLOW,
     val termux: ModeExpansion = ModeExpansion.OFF,
 ) {
-    /** The rule for [mode]. Planned and unknown modes use Standard's, as `OperatingMode.sanitize` does everywhere else. */
+    /** The rule for [mode]. Planned and unknown modes use Standard's, as `OperatingMode.sanitize` does elsewhere. */
     fun of(mode: OperatingMode?): ModeExpansion = when (OperatingMode.sanitize(mode)) {
         OperatingMode.DEVELOPER -> developer
         OperatingMode.TERMUX -> termux
@@ -53,8 +56,8 @@ data class ModeExpansionRules(
 
 object ModeExpansionPolicy {
     /**
-     * The keys that may complete an abbreviation while [mode] is active, or null when expansion is off there. The master
-     * switch always wins: a mode rule can narrow expansion but never turn it on.
+     * The keys that may complete an abbreviation while [mode] is active, or null when expansion is off there. The
+     * master switch always wins: a mode rule can narrow expansion but never turn it on.
      */
     fun triggers(
         mode: OperatingMode?,
@@ -74,7 +77,8 @@ object ModeExpansionPolicy {
     /**
      * The Termux rule for a stored value of the retired "Expand snippets in Termux mode" switch
      * (`snippets__expand_in_terminal_mode`). On meant "Enter and Tab follow the same switches as other modes", which is
-     * [ModeExpansion.FOLLOW]; off, or anything that is not a boolean, is [ModeExpansion.OFF]. Nobody's behaviour changes.
+     * [ModeExpansion.FOLLOW]; off, or anything that is not a boolean, is [ModeExpansion.OFF]. Nobody's behaviour
+     * changes.
      */
     fun termuxFromLegacy(rawValue: String?): ModeExpansion =
         if (rawValue?.trim()?.lowercase() == "true") ModeExpansion.FOLLOW else ModeExpansion.OFF

@@ -67,7 +67,11 @@ class ModeExpansionTest : FunSpec({
     }
 
     test("planned, unknown and null modes use Standard's rule") {
-        val rules = ModeExpansionRules(standard = ModeExpansion.OFF, developer = ModeExpansion.FOLLOW, termux = ModeExpansion.FOLLOW)
+        val rules = ModeExpansionRules(
+            standard = ModeExpansion.OFF,
+            developer = ModeExpansion.FOLLOW,
+            termux = ModeExpansion.FOLLOW,
+        )
         for (mode in OperatingMode.entries.filterNot { it.isSelectable }) {
             triggers(mode, rules) shouldBe null
         }
@@ -79,7 +83,8 @@ class ModeExpansionTest : FunSpec({
         val noKeys = ExpansionTriggers(space = false, enter = false, tab = false)
         triggers(OperatingMode.STANDARD, global = noKeys) shouldBe null
         val onlyEnter = ExpansionTriggers(space = false, enter = true, tab = false)
-        triggers(OperatingMode.TERMUX, ModeExpansionRules(termux = ModeExpansion.SPACE_ONLY), global = onlyEnter) shouldBe null
+        val spaceOnly = ModeExpansionRules(termux = ModeExpansion.SPACE_ONLY)
+        triggers(OperatingMode.TERMUX, spaceOnly, global = onlyEnter) shouldBe null
     }
 
     test("the retired Termux switch migrates without changing behaviour") {

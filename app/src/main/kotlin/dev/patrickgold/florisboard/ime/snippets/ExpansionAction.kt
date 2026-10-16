@@ -60,7 +60,11 @@ data class ExpansionAttempt(
     val caseSensitive: Boolean = true,
     val trigger: ExpansionTrigger,
     val textBeforeCursor: String = "",
-    val snippets: Collection<Snippet> = emptyList(),
+    /**
+     * The library to match against. Required on purpose: it once defaulted to empty and the shell stopped passing it,
+     * so typed expansion silently never matched.
+     */
+    val snippets: Collection<Snippet>,
     val sensitiveField: Boolean = false,
     val selectionActive: Boolean = false,
     /**

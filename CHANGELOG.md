@@ -47,6 +47,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
   override. Identifiers and licence credit intentionally unchanged (`docs/branding/README.md`).
 
 ### Fixed
+- Snippet expansion while typing (Space, and Enter or Tab when on) could not match any snippet. Since the Enter and Tab change (`f514726`, 2026-10-13), the keyboard built the expansion request without the snippet library, and the request's list defaulted to empty. The keyboard now passes the library, and the field is required, so leaving it out no longer compiles. Found by code review; not run on a device.
 - The *Terminal keys* and *Navigation keys* switches had no effect on the drawn row (it always showed both), and *Terminal keys* could not be reached because it depended on the retired *Developer row* switch.
 - In a terminal app with default settings the row was drawn but no height was reserved for it, so full-height panels (snippet picker) opened one row shorter and the window changed size.
 - Android 8–12 crashes found by lint (`NewApi`, a CI gate that was failing on `main`): importing a GGUF read its header with `InputStream.readNBytes` (API 33), and the URL encode/decode tools used the `Charset` overloads of `URLEncoder`/`URLDecoder` (API 33). Both now use calls available on API 26.

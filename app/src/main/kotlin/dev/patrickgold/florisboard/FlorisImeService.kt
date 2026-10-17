@@ -139,6 +139,9 @@ class FlorisImeService : LifecycleInputMethodService() {
         }
 
         /** Display the keyboard is attached to, or the default display when that is unknown. */
+        /** True when the keyboard service is up. Does not read the editor. */
+        fun isRunning(): Boolean = FlorisImeServiceReference.get() != null
+
         fun currentDisplayId(): Int {
             val ims = FlorisImeServiceReference.get() ?: return android.view.Display.DEFAULT_DISPLAY
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

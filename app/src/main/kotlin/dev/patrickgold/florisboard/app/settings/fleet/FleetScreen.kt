@@ -57,6 +57,11 @@ fun FleetScreen() = FlorisScreen {
             title = stringRes(R.string.settings__fleet__enabled),
             summary = stringRes(R.string.settings__fleet__enabled_summary),
         )
+        SwitchPreference(
+            prefs.fleet.externalControl,
+            title = stringRes(R.string.settings__fleet__external_control),
+            summary = stringRes(R.string.settings__fleet__external_control_summary),
+        )
         FlorisInfoCard(text = stringRes(R.string.settings__fleet__info))
         if (offers.isEmpty()) {
             Text(

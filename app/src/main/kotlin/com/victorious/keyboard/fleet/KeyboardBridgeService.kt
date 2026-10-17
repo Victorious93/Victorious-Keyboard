@@ -1,0 +1,115 @@
+/*
+ * Copyright (C) 2026 Victorious Keyboard Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.victorious.keyboard.fleet
+
+import android.app.Service
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Binder
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
+import android.os.Message
+import android.os.Messenger
+import dev.patrickgold.florisboard.FlorisImeService
+import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.lib.fleet.BridgeProtocol
+import dev.patrickgold.florisboard.lib.fleet.CertDigest
+
+/**
+ * Status bridge for the Droidcommand hub. External control is off until the
+ * user turns it on. The reply never includes typed text or keystrokes.
+ */
+class KeyboardBridgeService : Service() {
+    private val prefs by FlorisPreferenceStore
+    private val messenger = Messenger(Incoming())
+
+    override fun onBind(intent: Intent?): IBinder? {
+        if (intent?.action != BridgeProtocol.ACTION) return null
+        return messenger.binder
+    }
+
+    private inner class Incoming : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            val replyTo = msg.replyTo ?: return
+            val request = if (msg.what == BridgeProtocol.WHAT_REQUEST) {
+                msg.data?.getString(BridgeProtocol.KEY_REQUEST)
+            } else {
+                null
+            }
+            val response = try {
+                answer(request)
+            } catch (e: Exception) {
+                BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+            }
+            val outgoing = Message.obtain(null, BridgeProtocol.WHAT_RESPONSE)
+            outgoing.data = Bundle().apply { putString(BridgeProtocol.KEY_RESPONSE, response) }
+            try {
+                replyTo.send(outgoing)
+            } catch (e: Exception) {
+                // The caller is already gone.
+            }
+        }
+    }
+
+    private fun answer(request: String?): String {
+        val uid = Binder.getCallingUid()
+        val identity = Binder.clearCallingIdentity()
+        try {
+            val packages = packageManager.getPackagesForUid(uid)?.toList().orEmpty()
+            val certificatesPresent = packages.isNotEmpty() && packages.all { certificatePresent(it) }
+            val authorized = BridgeProtocol.authorized(packages, certificatesPresent)
+            val enabled = if (authorized) {
+                try {
+                    prefs.fleet.externalControl.get()
+                } catch (e: Exception) {
+                    false
+                }
+            } else {
+                false
+            }
+            val imeRunning = authorized && enabled && FlorisImeService.isRunning()
+            return BridgeProtocol.response(
+                op = BridgeProtocol.op(request),
+                authorized = authorized,
+                controlEnabled = enabled,
+                imeRunning = imeRunning,
+            )
+        } finally {
+            Binder.restoreCallingIdentity(identity)
+        }
+    }
+
+    private fun certificatePresent(packageName: String): Boolean {
+        return try {
+            val encoded = if (Build.VERSION.SDK_INT >= 28) {
+                val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                info.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
+            } else {
+                @Suppress("DEPRECATION")
+                val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                @Suppress("DEPRECATION")
+                info.signatures?.firstOrNull()?.toByteArray()
+            }
+            encoded != null && CertDigest.sha256(encoded).isNotBlank()
+        } catch (e: Exception) {
+            false
+        }
+    }
+}

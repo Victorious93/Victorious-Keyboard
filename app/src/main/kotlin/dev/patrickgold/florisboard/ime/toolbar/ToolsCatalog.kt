@@ -105,6 +105,7 @@ object ToolsCatalog {
             ToolbarActionId.BOTTOM_GAP,
             ToolbarActionId.THEME,
             ToolbarActionId.SETTINGS,
+            ToolbarActionId.SCREENSHOT,
         ),
     )
 

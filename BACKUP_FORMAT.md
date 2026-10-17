@@ -93,6 +93,14 @@ offset size field
   library; revisit in Phase 9.
 * Limitation: the password is held as a `String` by the UI text field and can't be wiped from memory.
 
+## Snippet export (reuses this container)
+
+`SnippetEncryptedBackup` (`ime/snippets/`) writes the snippets JSON (`format: "victorious-snippets"`, see `SNIPPETS.md`)
+inside the same container, with the same KDF, cipher, header and limits. The container carries no marker for its
+payload, so a reader must check what it decrypted: the snippet reader rejects anything that is not a snippets file, and
+the clipboard reader rejects anything that is not a ZIP of the clipboard format. File read is capped at the plain limit
+(8 MiB) plus 56 bytes of container overhead before any key is derived. No format change; container version stays 1.
+
 ## Limits
 
 File ≤ 96 MiB; uncompressed ≤ 96 MiB; ≤ 16 ZIP members; ≤ 5 000 entries; ≤ 1 000 000 chars per entry; ≤ 64 tags per

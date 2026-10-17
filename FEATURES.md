@@ -64,7 +64,8 @@ keyboard behaves like upstream. The UI has not been seen on a screen.
 | Expansion on Enter and Tab, each opt-in and off by default; a non-match still sends the real key; never in password fields | ✅ rules JVM-tested · 🟦 wiring compiled, **never run** |
 | Per-mode expansion (Standard / Developer / Termux: Follow, Space only, or Off; Termux Off by default; master switch wins; old Termux switch migrated) | ✅ rules JVM-tested; the migration is JVM-tested end to end (a stored preference file loaded through jetpref and `AppPrefs.migrate`), not on an installed upgrade · 🟦 settings and wiring compiled, **never run** |
 | In-keyboard snippet picker (smartbar quick action, panel with tag chips, insert at the caret, `{{selection}}`, `{{cursor}}`) | ✅ pure parts JVM-tested (insertion rules, caret placement, list model, preview, migration of the quick action) · 🟦 panel and wiring compiled, **never run or rendered** |
-| Typed search in the picker, encrypted export | ⬜ |
+| Encrypted snippet export/import (password container shared with the clipboard backup) | ✅ core + tests · 🟦 dialogs |
+| Typed search in the picker | ⬜ |
 | Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; prediction reads the bundled zips, and installing a pack still only feeds the system spell checker |
 | Command library | ⬜
 

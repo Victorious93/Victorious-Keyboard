@@ -71,6 +71,12 @@ Some shared networks get `429 Too Many Requests` from `repo.maven.apache.org`. T
 (see the script text in `docs/build-env-mirror.gradle.kts`). Do not commit mirror URLs into `settings.gradle.kts`.
 Dependency verification (Phase 1) protects against a mirror serving different bytes.
 
+## Debug signing
+
+Debug and benchmark builds sign with the committed keystore `signing/debug.keystore` (alias `victorious-debug`, store and key password `android`). That password is public. It is not a release key and it is not a fleet trust key. Release signing is unchanged and stays out of Git.
+
+Every CI run and local debug build uses this same certificate, so a newer debug APK installs over an older one that was signed with it. A phone that already has a debug build signed with a different key (the old per-machine debug key) must be uninstalled once before this APK will install. See `signing/README.md`.
+
 ## Not verified
 
 * Installing or running the APK on a device/emulator (no device or KVM in the reference environment).

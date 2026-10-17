@@ -127,8 +127,19 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Public debug key only. Release signing is unchanged and stays out of Git.
+            storeFile = rootProject.file("signing/debug.keystore")
+            storePassword = "android"
+            keyAlias = "victorious-debug"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         named("debug") {
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug+${getGitCommitHash(short = true).get()}"
 

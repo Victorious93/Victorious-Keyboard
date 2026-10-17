@@ -20,10 +20,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * JSON documents a provider returns from the binder. A document that cannot be read becomes an
+ * JSON documents a provider returns. A document that cannot be read becomes an
  * empty list. It is never logged.
- *
- * TODO-confirm-with-hub: the field names match the shared module README.
  */
 object FleetCodec {
     private const val MAX_DOCUMENT = 65_536

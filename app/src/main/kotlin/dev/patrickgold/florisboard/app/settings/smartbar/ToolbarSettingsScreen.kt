@@ -38,7 +38,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
+import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.screenshot.ScreenshotPolicy
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandDto
+import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
+import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandRules
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
@@ -58,6 +62,8 @@ fun ToolbarSettingsScreen() = FlorisScreen {
     previewFieldVisible = true
     content {
         val context = LocalContext.current
+        val prefs by FlorisPreferenceStore
+        val showScreenshot by prefs.tools.screenshotTile.observeAsState()
         LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
         val config by ToolbarRuntime.config.collectAsState()
         Text(
@@ -159,9 +165,11 @@ fun ToolbarSettingsScreen() = FlorisScreen {
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
             )
-            val shown = ToolsCatalog.visible(tab, config.hiddenSet(), config.tabOrder(tab))
+            val hiddenNames = ScreenshotPolicy.panelHidden(config.hiddenSet(), showScreenshot)
+            val shown = ToolsCatalog.visible(tab, hiddenNames, config.tabOrder(tab))
             val listed = shown + ToolsCatalog.actions(tab).filter { it !in shown }
             for (id in listed) {
+                if (id == ToolbarActionId.SCREENSHOT && !showScreenshot) continue
                 val hidden = id !in shown
                 val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
                 ItemRow(text = name, hidden = hidden) {

@@ -138,6 +138,16 @@ class FlorisImeService : LifecycleInputMethodService() {
             ims.hideUi()
         }
 
+        /** Display the keyboard is attached to, or the default display when that is unknown. */
+        fun currentDisplayId(): Int {
+            val ims = FlorisImeServiceReference.get() ?: return android.view.Display.DEFAULT_DISPLAY
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                ims.display?.displayId ?: android.view.Display.DEFAULT_DISPLAY
+            } else {
+                android.view.Display.DEFAULT_DISPLAY
+            }
+        }
+
         fun switchToPrevInputMethod(): Boolean {
             val ims = FlorisImeServiceReference.get() ?: return false
             return ims.switchToPrevInputMethod()

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Narrow on purpose. No event types, so nothing on screen is delivered here.
+  canRetrieveWindowContent is false. canTakeScreenshot is the only extra capability (API 30+).
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:description="@string/screenshot__service_description"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="0"
+    android:canRetrieveWindowContent="false"
+    android:canTakeScreenshot="true"
+    tools:targetApi="30" />

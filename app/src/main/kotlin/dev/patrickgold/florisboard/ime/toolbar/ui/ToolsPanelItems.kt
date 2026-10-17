@@ -43,6 +43,7 @@ import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Screenshot
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Spellcheck
@@ -146,5 +147,6 @@ object ToolsPanelItems {
         ToolbarActionId.BOTTOM_GAP to v(Icons.Outlined.VerticalAlignBottom, R.string.tools__action__bottom_gap),
         ToolbarActionId.THEME to v(Icons.Outlined.Palette, R.string.tools__action__theme),
         ToolbarActionId.SETTINGS to v(Icons.Outlined.Settings, R.string.tools__action__settings),
+        ToolbarActionId.SCREENSHOT to v(Icons.Outlined.Screenshot, R.string.tools__action__screenshot),
     )
 }

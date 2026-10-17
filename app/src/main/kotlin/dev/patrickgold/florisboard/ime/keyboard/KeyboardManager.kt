@@ -80,6 +80,7 @@ import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
 import dev.patrickgold.florisboard.nlpManager
+import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.slashCommands
 import dev.patrickgold.florisboard.snippetManager
 import dev.patrickgold.florisboard.subtypeManager
@@ -176,6 +177,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val subtypeManager by context.subtypeManager()
     private val snippetManager by context.snippetManager()
     private val slashCommands by context.slashCommands()
+    private val fleet by context.fleetHub()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     val layoutManager = LayoutManager(context)
@@ -198,6 +200,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
+        if (open) fleet.refresh()
     }
 
     /** The tools panel tab shown when it opens. Kept in memory only: switching tabs never writes to disk. */
@@ -307,6 +310,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
                 toolsOpen.value = false
+                fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
                     vaultLearningHold = false
@@ -487,6 +491,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private fun expandSlash(candidate: SlashSuggestionCandidate) {
         if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
         if (!prefs.slash.enabled.get()) return
+        if (candidate.fleet) {
+            expandFleetSlash(candidate)
+            return
+        }
         val commands = slashCommands.snapshot()
         val offer = if (candidate.customId != null) {
             dev.patrickgold.florisboard.ime.slash.SlashOffer(candidate.commandName, "", null, candidate.customId)
@@ -570,6 +578,92 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             }
             dev.patrickgold.florisboard.ime.slash.SlashAction.Unknown ->
                 appContext.showShortToastSync(R.string.slash__unknown)
+        }
+    }
+
+    private fun expandFleetSlash(candidate: SlashSuggestionCandidate) {
+        if (!prefs.fleet.enabled.get()) return
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
+        val packageName = candidate.fleetPackage?.takeIf { it.isNotBlank() } ?: return
+        val rawName = candidate.fleetRawName?.takeIf { it.isNotBlank() } ?: return
+        val argument = dev.patrickgold.florisboard.lib.fleet.FleetPolicy.slashText(
+            candidate.argument,
+            passwordLike = false,
+        ) ?: return
+        val token = editorInstance.activeContent.textBeforeSelection.takeLast(candidate.replaceLength)
+        scope.launch {
+            val reply = fleet.ask(packageName, rawName, argument)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (reply.isNullOrBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                    return@withContext
+                }
+                val before = editorInstance.activeContent.textBeforeSelection
+                if (token.isNotEmpty() && before.endsWith(token)) {
+                    replaceSlashToken(token.length, reply, null)
+                }
+            }
+        }
+    }
+
+    /**
+     * Sends only the current selection to the app the user picked.
+     * [action] is empty for Ask, or an advertised action name. Vault text is included because the tap is explicit.
+     */
+    fun askFleet(packageName: String, action: String = "") {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
+            appContext.showShortToastSync(R.string.fleet__password)
+            return
+        }
+        val session = clipEditor.value
+        val selection = if (session != null) {
+            if (session.body.hasSelection) session.body.selectedText else ""
+        } else {
+            editorInstance.activeContent.selectedText
+        }
+        val fromVault = session?.origin == dev.patrickgold.florisboard.ime.clipedit.ClipEditorOrigin.VAULT ||
+            session?.sensitive == true
+        val text = dev.patrickgold.florisboard.lib.fleet.FleetPolicy.askText(
+            selection = selection,
+            passwordLike = false,
+            selectionIsVault = fromVault,
+            explicitVaultPick = true,
+        )
+        if (text == null) {
+            appContext.showShortToastSync(R.string.fleet__need_selection)
+            return
+        }
+        scope.launch {
+            val reply = fleet.ask(packageName, action, text)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (reply.isNullOrBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                } else {
+                    if (fromVault) vaultLearningHold = true
+                    insertAtTarget(reply)
+                }
+            }
+        }
+    }
+
+    /** Inserts provider snippet text. A command name asks that provider for text and does not run it. */
+    fun insertFleetSnippet(packageName: String, snippet: dev.patrickgold.florisboard.lib.fleet.FleetSnippet) {
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) {
+            appContext.showShortToastSync(R.string.fleet__password)
+            return
+        }
+        scope.launch {
+            val outcome = fleet.insertSnippet(packageName, snippet)
+            withContext(Dispatchers.Main) {
+                if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return@withContext
+                if (outcome == null || outcome.execute || outcome.text.isBlank()) {
+                    appContext.showShortToastSync(R.string.fleet__unavailable)
+                } else {
+                    insertAtTarget(outcome.text)
+                }
+            }
         }
     }
 

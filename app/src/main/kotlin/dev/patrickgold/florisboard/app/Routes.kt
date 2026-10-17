@@ -85,6 +85,7 @@ import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreen
 import dev.patrickgold.florisboard.app.settings.theme.ThemeManagerScreenAction
 import dev.patrickgold.florisboard.app.settings.theme.ThemeScreen
 import dev.patrickgold.florisboard.app.settings.localai.LocalAiScreen
+import dev.patrickgold.florisboard.app.settings.fleet.FleetScreen
 import dev.patrickgold.florisboard.app.settings.screenshot.ScreenshotScreen
 import dev.patrickgold.florisboard.app.settings.slash.SlashCommandsScreen
 import dev.patrickgold.florisboard.app.settings.suggestions.MySuggestionsScreen
@@ -267,6 +268,10 @@ object Routes {
         object SlashCommands
 
         @Serializable
+        @Deeplink("settings/fleet")
+        object Fleet
+
+        @Serializable
         @Deeplink("settings/screenshot")
         object Screenshot
     }
@@ -375,6 +380,7 @@ object Routes {
             composableWithDeepLink(Settings.Typing::class) { TypingScreen() }
             composableWithDeepLink(Settings.MySuggestions::class) { MySuggestionsScreen() }
             composableWithDeepLink(Settings.SlashCommands::class) { SlashCommandsScreen() }
+            composableWithDeepLink(Settings.Fleet::class) { FleetScreen() }
             composableWithDeepLink(Settings.LocalAi::class) { LocalAiScreen() }
             composableWithDeepLink(Settings.Screenshot::class) { ScreenshotScreen() }
 

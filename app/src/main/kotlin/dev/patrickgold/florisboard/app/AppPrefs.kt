@@ -417,6 +417,14 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
     }
 
+    val fleet = Fleet()
+    inner class Fleet {
+        val enabled = boolean(
+            key = "fleet__enabled",
+            default = true,
+        )
+    }
+
     val devrow = Devrow()
     inner class Devrow {
         /**

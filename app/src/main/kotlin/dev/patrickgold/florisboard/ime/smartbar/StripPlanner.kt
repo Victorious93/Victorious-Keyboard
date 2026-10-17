@@ -22,6 +22,7 @@ import dev.patrickgold.florisboard.ime.slash.CustomSlashCommand
 import dev.patrickgold.florisboard.ime.slash.SlashCatalog
 import dev.patrickgold.florisboard.ime.slash.SlashMatcher
 import dev.patrickgold.florisboard.ime.slash.SlashOffer
+import dev.patrickgold.florisboard.lib.fleet.FleetCommand
 
 /**
  * Decides what the suggestion strip shows. A slash token replaces the strip with commands.
@@ -55,12 +56,34 @@ object StripPlanner {
         custom: List<CustomSuggestion>,
         commands: List<CustomSlashCommand>,
         clipboardAvailable: Boolean,
+        fleetCommands: List<FleetCommand> = emptyList(),
     ): StripPlan {
         if (!passwordLike) {
-            val known = commands.filter { it.enabled }.map { it.name }.toSet()
-            val token = SlashMatcher.token(textBeforeCursor, passwordLike = false, knownNames = known)
+            val known = commands.filter { it.enabled }.map { it.name }.toSet() +
+                fleetCommands.map { it.rawName }
+            val token = SlashMatcher.token(
+                textBeforeCursor,
+                passwordLike = false,
+                argumentNames = fleetCommands.map { it.name }.toSet(),
+                knownNames = known,
+            )
             if (token != null && slashEnabled) {
-                val offers = SlashCatalog.match(token.name, commands, enabled = true)
+                val local = SlashCatalog.match(token.name, commands, enabled = true)
+                val fleetOffers = fleetCommands
+                    .filter { token.name.isEmpty() || it.name.startsWith(token.name) || it.rawName.startsWith(token.name) }
+                    .filter { command -> local.none { it.name == command.name } }
+                    .map {
+                        SlashOffer(
+                            it.name,
+                            it.description,
+                            null,
+                            null,
+                            fleet = true,
+                            fleetPackage = it.packageName,
+                            fleetRawName = it.rawName,
+                        )
+                    }
+                val offers = (local + fleetOffers).take(24)
                 // A slash that matches nothing (`cd /usr/bin`) is a path, not a command list.
                 if (token.name.isEmpty() || offers.isNotEmpty()) {
                     return StripPlan.Slash(

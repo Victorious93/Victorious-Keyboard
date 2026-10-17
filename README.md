@@ -86,6 +86,14 @@ Settings → Typing → Suggestions → **My suggestions** stores words and phra
 
 Type `/` at the start of a word and the strip lists matching commands. Tap one to expand it. Built-ins: `/date`, `/time`, `/clip` (latest non-sensitive clip), `/snip name`, `/ai prompt` (Local AI, inserts the reply), `/fix`, `/rewrite`, `/sum`, `/translate`, `/shell description` (inserts one command and never runs it), `/edit` (clip editor), `/vault` (unlock). Settings → **Slash commands** adds, edits, deletes, and reorders custom commands. Output text can use `{date}`, `{time}`, `{clipboard}`, `{selection}`, and `{cursor}`. A global switch turns them off. They stay off in password fields. Custom commands live in `noBackupFilesDir/slash/commands.json`. Not run on a device.
 
+### Droidcommand-AI fleet
+
+The keyboard stays standalone. It does not request the Internet permission. It does not ship a list of fleet apps. It discovers every installed app that exports the shared service action, holds the shared signature permission, and is signed with this keyboard's certificate. If none are installed, or the fleet switch is off, every fleet feature stays hidden. The action (`com.victorious.fleet.KEYBOARD_PROVIDER`) and permission (`com.victorious.fleet.PERMISSION`) are still placeholders, marked `TODO-confirm-with-hub` in `fleet-keyboard-api`.
+
+Each connected app can advertise a name, an icon, slash commands, snippets, and actions. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel then shows a **Fleet** tab beside the five theme tabs. Each trusted app is a section there, with its icon and a status dot; Ask, advertised actions, and snippets are tiles under that app, drawn with the same theme tiles as the other tabs. Settings → Tools → **Fleet link** is the switch. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. Text that comes back is inserted and never run. Adding or removing an app rescans.
+
+Details: [docs/FLEET.md](docs/FLEET.md). Not run on a device.
+
 ### Developer and terminal
 
 The terminal key row follows **Show terminal key row** (Auto / Always / Never), described above. Keys send real key events (not literal `Ctrl+C` text); F1–F12 supported. Ctrl/Alt: tap, double-tap lock, or hold. Modes: Standard, Developer, Termux; optional auto-detect for Termux and ConnectBot. Termux/SSH/vim/tmux behaviour and Claude Code / Kali / NetHunter modes are **not verified** on device yet. The row itself is compiled and has not been rendered on a device.
@@ -250,7 +258,7 @@ Settings → Theme → the extension list opens the theme editor shipped with th
 |---|---|
 | [FEATURES.md](FEATURES.md) · [ROADMAP.md](ROADMAP.md) | Feature status and phases |
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [BUILD.md](BUILD.md) · [TESTING.md](TESTING.md) | Structure, build, tests |
-| [CLIPBOARD.md](CLIPBOARD.md) · [SNIPPETS.md](SNIPPETS.md) · [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md) · [TERMINAL.md](TERMINAL.md) | Feature design docs |
+| [CLIPBOARD.md](CLIPBOARD.md) · [SNIPPETS.md](SNIPPETS.md) · [DICTIONARY_PACKS.md](DICTIONARY_PACKS.md) · [TERMINAL.md](TERMINAL.md) · [docs/FLEET.md](docs/FLEET.md) | Feature design docs |
 | [PRIVACY.md](PRIVACY.md) · [SECURITY.md](SECURITY.md) | Data handling and vulnerability reports |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Contribution rules |
 | [LICENSES.md](LICENSES.md) · [docs/upstream/](docs/upstream/) | Licences and upstream attribution |

@@ -120,6 +120,9 @@ data class SlashOffer(
     val description: String,
     val builtin: SlashBuiltin?,
     val customId: String?,
+    val fleet: Boolean = false,
+    val fleetPackage: String? = null,
+    val fleetRawName: String? = null,
 )
 
 data class CustomSlashCommand(

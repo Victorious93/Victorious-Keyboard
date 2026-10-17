@@ -38,6 +38,9 @@ import dev.patrickgold.florisboard.ime.slash.SlashCommandCodec
 import dev.patrickgold.florisboard.ime.slash.SlashCommandList
 import dev.patrickgold.florisboard.ime.slash.SlashDocument
 import dev.patrickgold.florisboard.ime.slash.SlashMatcher
+import com.victorious.fleet.FleetApiContract
+import dev.patrickgold.florisboard.lib.fleet.FleetCommand
+import java.io.File
 import dev.patrickgold.florisboard.ime.slash.SlashOffer
 import dev.patrickgold.florisboard.ime.slash.SlashTemplate
 import dev.patrickgold.florisboard.ime.slash.SlashVars
@@ -264,6 +267,82 @@ class StripSlashTest : FunSpec({
         val opened = BackupReader.read(locked, "correct horse".toCharArray())
         opened.passwordProtected shouldBe true
         opened.suggestionsDocument shouldBe doc
+    }
+
+    test("fleet slash commands namespace clashes and stay off in password fields") {
+        val connected = listOf(
+            FleetCommand("edl:status", "status", "EDL status", "com.example.one"),
+            FleetCommand("swarm:status", "status", "Swarm status", "com.example.two"),
+            FleetCommand("flash", "flash", "Flash", "com.example.one"),
+        )
+        val names = connected.map { it.name }.toSet()
+        val qualified = SlashMatcher.token("/edl:status hello", passwordLike = false, argumentNames = names)
+        qualified!!.name shouldBe "edl:status"
+        qualified.argument shouldBe "hello"
+        val shared = StripPlanner.plan(
+            passwordLike = false,
+            slashEnabled = true,
+            textBeforeCursor = "/status",
+            selection = "",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+            fleetCommands = connected,
+        )
+        shared.shouldBeInstanceOf<StripPlan.Slash>()
+        shared.offers.map { it.name } shouldBe listOf("edl:status", "swarm:status")
+        shared.offers.all { it.fleet } shouldBe true
+        shared.offers.map { it.fleetRawName } shouldBe listOf("status", "status")
+        val unique = StripPlanner.plan(
+            passwordLike = false,
+            slashEnabled = true,
+            textBeforeCursor = "/flash",
+            selection = "",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+            fleetCommands = connected,
+        )
+        unique.shouldBeInstanceOf<StripPlan.Slash>()
+        unique.offers.single().name shouldBe "flash"
+        unique.offers.single().fleetPackage shouldBe "com.example.one"
+        val hidden = StripPlanner.plan(
+            passwordLike = true,
+            slashEnabled = true,
+            textBeforeCursor = "/status",
+            selection = "vault",
+            custom = emptyList(),
+            commands = emptyList(),
+            clipboardAvailable = false,
+            fleetCommands = connected,
+        )
+        hidden.shouldBeInstanceOf<StripPlan.Words>()
+    }
+
+    test("manifest discovers fleet services and does not name apps") {
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        val contract = File("../fleet-keyboard-api/src/main/kotlin/com/victorious/fleet/FleetApiContract.kt").readText()
+        val client = File("src/main/kotlin/dev/patrickgold/florisboard/ime/fleet/FleetHubClient.kt").readText()
+        contract shouldContain "TODO-confirm-with-hub"
+        manifest shouldContain "TODO-confirm-with-hub"
+        manifest shouldContain "android:name=\"${FleetApiContract.SERVICE_ACTION}\""
+        manifest shouldContain "android:name=\"${FleetApiContract.PERMISSION}\""
+        manifest.contains("<package ") shouldBe false
+        manifest.contains("android.permission.INTERNET") shouldBe false
+        client shouldContain "queryIntentServices"
+        val banned = listOf("edl-commander", "pentest-swarm", "victorlink", "victorsuite", "rootforge")
+        val roots = listOf(
+            File("src/main"),
+            File("../lib/fleet/src/main"),
+            File("../fleet-keyboard-api/src"),
+        )
+        val hits = roots.flatMap { root ->
+            root.walkTopDown().filter { it.isFile && it.extension in setOf("kt", "xml", "aidl", "pro") }
+        }.flatMap { file ->
+            val text = file.readText().lowercase()
+            banned.filter { needle -> needle in text }.map { file.path }
+        }
+        hits shouldBe emptyList()
     }
 
     test("primary candidate is the auto-commit word") {

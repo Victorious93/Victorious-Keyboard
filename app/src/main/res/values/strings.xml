@@ -520,6 +520,14 @@
     <string name="settings__my_suggestions__trigger">Shortcut (optional)</string>
     <string name="settings__my_suggestions__no_trigger">Matches the start of the phrase</string>
     <string name="settings__my_suggestions__rejected">That phrase or shortcut cannot be saved. It may be empty, too long, or already in the list.</string>
+    <string name="settings__fleet__title">Fleet link</string>
+    <string name="settings__fleet__summary">Optional link to apps signed with this keyboard. Hidden when none are installed</string>
+    <string name="settings__fleet__enabled">Droidcommand-AI fleet</string>
+    <string name="settings__fleet__enabled_summary">Connects only to same-signed apps that offer the fleet service. Replies are inserted and never run</string>
+    <string name="settings__fleet__info">The shared service action and signature permission are not confirmed yet. Until a same-signed app exports them, every fleet feature stays hidden and the keyboard stays standalone. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. No Internet permission is used.</string>
+    <string name="fleet__unavailable">That app did not answer</string>
+    <string name="fleet__need_selection">Select text, then tap Ask</string>
+    <string name="fleet__password">Fleet actions stay off in password fields</string>
     <string name="settings__slash__title">Slash commands</string>
     <string name="settings__slash__summary">Type / at the start of a word to expand a command</string>
     <string name="settings__slash__enabled">Slash commands</string>
@@ -1654,6 +1662,8 @@
     <string name="tools__tab__terminal">Terminal</string>
     <string name="tools__tab__code">Code</string>
     <string name="tools__tab__quick">Quick</string>
+    <string name="tools__tab__fleet">Fleet</string>
+    <string name="tools__fleet__ask">Ask</string>
     <string name="tools__state__on">On</string>
     <string name="tools__state__off">Off</string>
     <string name="tools__action__open_clipboard">History</string>

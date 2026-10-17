@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.ShortText
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.DeviceHub
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.Language
@@ -147,6 +148,12 @@ fun HomeScreen() = FlorisScreen {
                 title = stringRes(R.string.settings__slash__title),
                 summary = stringRes(R.string.settings__slash__summary),
                 onClick = { navController.navigate(Routes.Settings.SlashCommands) },
+            )
+            Preference(
+                icon = Icons.Default.DeviceHub,
+                title = stringRes(R.string.settings__fleet__title),
+                summary = stringRes(R.string.settings__fleet__summary),
+                onClick = { navController.navigate(Routes.Settings.Fleet) },
             )
             Preference(
                 icon = Icons.Default.Memory,

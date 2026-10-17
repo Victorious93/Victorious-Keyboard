@@ -16,8 +16,12 @@
 
 package dev.patrickgold.florisboard.ime.toolbar.ui
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,7 +29,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,15 +40,22 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.QuestionAnswer
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -68,7 +82,12 @@ import dev.patrickgold.florisboard.ime.toolbar.ToolTileFit
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
 import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
+import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.keyboardManager
+import dev.patrickgold.florisboard.lib.fleet.FleetAppStatus
+import dev.patrickgold.florisboard.lib.fleet.FleetPanelState
+import dev.patrickgold.florisboard.lib.fleet.FleetSnippet
+import dev.patrickgold.florisboard.lib.fleet.FleetSnippetKind
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.ui.SnyggBox
@@ -93,6 +112,13 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
     val config by ToolbarRuntime.config.collectAsState()
     val tab by keyboardManager.toolsTab.collectAsState()
+    val fleetClient by context.fleetHub()
+    val fleet by fleetClient.snapshot.collectAsState()
+    val fleetPanel = fleet.panel()
+    var fleetTab by remember { mutableStateOf(false) }
+    LaunchedEffect(fleetPanel.statuses.isEmpty()) {
+        if (fleetPanel.statuses.isEmpty()) fleetTab = false
+    }
     val imeState by keyboardManager.activeState.collectAsState()
     val learning by prefs.suggestion.learnFromTyping.observeAsState()
     val keyRow by prefs.devrow.terminalKeyRow.observeAsState()
@@ -132,7 +158,10 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
         actions = actions,
         commands = commands,
         stateOf = stateOf,
-        onTab = { keyboardManager.setToolsTab(it) },
+        onTab = {
+            fleetTab = false
+            keyboardManager.setToolsTab(it)
+        },
         onAction = { id ->
             keyboardManager.setToolsOpen(false)
             keyboardManager.performToolbarAction(id)
@@ -140,6 +169,21 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
         onCommand = { command ->
             keyboardManager.setToolsOpen(false)
             keyboardManager.insertSavedCommand(command.text)
+        },
+        fleet = fleetPanel,
+        fleetSelected = fleetTab && fleetPanel.statuses.isNotEmpty(),
+        onFleetTab = { fleetTab = true },
+        onAsk = { packageName ->
+            keyboardManager.setToolsOpen(false)
+            keyboardManager.askFleet(packageName)
+        },
+        onFleetAction = { packageName, action ->
+            keyboardManager.setToolsOpen(false)
+            keyboardManager.askFleet(packageName, action)
+        },
+        onSnippet = { packageName, snippet ->
+            keyboardManager.setToolsOpen(false)
+            keyboardManager.insertFleetSnippet(packageName, snippet)
         },
         onCustomize = { FlorisImeService.launchSettingsAt("settings/smartbar/toolbar") },
         onClose = { keyboardManager.setToolsOpen(false) },
@@ -160,6 +204,12 @@ fun ToolsPanelContent(
     onCustomize: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    fleet: FleetPanelState = FleetPanelState.Hidden,
+    fleetSelected: Boolean = false,
+    onFleetTab: () -> Unit = {},
+    onAsk: (String) -> Unit = {},
+    onFleetAction: (String, String) -> Unit = { _, _ -> },
+    onSnippet: (String, FleetSnippet) -> Unit = { _, _ -> },
 ) {
     SnyggBox(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
@@ -169,12 +219,60 @@ fun ToolsPanelContent(
             val headerHeight = FlorisImeSizing.smartbarHeight
             val tileHeight: Dp = ((maxHeight - headerHeight) / VisibleRows).coerceIn(52.dp, 88.dp)
             Column(modifier = Modifier.fillMaxSize()) {
-                ToolsHeader(tab, headerHeight, onTab, onCustomize, onClose)
+                ToolsHeader(tab, fleetSelected, fleet.statuses.isNotEmpty(), headerHeight, onTab, onFleetTab, onCustomize, onClose)
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 72.dp),
                     modifier = Modifier.fillMaxWidth().weight(1f),
                 ) {
-                    items(actions, key = { it.name }) { id ->
+                    if (fleetSelected) {
+                        for (status in fleet.statuses) {
+                            item(key = "fleet-status:" + status.packageName, span = { GridItemSpan(maxLineSpan) }) {
+                                FleetStatusHeader(status)
+                            }
+                            val section = fleet.sections.firstOrNull { it.packageName == status.packageName } ?: continue
+                            item(key = "fleet-ask:" + section.packageName) {
+                                ToolTile(
+                                    glyph = ToolGlyph.Vector(Icons.Outlined.QuestionAnswer),
+                                    label = stringRes(R.string.tools__fleet__ask),
+                                    state = null,
+                                    height = tileHeight,
+                                    onClick = { onAsk(section.packageName) },
+                                )
+                            }
+                            items(section.actions, key = { "fleet-action:" + section.packageName + ":" + it.name }) { action ->
+                                ToolTile(
+                                    glyph = ToolGlyph.Vector(Icons.Outlined.Terminal),
+                                    label = action.label,
+                                    state = null,
+                                    height = tileHeight,
+                                    onClick = { onFleetAction(section.packageName, action.name) },
+                                )
+                            }
+                            for (kind in FleetSnippetKind.entries) {
+                                val rows = section.snippets.filter { it.kind == kind }
+                                if (rows.isEmpty()) continue
+                                item(
+                                    key = "fleet-kind:" + section.packageName + ":" + kind.name,
+                                    span = { GridItemSpan(maxLineSpan) },
+                                ) {
+                                    SnyggText(
+                                        elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
+                                        text = kind.name.lowercase(),
+                                    )
+                                }
+                                items(rows, key = { "fleet-snip:" + section.packageName + ":" + it.id }) { snippet ->
+                                    ToolTile(
+                                        glyph = ToolGlyph.Vector(Icons.Outlined.Terminal),
+                                        label = snippet.label,
+                                        state = null,
+                                        height = tileHeight,
+                                        onClick = { onSnippet(section.packageName, snippet) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (!fleetSelected) items(actions, key = { it.name }) { id ->
                         val item = ToolsPanelItems.item(id) ?: return@items
                         val label = stringRes(item.label)
                         ToolTile(
@@ -185,7 +283,7 @@ fun ToolsPanelContent(
                             onClick = { onAction(id) },
                         )
                     }
-                    if (actions.isEmpty() && commands.isEmpty()) {
+                    if (!fleetSelected && actions.isEmpty() && commands.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             SnyggText(
                                 elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
@@ -194,7 +292,7 @@ fun ToolsPanelContent(
                             )
                         }
                     }
-                    if (commands.isNotEmpty()) {
+                    if (!fleetSelected && commands.isNotEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             SnyggText(
                                 elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
@@ -220,8 +318,11 @@ fun ToolsPanelContent(
 @Composable
 private fun ToolsHeader(
     tab: ToolsTab,
+    fleetSelected: Boolean,
+    showFleet: Boolean,
     height: Dp,
     onTab: (ToolsTab) -> Unit,
+    onFleetTab: () -> Unit,
     onCustomize: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -236,9 +337,17 @@ private fun ToolsHeader(
             for (entry in ToolsCatalog.tabs.keys) {
                 SnyggChip(
                     elementName = FlorisImeUi.ClipboardFilterChip.elementName,
-                    attributes = mapOf("state" to if (entry == tab) "active" else "inactive"),
+                    attributes = mapOf("state" to if (!fleetSelected && entry == tab) "active" else "inactive"),
                     onClick = { onTab(entry) },
                     text = stringRes(ToolsPanelItems.tabLabel(entry)),
+                )
+            }
+            if (showFleet) {
+                SnyggChip(
+                    elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+                    attributes = mapOf("state" to if (fleetSelected) "active" else "inactive"),
+                    onClick = onFleetTab,
+                    text = stringRes(R.string.tools__tab__fleet),
                 )
             }
         }
@@ -313,5 +422,45 @@ private fun ToolTile(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@Composable
+private fun FleetStatusHeader(status: FleetAppStatus) {
+    val png = status.iconPng
+    val icon = remember(status.packageName, png?.size, png?.contentHashCode()) {
+        decodeFleetIcon(png)
+    }
+    Row(
+        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Image(
+                bitmap = icon,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 6.dp).size(16.dp),
+            )
+        }
+        SnyggText(
+            elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
+            text = status.title,
+        )
+        Box(
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(if (status.connected) Color(0xFF3DDC84) else Color(0xFF6E6E6E)),
+        )
+    }
+}
+
+private fun decodeFleetIcon(png: ByteArray?): ImageBitmap? {
+    if (png == null || png.isEmpty()) return null
+    return try {
+        BitmapFactory.decodeByteArray(png, 0, png.size)?.asImageBitmap()
+    } catch (e: Exception) {
+        null
     }
 }

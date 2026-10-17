@@ -34,7 +34,7 @@ import dev.patrickgold.florisboard.lib.fleet.CertDigest
 
 /**
  * Status bridge for the Droidcommand hub. External control is off until the
- * user turns it on. The reply never includes typed text or keystrokes.
+ * user turns it on. The reply never includes what the user typed.
  */
 class KeyboardBridgeService : Service() {
     private val prefs by FlorisPreferenceStore

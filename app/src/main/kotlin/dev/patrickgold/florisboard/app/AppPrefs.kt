@@ -423,6 +423,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "fleet__enabled",
             default = true,
         )
+        /** Package, certificate, approval, and the per-app switch. Not user text. */
+        val grants = string(
+            key = "fleet__grants",
+            default = "",
+        )
     }
 
     val devrow = Devrow()

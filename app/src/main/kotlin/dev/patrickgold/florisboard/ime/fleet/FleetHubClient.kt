@@ -25,13 +25,18 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
-import com.victorious.fleet.FleetApiContract
-import com.victorious.fleet.IFleetKeyboardProvider
+import android.os.Messenger
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.lib.fleet.CertDigest
+import dev.patrickgold.florisboard.lib.fleet.FleetAccess
 import dev.patrickgold.florisboard.lib.fleet.FleetDiscovery
 import dev.patrickgold.florisboard.lib.fleet.FleetEndpoint
+import dev.patrickgold.florisboard.lib.fleet.FleetGrants
+import dev.patrickgold.florisboard.lib.fleet.FleetMessages
+import dev.patrickgold.florisboard.lib.fleet.FleetOffer
 import dev.patrickgold.florisboard.lib.fleet.FleetOutcome
 import dev.patrickgold.florisboard.lib.fleet.FleetProvider
+import dev.patrickgold.florisboard.lib.fleet.FleetReleaseCert
 import dev.patrickgold.florisboard.lib.fleet.FleetServiceCandidate
 import dev.patrickgold.florisboard.lib.fleet.FleetServiceTarget
 import dev.patrickgold.florisboard.lib.fleet.FleetSession
@@ -51,13 +56,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Discovers every app that exports [FleetApiContract.SERVICE_ACTION], holds the shared signature
- * permission, and is signed with this keyboard's certificate. There is no app list.
- *
- * TODO-confirm-with-hub: the action and permission are placeholders in `FleetApiContract`.
- *
- * Binder calls stay off the main thread. A dead provider drops only that app. Returned text is
- * not logged.
+ * Discovers command providers and binds only the ones the user has allowed.
+ * A provider signed with the keyboard release certificate is on until switched off.
+ * Every other app stays off until Settings approves that certificate.
+ * Removing a provider drops that binding and leaves the keyboard running.
+ * Request and reply text is not logged.
  */
 class FleetHubClient(private val context: Context) {
     private val prefs by FlorisPreferenceStore
@@ -70,6 +73,9 @@ class FleetHubClient(private val context: Context) {
 
     private val _snapshot = MutableStateFlow(FleetSnapshot.absent())
     val snapshot: StateFlow<FleetSnapshot> = _snapshot
+
+    private val _offers = MutableStateFlow<List<FleetOffer>>(emptyList())
+    val offers: StateFlow<List<FleetOffer>> = _offers
 
     @Volatile private var targets: List<FleetServiceTarget> = emptyList()
     private var started = false
@@ -98,6 +104,7 @@ class FleetHubClient(private val context: Context) {
                 } catch (e: Exception) {
                     failures++
                     _snapshot.value = FleetSnapshot.absent()
+                    _offers.value = emptyList()
                     delay(250)
                 }
             }
@@ -132,6 +139,7 @@ class FleetHubClient(private val context: Context) {
                 if (generation.get() == gen) {
                     targets = emptyList()
                     _snapshot.value = FleetSnapshot.absent()
+                    _offers.value = emptyList()
                 }
                 return@launch
             }
@@ -140,10 +148,35 @@ class FleetHubClient(private val context: Context) {
             } catch (e: Exception) {
                 emptyList()
             }
+            if (generation.get() == gen) _offers.value = found
+            val active = FleetDiscovery.active(found)
             withContext(Dispatchers.Main) {
                 if (generation.get() != gen) return@withContext
-                syncBindings(gen, found)
+                syncBindings(gen, active)
             }
+        }
+    }
+
+    fun approve(packageName: String) {
+        val offer = _offers.value.firstOrNull { it.packageName == packageName } ?: return
+        updateGrant { FleetGrants.approve(it, offer.packageName, offer.certSha256) }
+    }
+
+    fun setEnabled(packageName: String, enabled: Boolean) {
+        val offer = _offers.value.firstOrNull { it.packageName == packageName } ?: return
+        if (offer.access == FleetAccess.NeedsApproval && enabled) return
+        updateGrant { FleetGrants.setEnabled(it, offer.packageName, offer.certSha256, enabled) }
+    }
+
+    private fun updateGrant(block: (List<dev.patrickgold.florisboard.lib.fleet.FleetGrant>) -> List<dev.patrickgold.florisboard.lib.fleet.FleetGrant>) {
+        scope.launch {
+            try {
+                val next = block(FleetGrants.parse(prefs.fleet.grants.get()))
+                prefs.fleet.grants.set(FleetGrants.render(next))
+            } catch (e: Exception) {
+                return@launch
+            }
+            refresh()
         }
     }
 
@@ -183,30 +216,42 @@ class FleetHubClient(private val context: Context) {
         _snapshot.value = loaded
     }
 
-    private fun discover(): List<FleetServiceTarget> {
+    private fun discover(): List<FleetOffer> {
         val pm = context.packageManager
-        val intent = Intent(FleetApiContract.SERVICE_ACTION)
-        val keyboardCerts = certificates(pm, context.packageName)
+        val intent = Intent(FleetMessages.ACTION)
+        val ownSha = certificateSha(pm, context.packageName)
+        val release = if (FleetReleaseCert.SHA256.isNotBlank()) {
+            FleetReleaseCert.SHA256
+        } else if (context.packageName == "com.victorious.keyboard") {
+            ownSha
+        } else {
+            ""
+        }
+        val grants = try {
+            FleetGrants.parse(prefs.fleet.grants.get())
+        } catch (e: Exception) {
+            emptyList()
+        }
         val candidates = ArrayList<FleetServiceCandidate>()
         for (info in query(pm, intent)) {
             val service = info.serviceInfo ?: continue
             val pkg = service.packageName ?: continue
             val className = service.name ?: continue
-            val granted = try {
-                pm.checkPermission(FleetApiContract.PERMISSION, pkg) == PackageManager.PERMISSION_GRANTED
+            val label = try {
+                info.loadLabel(pm)?.toString().orEmpty()
             } catch (e: Exception) {
-                false
+                ""
             }
             candidates.add(
                 FleetServiceCandidate(
                     packageName = pkg,
                     className = className,
-                    permissionGranted = granted,
-                    certificates = certificates(pm, pkg),
+                    label = label,
+                    certSha256 = certificateSha(pm, pkg),
                 ),
             )
         }
-        return FleetDiscovery.select(context.packageName, keyboardCerts, candidates)
+        return FleetDiscovery.classify(context.packageName, release, grants, candidates)
     }
 
     private fun query(pm: PackageManager, intent: Intent) = if (Build.VERSION.SDK_INT >= 33) {
@@ -216,18 +261,19 @@ class FleetHubClient(private val context: Context) {
         pm.queryIntentServices(intent, 0)
     }
 
-    private fun certificates(pm: PackageManager, packageName: String): List<ByteArray> = try {
-        if (Build.VERSION.SDK_INT >= 28) {
+    private fun certificateSha(pm: PackageManager, packageName: String): String = try {
+        val encoded = if (Build.VERSION.SDK_INT >= 28) {
             val info = pm.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            info.signingInfo?.apkContentsSigners?.map { it.toByteArray() } ?: emptyList()
+            info.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
         } else {
             @Suppress("DEPRECATION")
             val info = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
             @Suppress("DEPRECATION")
-            info.signatures?.map { it.toByteArray() } ?: emptyList()
+            info.signatures?.firstOrNull()?.toByteArray()
         }
+        if (encoded == null) "" else CertDigest.sha256(encoded)
     } catch (e: Exception) {
-        emptyList()
+        ""
     }
 
     private fun syncBindings(gen: Int, next: List<FleetServiceTarget>) {
@@ -251,17 +297,13 @@ class FleetHubClient(private val context: Context) {
         val holder = Binding(target.className)
         holder.connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val remote = try {
-                    if (service == null) null else IFleetKeyboardProvider.Stub.asInterface(service)
-                } catch (e: Exception) {
-                    null
-                }
-                if (remote == null || service == null) {
+                if (service == null) {
                     holder.provider = null
                 } else {
                     try {
                         service.linkToDeath({
                             if (bindings[target.packageName] !== holder) return@linkToDeath
+                            (holder.provider as? MessengerFleetProvider)?.close()
                             holder.provider = null
                             val now = generation.get()
                             calls.execute { publish(now) }
@@ -272,7 +314,7 @@ class FleetHubClient(private val context: Context) {
                         calls.execute { publish(now) }
                         return
                     }
-                    holder.provider = AidlFleetProvider(remote)
+                    holder.provider = MessengerFleetProvider(Messenger(service))
                 }
                 val now = generation.get()
                 calls.execute { publish(now) }
@@ -280,6 +322,7 @@ class FleetHubClient(private val context: Context) {
 
             override fun onServiceDisconnected(name: ComponentName?) {
                 if (bindings[target.packageName] !== holder) return
+                (holder.provider as? MessengerFleetProvider)?.close()
                 holder.provider = null
                 holder.bound = false
                 val now = generation.get()
@@ -287,7 +330,7 @@ class FleetHubClient(private val context: Context) {
             }
         }
         bindings[target.packageName] = holder
-        val intent = Intent(FleetApiContract.SERVICE_ACTION).setComponent(
+        val intent = Intent(FleetMessages.ACTION).setComponent(
             ComponentName(target.packageName, target.className),
         )
         holder.bound = try {
@@ -299,6 +342,7 @@ class FleetHubClient(private val context: Context) {
 
     private fun unbind(packageName: String) {
         val binding = bindings.remove(packageName) ?: return
+        (binding.provider as? MessengerFleetProvider)?.close()
         binding.provider = null
         if (!binding.bound) return
         try {

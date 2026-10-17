@@ -120,51 +120,14 @@ data class FleetPanelState(
 data class FleetServiceCandidate(
     val packageName: String,
     val className: String,
-    val permissionGranted: Boolean,
-    val certificates: List<ByteArray>,
+    val label: String,
+    val certSha256: String,
 )
 
 data class FleetServiceTarget(
     val packageName: String,
     val className: String,
 )
-
-object FleetTrust {
-    /** Same signature permission and the same set of signing certificates. Order does not matter. */
-    fun accept(
-        permissionGranted: Boolean,
-        keyboardCertificates: List<ByteArray>,
-        providerCertificates: List<ByteArray>,
-    ): Boolean {
-        if (!permissionGranted) return false
-        if (keyboardCertificates.isEmpty() || providerCertificates.isEmpty()) return false
-        return keyboardCertificates.map { it.toList() }.toSet() == providerCertificates.map { it.toList() }.toSet()
-    }
-}
-
-object FleetDiscovery {
-    const val MAX_PROVIDERS = 16
-
-    /**
-     * Keeps services the keyboard may bind. Skips this app, a missing permission, and a different
-     * signer. Two services in one package collapse to the first class name in sorted order.
-     */
-    fun select(
-        ownPackage: String,
-        keyboardCertificates: List<ByteArray>,
-        candidates: List<FleetServiceCandidate>,
-    ): List<FleetServiceTarget> {
-        return candidates
-            .asSequence()
-            .filter { it.packageName.isNotBlank() && it.className.isNotBlank() && it.packageName != ownPackage }
-            .sortedWith(compareBy({ it.packageName }, { it.className }))
-            .filter { FleetTrust.accept(it.permissionGranted, keyboardCertificates, it.certificates) }
-            .distinctBy { it.packageName }
-            .take(MAX_PROVIDERS)
-            .map { FleetServiceTarget(it.packageName, it.className) }
-            .toList()
-    }
-}
 
 object FleetNamespaces {
     private val token = Regex("[a-z][a-z0-9]{0,15}")

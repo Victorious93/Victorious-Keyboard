@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
@@ -57,12 +58,15 @@ import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.settings.clipboard.BackupIo
+import dev.patrickgold.florisboard.ime.clipboard.backup.BackupCrypto
 import dev.patrickgold.florisboard.ime.snippets.DecodeResult
+import dev.patrickgold.florisboard.ime.snippets.EncryptedExport
 import dev.patrickgold.florisboard.ime.snippets.ImportMode
 import dev.patrickgold.florisboard.ime.snippets.LibraryError
 import dev.patrickgold.florisboard.ime.snippets.LibraryResult
 import dev.patrickgold.florisboard.ime.snippets.Snippet
 import dev.patrickgold.florisboard.ime.snippets.SnippetBackup
+import dev.patrickgold.florisboard.ime.snippets.SnippetEncryptedBackup
 import dev.patrickgold.florisboard.ime.snippets.SnippetFileError
 import dev.patrickgold.florisboard.ime.snippets.SnippetIssue
 import dev.patrickgold.florisboard.ime.snippets.SnippetLimits
@@ -101,6 +105,9 @@ private fun SnippetFileError.messageRes(): Int = when (this) {
     SnippetFileError.WRONG_FORMAT -> R.string.snippets__file_wrong_format
     SnippetFileError.NEWER_VERSION -> R.string.snippets__file_newer_version
     SnippetFileError.TOO_MANY -> R.string.snippets__file_too_many
+    SnippetFileError.ENCRYPTED -> R.string.snippets__file_encrypted
+    SnippetFileError.WRONG_PASSWORD -> R.string.snippets__file_wrong_password
+    SnippetFileError.WEAK_PASSWORD -> R.string.snippets__file_weak_password
 }
 
 @StringRes
@@ -143,6 +150,11 @@ fun SnippetsScreen() = FlorisScreen {
     var creating by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<Snippet?>(null) }
     var pendingImport by remember { mutableStateOf<PendingImport?>(null) }
+    // The encrypted file waits here for its password. Only bytes are kept; the password lives in the dialog.
+    var pendingEncrypted by remember { mutableStateOf<ByteArray?>(null) }
+    var exportDialog by remember { mutableStateOf(false) }
+    // The password chosen for an encrypted export, held only between the dialog and the file picker's result.
+    var exportPassword by remember { mutableStateOf<CharArray?>(null) }
     // Resource id, resolved during composition. Reading it with LocalContext.current.getString
     // from the save callback is a Compose lint error (LocalContextGetResourceValueCall).
     var editorError by remember { mutableStateOf<Int?>(null) }
@@ -157,10 +169,14 @@ fun SnippetsScreen() = FlorisScreen {
     val openLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch {
             val bytes = withContext(Dispatchers.IO) {
-                runCatching { BackupIo.readBytes(resolver, uri, SnippetLimits.MAX_FILE_BYTES) }.getOrNull()
+                runCatching { BackupIo.readBytes(resolver, uri, SnippetEncryptedBackup.MAX_ENCRYPTED_BYTES) }.getOrNull()
             }
             if (bytes == null) {
                 context.showShortToast(R.string.snippets__import_unreadable)
+                return@launch
+            }
+            if (SnippetEncryptedBackup.isEncrypted(bytes)) {
+                pendingEncrypted = bytes
                 return@launch
             }
             when (val d = SnippetBackup.decode(bytes)) {
@@ -177,6 +193,26 @@ fun SnippetsScreen() = FlorisScreen {
             }
             context.showShortToast(if (ok) R.string.snippets__export_done else R.string.snippets__export_failed)
         }
+    }
+
+    val createEncryptedLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        val password = exportPassword
+        exportPassword = null
+        if (uri != null && password != null) scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                try {
+                    // Key derivation takes a moment by design; this is off the main thread.
+                    val result = SnippetEncryptedBackup.encode(manager.snapshot().snippets, password)
+                    result is EncryptedExport.Ok &&
+                        runCatching { BackupIo.writeAndVerify(resolver, uri, result.bytes) }.isSuccess
+                } finally {
+                    password.fill('\u0000')
+                }
+            }
+            context.showShortToast(if (ok) R.string.snippets__export_done else R.string.snippets__export_failed)
+        } else password?.fill('\u0000')
     }
 
     content {
@@ -207,7 +243,7 @@ fun SnippetsScreen() = FlorisScreen {
             OutlinedButton(onClick = { openLauncher.launch(arrayOf("*/*")) }) { Text(stringRes(R.string.snippets__import)) }
             OutlinedButton(
                 enabled = state.library.snippets.isNotEmpty(),
-                onClick = { createLauncher.launch("snippets.json") },
+                onClick = { exportDialog = true },
             ) { Text(stringRes(R.string.snippets__export)) }
         }
         Text(
@@ -293,6 +329,48 @@ fun SnippetsScreen() = FlorisScreen {
                 }
             },
             onDelete = initial?.let { snippet -> { confirmDelete = snippet } },
+        )
+    }
+
+    if (exportDialog) {
+        SnippetExportDialog(
+            onDismiss = { exportDialog = false },
+            onPlain = { exportDialog = false; createLauncher.launch("snippets.json") },
+            onEncrypted = { password ->
+                exportDialog = false
+                exportPassword = password
+                createEncryptedLauncher.launch("snippets.vkbk")
+            },
+        )
+    }
+
+    pendingEncrypted?.let { file ->
+        var wrong by remember { mutableStateOf(false) }
+        SnippetPasswordDialog(
+            wrong = wrong,
+            onDismiss = { pendingEncrypted = null },
+            onConfirm = { password ->
+                scope.launch {
+                    val result = withContext(Dispatchers.Default) {
+                        try {
+                            SnippetEncryptedBackup.decode(file, password)
+                        } finally {
+                            password.fill('\u0000')
+                        }
+                    }
+                    when {
+                        result is DecodeResult.Failed && result.error == SnippetFileError.WRONG_PASSWORD -> wrong = true
+                        result is DecodeResult.Failed -> {
+                            pendingEncrypted = null
+                            context.showShortToast(result.error.messageRes())
+                        }
+                        result is DecodeResult.Ok -> {
+                            pendingEncrypted = null
+                            pendingImport = PendingImport(result.snippets, result.invalid.size)
+                        }
+                    }
+                }
+            },
         )
     }
 
@@ -470,5 +548,100 @@ private fun SnippetEditorDialog(
                 TextButton(onClick = onDismiss) { Text(stringRes(R.string.action__cancel)) }
             }
         },
+    )
+}
+
+/** Asks whether to protect the export with a password. Plain export stays one tap away. */
+@Composable
+private fun SnippetExportDialog(onDismiss: () -> Unit, onPlain: () -> Unit, onEncrypted: (CharArray) -> Unit) {
+    var encrypt by rememberSaveable { mutableStateOf(true) }
+    var password by remember { mutableStateOf("") }
+    var repeat by remember { mutableStateOf("") }
+    val tooShort = password.length < BackupCrypto.MIN_PASSWORD_LENGTH
+    val mismatch = password != repeat
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringRes(R.string.snippets__export_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(modifier = Modifier.weight(1f), text = stringRes(R.string.snippets__export_encrypt))
+                    Switch(checked = encrypt, onCheckedChange = { encrypt = it })
+                }
+                if (encrypt) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = password,
+                        onValueChange = { password = it },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        label = { Text(stringRes(R.string.clipboard_backup__password)) },
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = repeat,
+                        onValueChange = { repeat = it },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = repeat.isNotEmpty() && mismatch,
+                        label = { Text(stringRes(R.string.clipboard_backup__password_repeat)) },
+                    )
+                    Text(
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = stringRes(R.string.clipboard_backup__password_hint, "n" to BackupCrypto.MIN_PASSWORD_LENGTH),
+                    )
+                } else {
+                    Text(
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = stringRes(R.string.snippets__export_warning),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !encrypt || (!tooShort && !mismatch),
+                onClick = { if (encrypt) onEncrypted(password.toCharArray()) else onPlain() },
+            ) { Text(stringRes(R.string.snippets__export)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringRes(R.string.action__cancel)) } },
+    )
+}
+
+/** Password prompt for an encrypted import. A wrong password keeps the dialog open. */
+@Composable
+private fun SnippetPasswordDialog(wrong: Boolean, onDismiss: () -> Unit, onConfirm: (CharArray) -> Unit) {
+    var password by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringRes(R.string.clipboard_backup__password_prompt_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = password,
+                    onValueChange = { password = it },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = wrong,
+                    label = { Text(stringRes(R.string.clipboard_backup__password)) },
+                )
+                if (wrong) {
+                    Text(
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium,
+                        text = stringRes(R.string.snippets__file_wrong_password),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = password.isNotEmpty(), onClick = { onConfirm(password.toCharArray()) }) {
+                Text(stringRes(R.string.snippets__import))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringRes(R.string.action__cancel)) } },
     )
 }

@@ -765,6 +765,11 @@
     <string name="snippets__file_wrong_format" comment="Toast">This is not a snippets file.</string>
     <string name="snippets__file_newer_version" comment="Toast">The file was made by a newer version of the app.</string>
     <string name="snippets__file_too_many" comment="Toast">The file has too many snippets (limit 500).</string>
+    <string name="snippets__file_encrypted" comment="Toast">This file is encrypted and needs its password.</string>
+    <string name="snippets__file_wrong_password" comment="Dialog error">Wrong password, or the file was modified after it was created.</string>
+    <string name="snippets__file_weak_password" comment="Toast">The password is too short.</string>
+    <string name="snippets__export_title" comment="Dialog title">Export snippets</string>
+    <string name="snippets__export_encrypt" comment="Switch label">Protect with a password</string>
     <string name="snippets__issue_bad_id" comment="Validation">Internal id is invalid.</string>
     <string name="snippets__issue_blank_title" comment="Validation">Enter a title.</string>
     <string name="snippets__issue_title_too_long" comment="Validation">The title is too long (80 characters at most).</string>

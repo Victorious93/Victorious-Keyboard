@@ -66,6 +66,7 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
 | `ExpansionSettings`, `ExpansionMatcher` | Opt-in text expansion: decides whether a typed boundary character completes `<prefix><abbreviation>` |
 | `ExpansionTrigger`, `ExpansionTriggers`, `ExpansionAction` | Per-key opt-in for space, Enter and Tab, and the rule that a non-match (or a render that cannot be inserted) leaves the key alone |
 | `SnippetLibrary` | Immutable collection: add/update/remove, unique abbreviations (case-insensitive), search. Never drops anything silently |
+| `SnippetEncryptedBackup` | Password-encrypted export/import: the clipboard `BackupCrypto` container around `SnippetBackup`'s JSON; size-bounded before key derivation, typed errors (`WRONG_PASSWORD`, `WEAK_PASSWORD`, `ENCRYPTED`) |
 | `SnippetBackup`, `SnippetImporter` | Versioned JSON export/import (`format: "victorious-snippets"`, `version: 1`) and a non-destructive merge |
 | `SnippetFileStore` | One JSON file with atomic save and automatic `.bak` / `.corrupt` safety copies |
 
@@ -106,8 +107,14 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 
 * The store directory **must** be under `noBackupFilesDir` (CLAUDE.md invariant 7); snippets are personal text.
 * Nothing in the core logs or reports snippet content. The shell must not either.
-* Exports are **plain, unencrypted JSON** (they contain whatever the user wrote). Encryption can reuse the clipboard
-  backup container later; it is not done.
+* Exports are JSON that contains whatever the user wrote. **Export** asks whether to protect the file with a password
+  (the switch is on by default; switching it off writes plain JSON). The encrypted file is the clipboard backup
+  container (`BackupCrypto`, see `BACKUP_FORMAT.md`: PBKDF2-HMAC-SHA256 600 000 iterations, AES-256-GCM, random salt and
+  nonce per file, authenticated header) around the same JSON, saved as `snippets.vkbk`. Minimum password length 8; a lost
+  password cannot be recovered. Import detects an encrypted file by its magic bytes and asks for the password; a wrong
+  password and a modified file give the same message. A clipboard `.vkbk` opened here is refused after decryption
+  (not a snippets file). The container does not say what is inside it, so the two kinds of file look alike until opened.
+  Limitation: the password is held as a `String` by the text field and cannot be wiped from memory.
 * `{{clipboard}}` and `{{selection}}` must be passed as `null` in sensitive fields (`SnippetInsertion.plan` enforces it for
   both callers; a test per path).
 * Before the first unlock after a reboot (Direct Boot) the credential-encrypted storage is unavailable: `SnippetManager`
@@ -129,7 +136,7 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
   commit would, but its text is (deliberately) not read.
 * Per-mode settings beyond expansion (for example a different prefix or Enter/Tab keep-switches per mode), snippet
   variables beyond the six above, folders.
-* Encrypted export. Translations.
+* Translations. Password strength beyond the 8-character minimum. A separate file extension that tells snippet and clipboard containers apart.
 * Device validation of any of it (expansion timing against the IME's own composing text is the main unknown; for the
   picker: panel height and look, the left-arrow caret placement in real editors and in Termux, and `{{selection}}` in
   editors that report no selection). See the checklist in `TESTING.md`.

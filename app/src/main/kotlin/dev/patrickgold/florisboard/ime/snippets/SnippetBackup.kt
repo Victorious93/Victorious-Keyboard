@@ -16,6 +16,7 @@
 
 package dev.patrickgold.florisboard.ime.snippets
 
+import dev.patrickgold.florisboard.ime.clipboard.backup.BackupCrypto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -30,7 +31,18 @@ internal data class SnippetFile(
     val snippets: List<Snippet> = emptyList(),
 )
 
-enum class SnippetFileError { TOO_LARGE, MALFORMED, WRONG_FORMAT, NEWER_VERSION, TOO_MANY }
+enum class SnippetFileError {
+    TOO_LARGE, MALFORMED, WRONG_FORMAT, NEWER_VERSION, TOO_MANY,
+
+    /** The file is a password-encrypted export; it needs [SnippetEncryptedBackup.decode] and a password. */
+    ENCRYPTED,
+
+    /** Wrong password, or the encrypted file was modified. The two are deliberately not told apart. */
+    WRONG_PASSWORD,
+
+    /** The password is shorter than [BackupCrypto.MIN_PASSWORD_LENGTH]. Export only. */
+    WEAK_PASSWORD,
+}
 
 data class InvalidEntry(val index: Int, val issues: List<SnippetIssue>, val duplicateId: Boolean = false)
 
@@ -54,6 +66,8 @@ object SnippetBackup {
 
     fun decode(bytes: ByteArray): DecodeResult {
         if (bytes.size > SnippetLimits.MAX_FILE_BYTES) return DecodeResult.Failed(SnippetFileError.TOO_LARGE)
+        // An encrypted export is not JSON; say what it is instead of "malformed".
+        if (BackupCrypto.isEncrypted(bytes)) return DecodeResult.Failed(SnippetFileError.ENCRYPTED)
         val file = try {
             reader.decodeFromString(SnippetFile.serializer(), bytes.toString(Charsets.UTF_8))
         } catch (_: SerializationException) {

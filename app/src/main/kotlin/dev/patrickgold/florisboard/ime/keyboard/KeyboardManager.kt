@@ -65,6 +65,7 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertPrivacy
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.ime.popup.PopupMappingComponent
+import dev.patrickgold.florisboard.ime.screenshot.ScreenshotCapture
 import dev.patrickgold.florisboard.ime.text.composing.Composer
 import dev.patrickgold.florisboard.ime.text.gestures.SwipeAction
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
@@ -1667,6 +1668,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.AI_TRANSLATE -> startLocalAi(AiTask.TRANSLATE)
             ToolbarActionId.AI_SHELL -> startLocalAi(AiTask.SHELL)
             ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
+            ToolbarActionId.SCREENSHOT -> scope.launch {
+                if (!prefs.tools.screenshotTile.get()) return@launch
+                withContext(Dispatchers.Main) { ScreenshotCapture.onTile(appContext) }
+            }
             else -> Unit
         }
     }

@@ -922,6 +922,15 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
     }
 
+    val tools = Tools()
+    inner class Tools {
+        /** When false, the Quick tab does not show the Screenshot tile. This screen stays in Settings. */
+        val screenshotTile = boolean(
+            key = "tools__screenshot_tile",
+            default = true,
+        )
+    }
+
     val theme = Theme()
     inner class Theme {
         val mode = enum(

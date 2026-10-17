@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Screenshot
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.runtime.Composable
@@ -165,6 +166,12 @@ fun HomeScreen() = FlorisScreen {
                 title = stringRes(R.string.settings__media__title),
                 summary = stringRes(R.string.settings__home__media_summary),
                 onClick = { navController.navigate(Routes.Settings.Media) },
+            )
+            Preference(
+                icon = Icons.Outlined.Screenshot,
+                title = stringRes(R.string.settings__screenshot__title),
+                summary = stringRes(R.string.settings__screenshot__home_summary),
+                onClick = { navController.navigate(Routes.Settings.Screenshot) },
             )
         }
         PreferenceGroup(title = stringRes(R.string.settings__home__section_developer)) {

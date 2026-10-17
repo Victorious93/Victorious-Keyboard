@@ -74,6 +74,7 @@ import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
+import dev.patrickgold.florisboard.ime.screenshot.ScreenshotPolicy
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommand
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
@@ -122,8 +123,12 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
     val learning by prefs.suggestion.learnFromTyping.observeAsState()
     val keyRow by prefs.devrow.terminalKeyRow.observeAsState()
     val bottomGap by prefs.keyboard.bottomGapDp.observeAsState()
+    val showScreenshot by prefs.tools.screenshotTile.observeAsState()
 
-    val actions = remember(tab, config) { ToolsCatalog.visible(tab, config.hiddenSet(), config.tabOrder(tab)) }
+    val actions = remember(tab, config, showScreenshot) {
+        val hidden = ScreenshotPolicy.panelHidden(config.hiddenSet(), showScreenshot)
+        ToolsCatalog.visible(tab, hidden, config.tabOrder(tab))
+    }
     val commands = remember(tab, config) {
         if (tab != ToolsTab.TERMINAL) {
             emptyList()

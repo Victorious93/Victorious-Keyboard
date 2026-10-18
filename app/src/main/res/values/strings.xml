@@ -521,10 +521,13 @@
     <string name="settings__my_suggestions__no_trigger">Matches the start of the phrase</string>
     <string name="settings__my_suggestions__rejected">That phrase or shortcut cannot be saved. It may be empty, too long, or already in the list.</string>
     <string name="settings__fleet__title">Fleet link</string>
-    <string name="settings__fleet__summary">Optional link to apps signed with this keyboard. Hidden when none are installed</string>
+    <string name="settings__fleet__summary">Optional slash commands from apps you approve. Hidden when none are connected</string>
     <string name="settings__fleet__enabled">Droidcommand-AI fleet</string>
-    <string name="settings__fleet__enabled_summary">Connects only to same-signed apps that offer the fleet service. Replies are inserted and never run</string>
-    <string name="settings__fleet__info">The shared service action and signature permission are not confirmed yet. Until a same-signed app exports them, every fleet feature stays hidden and the keyboard stays standalone. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. No Internet permission is used.</string>
+    <string name="settings__fleet__enabled_summary">Apps signed with the keyboard release key start on. Every other app needs one approval. Replies are inserted and never run</string>
+    <string name="settings__fleet__info">Each app below shows its name and signing certificate. Approve an app once to pin that certificate. The switch turns any app off, including one signed with the release key. Password fields are never sent. Nothing is sent until you run a command. No Internet permission is used.</string>
+    <string name="settings__fleet__none">No command apps are installed.</string>
+    <string name="settings__fleet__approve">Approve this certificate</string>
+    <string name="settings__fleet__no_cert">No signing certificate</string>
     <string name="fleet__unavailable">That app did not answer</string>
     <string name="fleet__need_selection">Select text, then tap Ask</string>
     <string name="fleet__password">Fleet actions stay off in password fields</string>

@@ -62,9 +62,6 @@ class FakeFleetProvider(
 }
 
 class FleetSessionTest : FunSpec({
-    val cert = byteArrayOf(1, 2, 3)
-    val other = byteArrayOf(9, 9)
-
     test("no trusted provider hides every fleet feature") {
         val snapshot = FleetSession.load(enabled = true, endpoints = emptyList())
         snapshot.commands(emptySet()) shouldBe emptyList()
@@ -159,30 +156,51 @@ class FleetSessionTest : FunSpec({
         fromTitle.apps.single().namespace shouldBe "swarm"
     }
 
-    test("discovery keeps two trusted services and drops permission or certificate mismatches") {
-        val keyboard = listOf(cert)
-        val selected = FleetDiscovery.select(
-            ownPackage = "dev.patrickgold.florisboard",
-            keyboardCertificates = keyboard,
+    test("release-signed providers are on, other certificates wait for approval, and every one can be switched off") {
+        val release = "11".repeat(32).chunked(2).joinToString(":")
+        val otherCert = "22".repeat(32)
+        val grants = listOf(
+            FleetGrant("com.example.approved", otherCert, approved = true, enabled = true),
+            FleetGrant("com.example.edl", release, approved = false, enabled = false),
+            FleetGrant("com.example.stale", "33".repeat(32), approved = true, enabled = true),
+        )
+        val offers = FleetDiscovery.classify(
+            ownPackage = "com.victorious.keyboard",
+            releaseSha256 = release,
+            grants = grants,
             candidates = listOf(
-                FleetServiceCandidate("dev.patrickgold.florisboard", "Own", true, keyboard),
-                FleetServiceCandidate("com.example.edl", "Z", true, keyboard),
-                FleetServiceCandidate("com.example.edl", "A", true, keyboard),
-                FleetServiceCandidate("com.example.swarm", "S", true, keyboard),
-                FleetServiceCandidate("com.example.denied", "D", false, keyboard),
-                FleetServiceCandidate("com.example.other", "O", true, listOf(other)),
-                FleetServiceCandidate("com.example.empty", "E", true, emptyList()),
+                FleetServiceCandidate("com.victorious.keyboard", "Own", "Keyboard", release),
+                FleetServiceCandidate("com.example.edl", "Z", "EDL", release),
+                FleetServiceCandidate("com.example.edl", "A", "EDL", release),
+                FleetServiceCandidate("com.example.swarm", "S", "Swarm", release),
+                FleetServiceCandidate("com.example.approved", "O", "Other", otherCert),
+                FleetServiceCandidate("com.example.stale", "T", "Stale", otherCert),
+                FleetServiceCandidate("com.example.fresh", "F", "Fresh", otherCert),
+                FleetServiceCandidate("com.example.empty", "E", "Empty", ""),
             ),
         )
-        selected shouldBe listOf(
-            FleetServiceTarget("com.example.edl", "A"),
+        offers.map { it.packageName to it.access } shouldBe listOf(
+            "com.example.approved" to FleetAccess.Active,
+            "com.example.edl" to FleetAccess.Off,
+            "com.example.empty" to FleetAccess.NeedsApproval,
+            "com.example.fresh" to FleetAccess.NeedsApproval,
+            "com.example.stale" to FleetAccess.NeedsApproval,
+            "com.example.swarm" to FleetAccess.Active,
+        )
+        FleetDiscovery.active(offers) shouldBe listOf(
+            FleetServiceTarget("com.example.approved", "O"),
             FleetServiceTarget("com.example.swarm", "S"),
         )
-        FleetTrust.accept(true, listOf(cert, other), listOf(other, cert)) shouldBe true
-        FleetTrust.accept(true, emptyList(), listOf(cert)) shouldBe false
-        FleetDiscovery.select("app", keyboard, List(20) {
-            FleetServiceCandidate("com.example.p$it", "C", true, keyboard)
-        }).size shouldBe FleetDiscovery.MAX_PROVIDERS
+        val turnedOn = FleetGrants.setEnabled(grants, "com.example.edl", release, enabled = true)
+        FleetTrust.access(release, release, FleetGrants.find(turnedOn, "com.example.edl")) shouldBe FleetAccess.Active
+        val approved = FleetGrants.approve(emptyList(), "com.example.fresh", otherCert)
+        FleetTrust.access(otherCert, release, FleetGrants.find(approved, "com.example.fresh")) shouldBe FleetAccess.Active
+        FleetDiscovery.classify(
+            "app",
+            release,
+            emptyList(),
+            List(20) { FleetServiceCandidate("com.example.p$it", "C", "P", release) },
+        ).size shouldBe FleetDiscovery.MAX_PROVIDERS
     }
 
     test("hostile documents and a non-png icon become empty") {

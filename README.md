@@ -88,9 +88,9 @@ Type `/` at the start of a word and the strip lists matching commands. Tap one t
 
 ### Droidcommand-AI fleet
 
-The keyboard stays standalone. It does not request the Internet permission. It does not ship a list of fleet apps. It discovers every installed app that exports the shared service action, holds the shared signature permission, and is signed with this keyboard's certificate. If none are installed, or the fleet switch is off, every fleet feature stays hidden. The action (`com.victorious.fleet.KEYBOARD_PROVIDER`) and permission (`com.victorious.fleet.PERMISSION`) are still placeholders, marked `TODO-confirm-with-hub` in `fleet-keyboard-api`.
+The keyboard stays standalone. It does not request the Internet permission. It does not ship a list of fleet apps. It discovers every installed app that exports `com.victorious.keyboard.action.COMMAND_PROVIDER`, then talks to it with Messenger messages that carry JSON. An app signed with the keyboard's release certificate is on until you switch it off. Every other app stays off until you approve it once in Settings → Tools → **Fleet link**; that approval is pinned to the app's certificate. The switch on that screen turns any app off.
 
-Each connected app can advertise a name, an icon, slash commands, snippets, and actions. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel then shows a **Fleet** tab beside the five theme tabs. Each trusted app is a section there, with its icon and a status dot; Ask, advertised actions, and snippets are tiles under that app, drawn with the same theme tiles as the other tabs. Settings → Tools → **Fleet link** is the switch. Password fields are never sent. Vault text is sent only when you tap Ask or an action for that app. Text that comes back is inserted and never run. Adding or removing an app rescans.
+Each connected app advertises slash commands and snippets. When two apps advertise the same slash name, the strip namespaces them (`/edl:status`). The tools panel then shows a **Fleet** tab beside the five theme tabs. Password fields are never sent. Nothing is sent until you run a command. Text that comes back is inserted and never run. Removing an app drops that link and leaves the keyboard running.
 
 Details: [docs/FLEET.md](docs/FLEET.md). Not run on a device.
 

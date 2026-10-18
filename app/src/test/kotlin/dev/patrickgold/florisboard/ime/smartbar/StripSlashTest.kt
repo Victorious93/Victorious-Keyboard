@@ -38,8 +38,8 @@ import dev.patrickgold.florisboard.ime.slash.SlashCommandCodec
 import dev.patrickgold.florisboard.ime.slash.SlashCommandList
 import dev.patrickgold.florisboard.ime.slash.SlashDocument
 import dev.patrickgold.florisboard.ime.slash.SlashMatcher
-import com.victorious.fleet.FleetApiContract
 import dev.patrickgold.florisboard.lib.fleet.FleetCommand
+import dev.patrickgold.florisboard.lib.fleet.FleetMessages
 import java.io.File
 import dev.patrickgold.florisboard.ime.slash.SlashOffer
 import dev.patrickgold.florisboard.ime.slash.SlashTemplate
@@ -319,22 +319,20 @@ class StripSlashTest : FunSpec({
         hidden.shouldBeInstanceOf<StripPlan.Words>()
     }
 
-    test("manifest discovers fleet services and does not name apps") {
+    test("manifest discovers command providers and does not name apps") {
         val manifest = File("src/main/AndroidManifest.xml").readText()
-        val contract = File("../fleet-keyboard-api/src/main/kotlin/com/victorious/fleet/FleetApiContract.kt").readText()
         val client = File("src/main/kotlin/dev/patrickgold/florisboard/ime/fleet/FleetHubClient.kt").readText()
-        contract shouldContain "TODO-confirm-with-hub"
-        manifest shouldContain "TODO-confirm-with-hub"
-        manifest shouldContain "android:name=\"${FleetApiContract.SERVICE_ACTION}\""
-        manifest shouldContain "android:name=\"${FleetApiContract.PERMISSION}\""
+        manifest shouldContain "android:name=\"${FleetMessages.ACTION}\""
+        manifest.contains("com.victorious.fleet.PERMISSION") shouldBe false
+        manifest.contains("KEYBOARD_PROVIDER") shouldBe false
         manifest.contains("<package ") shouldBe false
         manifest.contains("android.permission.INTERNET") shouldBe false
         client shouldContain "queryIntentServices"
+        client shouldContain "Messenger"
         val banned = listOf("edl-commander", "pentest-swarm", "victorlink", "victorsuite", "rootforge")
         val roots = listOf(
             File("src/main"),
             File("../lib/fleet/src/main"),
-            File("../fleet-keyboard-api/src"),
         )
         val hits = roots.flatMap { root ->
             root.walkTopDown().filter { it.isFile && it.extension in setOf("kt", "xml", "aidl", "pro") }

@@ -1,2 +1,0 @@
--keep class com.victorious.fleet.IFleetKeyboardProvider { *; }
--keep class com.victorious.fleet.IFleetKeyboardProvider$Stub { *; }

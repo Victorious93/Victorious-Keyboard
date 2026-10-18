@@ -27,7 +27,7 @@ runtime verification.
 ./gradlew lintDebug                # lint is a CI gate
 ```
 Modules: `:app`, `:lib:android`, `:lib:color`, `:lib:compose`, `:lib:kotlin`, `:lib:snygg` (`:benchmark` is commented out).
-Version: `gradle.properties` (`projectVersionCode=130`, `0.1.0-alpha01`, minSdk 26, target/compile 36). Debug builds sign with `signing/debug.keystore`.
+Version: `gradle.properties` (`projectVersionCode=131`, `0.1.0-alpha01`, minSdk 26, target/compile 36). Debug builds sign with `signing/debug.keystore`.
 `applicationId` `com.victorious.keyboard`.
 
 ## CI

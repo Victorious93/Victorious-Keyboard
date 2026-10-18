@@ -17,9 +17,8 @@
 package dev.patrickgold.florisboard.lib.fleet
 
 /**
- * One fleet app, as the keyboard sees it. The binder shape is
- * `com.victorious.fleet.IFleetKeyboardProvider`. Returned strings are inserted.
- * Nothing in this interface runs a command.
+ * One command provider, as the keyboard sees it. The wire format is
+ * [FleetMessages]. Returned strings are inserted. Nothing in this interface runs a command.
  */
 interface FleetProvider {
     fun ping(): Boolean

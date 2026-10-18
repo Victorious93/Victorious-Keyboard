@@ -4,7 +4,8 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    # main, plus the command-protocol branch so the stacked hub-status PR is checked.
+    branches: [ main, cursor/fleet-command-protocol-877b ]
   workflow_dispatch:
 
 permissions:

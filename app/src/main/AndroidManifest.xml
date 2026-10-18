@@ -80,6 +80,15 @@
             <meta-data android:name="android.view.textservice.scs" android:resource="@xml/spellchecker"/>
         </service>
 
+        <!-- Hub status bridge. No signature permission. External control stays off until the user enables it. -->
+        <service
+            android:name="com.victorious.keyboard.fleet.KeyboardBridgeService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.victorious.keyboard.action.BRIDGE"/>
+            </intent-filter>
+        </service>
+
         <!-- Main App Activity -->
         <activity
             android:name="dev.patrickgold.florisboard.app.FlorisAppActivity"

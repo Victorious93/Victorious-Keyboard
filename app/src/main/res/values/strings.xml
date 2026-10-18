@@ -525,6 +525,8 @@
     <string name="settings__fleet__enabled">Droidcommand-AI fleet</string>
     <string name="settings__fleet__enabled_summary">Apps signed with the keyboard release key start on. Every other app needs one approval. Replies are inserted and never run</string>
     <string name="settings__fleet__info">Each app below shows its name and signing certificate. Approve an app once to pin that certificate. The switch turns any app off, including one signed with the release key. Password fields are never sent. Nothing is sent until you run a command. No Internet permission is used.</string>
+    <string name="settings__fleet__external_control">Hub status</string>
+    <string name="settings__fleet__external_control_summary">Lets the Droidcommand hub ask whether the keyboard is running. Off by default. Typed text is never sent.</string>
     <string name="settings__fleet__none">No command apps are installed.</string>
     <string name="settings__fleet__approve">Approve this certificate</string>
     <string name="settings__fleet__no_cert">No signing certificate</string>

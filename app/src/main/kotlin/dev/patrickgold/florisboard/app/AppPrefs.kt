@@ -428,6 +428,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "fleet__grants",
             default = "",
         )
+        /** Hub status bridge. Off until the user turns it on. */
+        val externalControl = boolean(
+            key = "fleet__external_control",
+            default = false,
+        )
     }
 
     val devrow = Devrow()

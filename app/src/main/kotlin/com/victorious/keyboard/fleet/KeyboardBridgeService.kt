@@ -27,18 +27,21 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
-import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.fleet.ExternalInputPort
+import dev.patrickgold.florisboard.lib.fleet.BridgeInput
 import dev.patrickgold.florisboard.lib.fleet.BridgeProtocol
 import dev.patrickgold.florisboard.lib.fleet.CertDigest
 
 /**
- * Status bridge for the Droidcommand hub. External control is off until the
- * user turns it on. The reply never includes what the user typed.
+ * Bridge for the Droidcommand hub. External control is off until the user turns it on. An allowed caller may ask for
+ * status, type text, or press keys; the rules live in [BridgeInput] and the editor work in [ExternalInputPort], not
+ * here. The reply never includes what the user typed.
  */
 class KeyboardBridgeService : Service() {
     private val prefs by FlorisPreferenceStore
     private val messenger = Messenger(Incoming())
+    private val port by lazy { ExternalInputPort(applicationContext) }
 
     override fun onBind(intent: Intent?): IBinder? {
         if (intent?.action != BridgeProtocol.ACTION) return null
@@ -84,13 +87,7 @@ class KeyboardBridgeService : Service() {
             } else {
                 false
             }
-            val imeRunning = authorized && enabled && FlorisImeService.isRunning()
-            return BridgeProtocol.response(
-                op = BridgeProtocol.op(request),
-                authorized = authorized,
-                controlEnabled = enabled,
-                imeRunning = imeRunning,
-            )
+            return BridgeInput.handle(request, authorized, enabled, port)
         } finally {
             Binder.restoreCallingIdentity(identity)
         }

@@ -32,6 +32,8 @@ object BridgeProtocol {
     const val KEY_RESPONSE = "response"
     const val OP_CAPABILITIES = "keyboard.capabilities.get"
     const val OP_STATUS = "keyboard.status"
+    const val OP_INPUT_TEXT = "keyboard.input.text"
+    const val OP_INPUT_KEY = "keyboard.input.key"
     const val ERROR_DISABLED = "external_control_disabled"
     const val ERROR_UNAUTHORIZED = "unauthorized_caller"
     const val FLEET_CLASS = "external_node"
@@ -74,9 +76,34 @@ object BridgeProtocol {
             op = op,
             ok = ok,
             error = error,
-            capabilities = if (ok && op == OP_CAPABILITIES) listOf(OP_CAPABILITIES, OP_STATUS) else emptyList(),
+            capabilities = if (ok && op == OP_CAPABILITIES) {
+                listOf(OP_CAPABILITIES, OP_STATUS, OP_INPUT_TEXT, OP_INPUT_KEY)
+            } else {
+                emptyList()
+            },
             external_control = controlEnabled && authorized,
             ime_running = if (ok && op == OP_STATUS) imeRunning else false,
+        )
+        return json.encodeToString(body)
+    }
+
+    /**
+     * Reply to an input operation from a caller that already passed the allowlist and the switch. Carries only the
+     * outcome: never the text, the key, or anything read from the editor.
+     */
+    internal fun inputResponse(op: String, error: String, imeRunning: Boolean): String {
+        val body = Response(
+            protocol_major = PROTOCOL_MAJOR,
+            live = imeRunning,
+            mode = if (imeRunning) "live" else "stub",
+            dca_required = false,
+            fleet_class = FLEET_CLASS,
+            op = op,
+            ok = error.isEmpty(),
+            error = error,
+            capabilities = emptyList(),
+            external_control = true,
+            ime_running = false,
         )
         return json.encodeToString(body)
     }

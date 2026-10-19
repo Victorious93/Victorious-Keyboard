@@ -72,7 +72,7 @@ The master switch still hides every fleet feature. Each provider has its own swi
 * Ask and a command tile: the current selection, and only because the user tapped that tile. A vault selection is sent on that tap.
 * Snippets with text: inserted locally. A snippet with no text calls `command.run` and inserts the reply.
 
-Each send and each reply is capped at 8,000 characters. Calls run on a daemon thread named `fleet-hub`, with a two-second wait. A timeout or a dead provider leaves the keyboard usable.
+Each send and each reply is capped at 8,000 characters. Calls run on a daemon thread named `fleet-hub`, with a two-second wait. A timeout or a dead provider leaves the keyboard usable. One request is in flight at a time. A reply is used only when its `id` is the id of that request, so a late reply cannot fill in the next command. A reply with no `id` is ignored.
 
 ## Provider sketch
 

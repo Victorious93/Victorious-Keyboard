@@ -30,6 +30,12 @@ class BridgeProtocolTest : FunSpec({
     val hub = listOf("ai.droidcommand.app")
     val debugHub = listOf("ai.droidcommand.app.debug")
 
+    test("a messenger stamp is the caller, and a missing stamp is not this process") {
+        BridgeProtocol.callerUid(10_123) shouldBe 10_123
+        BridgeProtocol.callerUid(0) shouldBe 0
+        BridgeProtocol.callerUid(-1) shouldBe null
+    }
+
     test("only the two hub packages with a certificate are allowed") {
         BridgeProtocol.authorized(hub, certificatesPresent = true) shouldBe true
         BridgeProtocol.authorized(debugHub, certificatesPresent = true) shouldBe true

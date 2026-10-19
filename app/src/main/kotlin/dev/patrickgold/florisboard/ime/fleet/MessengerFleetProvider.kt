@@ -23,6 +23,7 @@ import android.os.Message
 import android.os.Messenger
 import dev.patrickgold.florisboard.lib.fleet.FleetMessages
 import dev.patrickgold.florisboard.lib.fleet.FleetProvider
+import dev.patrickgold.florisboard.lib.fleet.FleetReplyMailbox
 import dev.patrickgold.florisboard.lib.fleet.Listed
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -37,8 +38,8 @@ class MessengerFleetProvider(private val remote: Messenger) : FleetProvider {
         isDaemon = true
         start()
     }
-    private val lock = Any()
-    private var pending: CompletableFuture<String>? = null
+    private val turn = Any()
+    private val mailbox = FleetReplyMailbox()
     private var cache: Listed? = null
     private val ids = AtomicInteger()
 
@@ -49,7 +50,7 @@ class MessengerFleetProvider(private val remote: Messenger) : FleetProvider {
             } else {
                 ""
             }
-            synchronized(lock) { pending }?.complete(body)
+            mailbox.complete(FleetMessages.replyId(body), body)
         }
     })
 
@@ -84,33 +85,33 @@ class MessengerFleetProvider(private val remote: Messenger) : FleetProvider {
     }
 
     private fun run(name: String, argument: String): String {
-        val raw = transact(FleetMessages.runRequest(ids.incrementAndGet().toString(), name, argument))
+        val id = ids.incrementAndGet().toString()
+        val raw = transact(id, FleetMessages.runRequest(id, name, argument))
         return FleetMessages.parseRun(raw)
     }
 
     private fun listed(): Listed {
         cache?.let { return it }
-        val raw = transact(FleetMessages.listRequest(ids.incrementAndGet().toString()))
+        val id = ids.incrementAndGet().toString()
+        val raw = transact(id, FleetMessages.listRequest(id))
         val parsed = FleetMessages.parseList(raw)
         if (parsed.ok) cache = parsed
         return parsed
     }
 
-    private fun transact(request: String): String {
+    private fun transact(id: String, request: String): String = synchronized(turn) {
         val future = CompletableFuture<String>()
-        synchronized(lock) { pending = future }
+        if (!mailbox.begin(id, future)) return ""
         val message = Message.obtain(null, FleetMessages.WHAT_REQUEST)
         message.data = Bundle().apply { putString(FleetMessages.KEY_REQUEST, request) }
         message.replyTo = replyTo
-        return try {
+        try {
             remote.send(message)
             future.get(1500, TimeUnit.MILLISECONDS) ?: ""
         } catch (e: Exception) {
             ""
         } finally {
-            synchronized(lock) {
-                if (pending === future) pending = null
-            }
+            mailbox.end(id)
         }
     }
 }

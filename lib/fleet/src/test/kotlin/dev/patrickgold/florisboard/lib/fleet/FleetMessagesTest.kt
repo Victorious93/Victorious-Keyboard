@@ -51,6 +51,10 @@ class FleetMessagesTest : FunSpec({
             """{"protocol_major":1,"op":"command.run","id":"2","ok":true,"text":"inserted"}""",
         ) shouldBe "inserted"
         FleetMessages.parseRun("""{"protocol_major":1,"op":"command.run","ok":false,"text":"no"}""") shouldBe ""
+        FleetMessages.replyId("""{"protocol_major":1,"op":"command.run","id":"2","ok":true}""") shouldBe "2"
+        FleetMessages.replyId("""{"protocol_major":1,"ok":true}""") shouldBe null
+        FleetMessages.replyId("{") shouldBe null
+        FleetMessages.replyId("""{"id":"${"a".repeat(65)}"}""") shouldBe null
     }
 
     test("a stored grant does not follow a replaced certificate") {

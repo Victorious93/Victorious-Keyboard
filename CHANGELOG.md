@@ -4,6 +4,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Fixed
+- Hub bridge: an allowed Droidcommand app was always refused. The service read the caller's process id after Messenger had already posted the message, so it saw itself. It now uses the id Messenger stamped on the message. A missing stamp is refused.
+- Fleet commands: a late reply from a provider could be applied to the next command. Replies are matched to the request id, and a reply with a missing or older id is ignored.
+- Clipboard tile: an image or video clip with a missing or non-numeric uri crashed the keyboard. Those clips now show a short message. A video thumbnail no longer throws when width or height metadata is missing, and the metadata reader is released.
+- Short and long toasts no longer block on `runBlocking`, which could deadlock a caller that already held the main thread. The same function names stay, and they are no longer marked deprecated.
+
 ### Changed
 - No tappable link points at FlorisBoard any more. The About screen's "Based on FlorisBoard" row stays as a credit (the original licence is kept in the app) and now opens the in-app licence screen instead of the upstream repository. Theme stylesheets name `https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet` as their schema; stylesheets that name the old `schemas.florisboard.org` URL (imported or community themes) still load and are rewritten to the new one on export. The URL is an identifier only and is never fetched. The bundled `extension.json` maintainer lists no longer carry personal email addresses (so no mailto chips); the original authors stay credited by name, and "Victorious Keyboard Contributors" is added. Extension ids stay `org.florisboard.*` because renaming them would orphan built-in layouts and themes. Covered by JVM tests; not run on a device.
 

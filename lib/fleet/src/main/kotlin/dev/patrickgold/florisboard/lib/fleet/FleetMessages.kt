@@ -121,6 +121,16 @@ object FleetMessages {
         )
     }
 
+    /**
+     * The `id` on a provider reply, or null when the document is refused or has none.
+     * The keyboard uses it so a late reply cannot complete a newer request.
+     */
+    fun replyId(raw: String?): String? {
+        val id = decode(raw)?.id ?: return null
+        if (id.isEmpty() || id.length > 64) return null
+        return id
+    }
+
     /** Insertable text, or blank when the reply is refused. */
     fun parseRun(raw: String?): String {
         val row = decode(raw) ?: return ""

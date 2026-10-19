@@ -93,7 +93,7 @@ suspend fun Context.showLongToast(@StringRes id: Int, vararg args: CurlyArg): To
 
 
 /**
- * Shows a toast without [kotlinx.coroutines.runBlocking]. On the main thread the toast is shown
+ * Shows a toast without blocking a coroutine that already owns the main thread. On the main thread the toast is shown
  * immediately. From any other thread it is posted to the main looper and this call waits for that
  * post, so a caller that already holds the main thread cannot deadlock against it.
  */

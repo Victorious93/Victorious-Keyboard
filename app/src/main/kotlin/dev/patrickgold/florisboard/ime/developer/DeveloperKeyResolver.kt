@@ -17,6 +17,7 @@
 package dev.patrickgold.florisboard.ime.developer
 
 import dev.patrickgold.florisboard.ime.terminal.Modifiers
+import dev.patrickgold.florisboard.ime.terminal.SpecialKey
 import dev.patrickgold.florisboard.ime.terminal.TerminalAction
 import dev.patrickgold.florisboard.ime.terminal.TerminalKeyMapper
 
@@ -53,6 +54,24 @@ object DeveloperKeyResolver {
             DevResolution(listOf(DevStep.Key(key.keyCode, key.metaState)), true)
         }
         is DevKeyAction.Insert -> resolveInsert(action, mods)
+        is DevKeyAction.Play -> resolvePlay(action)
+    }
+
+    private fun resolvePlay(action: DevKeyAction.Play): DevResolution {
+        val steps = action.steps.flatMap { step ->
+            when (step) {
+                is MacroStep.Text -> listOf(DevStep.Text(step.text))
+                MacroStep.Enter -> {
+                    val key = TerminalKeyMapper.mapSpecial(SpecialKey.ENTER, Modifiers()) as TerminalAction.Key
+                    listOf(DevStep.Key(key.keyCode, key.metaState))
+                }
+                is MacroStep.Ctrl -> when (val mapped = TerminalKeyMapper.mapChar(step.letter.toString(), Modifiers(ctrl = true))) {
+                    is TerminalAction.Key -> listOf(DevStep.Key(mapped.keyCode, mapped.metaState))
+                    is TerminalAction.Text -> listOf(DevStep.Text(mapped.text))
+                }
+            }
+        }
+        return DevResolution(steps, consumesModifiers = false)
     }
 
     private fun resolveInsert(action: DevKeyAction.Insert, mods: Modifiers): DevResolution {

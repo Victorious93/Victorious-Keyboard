@@ -493,6 +493,16 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "devrow__haptics",
             default = true,
         )
+        /** Comma-separated catalog ids. Blank keeps today's row. */
+        val keyOrder = string(
+            key = "devrow__key_order",
+            default = "",
+        )
+        /** One macro per line. See [dev.patrickgold.florisboard.ime.developer.TerminalRowLayout]. */
+        val macros = string(
+            key = "devrow__macros",
+            default = "",
+        )
     }
 
     val gestures = Gestures()

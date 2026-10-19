@@ -91,6 +91,7 @@ fun DeveloperScreen() = FlorisScreen {
                 summary = stringRes(R.string.devadv__link_summary),
                 onClick = { navController.navigate(Routes.Settings.AdvancedDeveloper) },
             )
+            TerminalKeyOrderSection()
         }
     }
 }

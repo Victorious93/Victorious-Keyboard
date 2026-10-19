@@ -69,6 +69,8 @@ class SnippetInsertionTest : FunSpec({
         SnippetInsertion.plan(req("{date} {clipboard}", clip = "x", sensitive = true)) shouldBe
             InsertionPlan.Insert("2026-03-04 ", null)
     }
+
+    test("cursor placement is reported in code points from the end") {
         SnippetInsertion.plan(req("a{{cursor}}é😀")) shouldBe InsertionPlan.Insert("aé😀", 2)
     }
 

@@ -59,7 +59,7 @@ import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.ToggleOff
 import androidx.compose.material.icons.filled.ToggleOn
@@ -164,16 +164,37 @@ fun ClipboardInputLayout(
     }
     var isFilterRowShown by remember { mutableStateOf(false) }
     val activeFilterTypes = remember { mutableStateSetOf<ItemType>() }
+    var pinnedOnly by remember { mutableStateOf(false) }
+    var favoritesOnly by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val capturedQuery by keyboardManager.clipboardSearch.collectAsState()
+    LaunchedEffect(capturedQuery) {
+        if (capturedQuery != null) query = capturedQuery
+    }
+    LaunchedEffect(lane) {
+        if (lane != ClipLane.REGULAR) keyboardManager.clipboardSearch.value = null
+    }
 
     val unfilteredHistory by clipboardManager.historyFlow.collectAsState()
-    val filteredHistory = remember(unfilteredHistory, activeFilterTypes.toSet()) {
-        if (activeFilterTypes.isEmpty()) {
-            unfilteredHistory
-        } else {
+    val filteredHistory = remember(unfilteredHistory, activeFilterTypes.toSet(), query, pinnedOnly, favoritesOnly) {
+        val typed = if (activeFilterTypes.isEmpty()) {
             unfilteredHistory.all
-                .filter { activeFilterTypes.contains(it.type) }
-                .let { ClipboardHistory(it) }
+        } else {
+            unfilteredHistory.all.filter { activeFilterTypes.contains(it.type) }
         }
+        ClipboardHistory(
+            ClipboardTileQuery.filter(
+                items = typed,
+                text = { item ->
+                    if (item.tags.isBlank()) item.text.orEmpty() else item.text.orEmpty() + " " + item.tags
+                },
+                pinned = { it.isPinned },
+                favorite = { it.isFavorite },
+                query = query,
+                pinnedOnly = pinnedOnly,
+                favoritesOnly = favoritesOnly,
+            ),
+        )
     }
 
     val gridState = rememberLazyStaggeredGridState()
@@ -189,7 +210,7 @@ fun ClipboardInputLayout(
         }
     }
 
-    LaunchedEffect(activeFilterTypes.toSet()) {
+    LaunchedEffect(activeFilterTypes.toSet(), query, pinnedOnly, favoritesOnly) {
         gridState.scrollToItem(0)
     }
 
@@ -446,6 +467,12 @@ fun ClipboardInputLayout(
                     .matchParentSize()
                     .alpha(historyAlpha),
             ) {
+                if (filteredHistory.all.isEmpty()) {
+                    SnyggText(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                        text = stringRes(R.string.clipboard__search_empty),
+                    )
+                }
                 AnimatedVisibility(
                     visible = isFilterRowShown,
                     enter = VerticalEnterTransition,
@@ -758,7 +785,23 @@ fun ClipboardInputLayout(
             HistoryLockedView()
         } else {
             if (historyEnabled) {
-                if (filteredHistory.all.isNotEmpty() || !activeFilterTypes.isEmpty()) {
+                ClipboardSearchRow(
+                    query = query,
+                    capturing = capturedQuery != null,
+                    pinnedOnly = pinnedOnly,
+                    favoritesOnly = favoritesOnly,
+                    onToggleCapture = {
+                        keyboardManager.clipboardSearch.value = if (capturedQuery == null) query else null
+                    },
+                    onPinned = { pinnedOnly = !pinnedOnly },
+                    onFavorites = { favoritesOnly = !favoritesOnly },
+                    onClear = {
+                        query = ""
+                        if (capturedQuery != null) keyboardManager.clipboardSearch.value = ""
+                    },
+                )
+                val narrowing = query.isNotEmpty() || pinnedOnly || favoritesOnly || activeFilterTypes.isNotEmpty()
+                if (filteredHistory.all.isNotEmpty() || narrowing) {
                     HistoryMainView()
                 } else {
                     HistoryEmptyView()
@@ -766,6 +809,61 @@ fun ClipboardInputLayout(
             } else {
                 HistoryDisabledView()
             }
+        }
+    }
+}
+
+@Composable
+private fun ClipboardSearchRow(
+    query: String,
+    capturing: Boolean,
+    pinnedOnly: Boolean,
+    favoritesOnly: Boolean,
+    onToggleCapture: () -> Unit,
+    onPinned: () -> Unit,
+    onFavorites: () -> Unit,
+    onClear: () -> Unit,
+) {
+    SnyggRow(
+        elementName = FlorisImeUi.ClipboardFilterRow.elementName,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+        clickAndSemanticsModifier = Modifier.florisHorizontalScroll(),
+    ) {
+        SnyggChip(
+            elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+            attributes = mapOf("state" to if (capturing) "active" else "inactive"),
+            onClick = onToggleCapture,
+            imageVector = Icons.Default.Search,
+            text = stringRes(R.string.clipboard__search),
+        )
+        SnyggText(
+            modifier = Modifier.padding(horizontal = 6.dp),
+            text = if (query.isNotEmpty()) query else stringRes(R.string.clipboard__search_hint),
+        )
+        SnyggChip(
+            elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+            attributes = mapOf("state" to if (pinnedOnly) "active" else "inactive"),
+            onClick = onPinned,
+            imageVector = Icons.Outlined.PushPin,
+            text = stringRes(R.string.clipboard__pinned_only),
+        )
+        SnyggChip(
+            elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+            attributes = mapOf("state" to if (favoritesOnly) "active" else "inactive"),
+            onClick = onFavorites,
+            imageVector = Icons.Default.Star,
+            text = stringRes(R.string.clipboard__favorites_only),
+        )
+        if (query.isNotEmpty() || pinnedOnly || favoritesOnly) {
+            SnyggChip(
+                elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+                onClick = {
+                    if (pinnedOnly) onPinned()
+                    if (favoritesOnly) onFavorites()
+                    onClear()
+                },
+                text = stringRes(R.string.clipboard__search_clear),
+            )
         }
     }
 }

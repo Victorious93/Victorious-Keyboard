@@ -933,6 +933,12 @@
 
     <!-- Clipboard strings -->
     <string name="clipboard__header_title">Clipboard</string>
+    <string name="clipboard__search">Search</string>
+    <string name="clipboard__search_hint">Type to search</string>
+    <string name="clipboard__search_empty">No matching clips</string>
+    <string name="clipboard__pinned_only">Pinned</string>
+    <string name="clipboard__favorites_only">Favorites</string>
+    <string name="clipboard__search_clear">Clear</string>
     <string name="clipboard__disabled__title">Clipboard history is currently disabled</string>
     <string name="clipboard__disabled__message">{app_name}\'s clipboard history allows you to quickly store and access text and images you copy, with the ability to pin items, configure automatic clean-up and set a maximum item limit.</string>
     <string name="clipboard__disabled__enable_button">Enable clipboard history</string>

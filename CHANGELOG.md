@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- Clipboard tile search. On the regular clipboard tab, Search takes what you type (the keys do not go to the app while it is on), and Pinned and Favorites narrow the list. Clear resets them. Vault stays on its own tab. The query is not logged. No network access.
 - Snippet variables. Inserting a snippet expands exact `{date}`, `{time}`, `{clipboard}` and `{cursor}` tokens, in addition to the existing `{{date}}` form. `{cursor}` places the caret. `{date:pattern}`, `{datetime}`, `{selection}` and other braces such as `{ return; }` stay as written. A value taken from the clipboard is not scanned again. No network access.
 
 ### Fixed

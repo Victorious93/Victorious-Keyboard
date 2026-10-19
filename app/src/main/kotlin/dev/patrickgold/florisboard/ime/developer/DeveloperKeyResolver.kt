@@ -65,9 +65,12 @@ object DeveloperKeyResolver {
                     val key = TerminalKeyMapper.mapSpecial(SpecialKey.ENTER, Modifiers()) as TerminalAction.Key
                     listOf(DevStep.Key(key.keyCode, key.metaState))
                 }
-                is MacroStep.Ctrl -> when (val mapped = TerminalKeyMapper.mapChar(step.letter.toString(), Modifiers(ctrl = true))) {
-                    is TerminalAction.Key -> listOf(DevStep.Key(mapped.keyCode, mapped.metaState))
-                    is TerminalAction.Text -> listOf(DevStep.Text(mapped.text))
+                is MacroStep.Ctrl -> {
+                    val letter = step.letter.lowercaseChar()
+                    when (val mapped = TerminalKeyMapper.mapChar(letter.toString(), Modifiers(ctrl = true))) {
+                        is TerminalAction.Key -> listOf(DevStep.Key(mapped.keyCode, mapped.metaState))
+                        is TerminalAction.Text -> listOf(DevStep.Text(mapped.text))
+                    }
                 }
             }
         }

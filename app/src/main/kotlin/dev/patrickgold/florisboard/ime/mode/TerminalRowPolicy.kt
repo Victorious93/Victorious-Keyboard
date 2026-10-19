@@ -20,6 +20,7 @@ import dev.patrickgold.florisboard.ime.developer.CustomSymbolsMode
 import dev.patrickgold.florisboard.ime.developer.DevKey
 import dev.patrickgold.florisboard.ime.developer.DeveloperRows
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
+import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.developer.TerminalRowLayout
 
 /**

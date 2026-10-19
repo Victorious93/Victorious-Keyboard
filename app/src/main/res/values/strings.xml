@@ -844,7 +844,7 @@
     <string name="devadv__reset__text" comment="Dialog text">Everything on this screen returns to its default, including your own symbol keys and app mappings.</string>
     <string name="devadv__reset__confirm" comment="Dialog button">Reset</string>
     <string name="about__based_on__title" comment="Preference title: credit to the upstream project">Based on FlorisBoard</string>
-    <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to open the original project.</string>
+    <string name="about__based_on__summary" comment="Preference summary: credit to the upstream project">A modified version of FlorisBoard by The FlorisBoard Contributors (Apache 2.0), based on v0.6.0-alpha02. Tap to see the licence.</string>
     <string name="about__third_party_licenses__title" comment="Preference title">Third-party licenses</string>
     <string name="about__third_party_licenses__summary" comment="Preference summary">Licenses of the third-party libraries included in this app</string>
 

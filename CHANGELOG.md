@@ -4,6 +4,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Changed
+- No tappable link points at FlorisBoard any more. The About screen's "Based on FlorisBoard" row stays as a credit (the original licence is kept in the app) and now opens the in-app licence screen instead of the upstream repository. Theme stylesheets name `https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet` as their schema; stylesheets that name the old `schemas.florisboard.org` URL (imported or community themes) still load and are rewritten to the new one on export. The URL is an identifier only and is never fetched. The bundled `extension.json` maintainer lists no longer carry personal email addresses (so no mailto chips); the original authors stay credited by name, and "Victorious Keyboard Contributors" is added. Extension ids stay `org.florisboard.*` because renaming them would orphan built-in layouts and themes. Covered by JVM tests; not run on a device.
+
 ### Added
 - Customizable toolbar row above the suggestions. Pin any tools-panel button (clipboard, snippets, select all, copy, paste, undo, redo, emoji by default), reorder or remove them, or switch the row off: Settings → Smartbar → Toolbar → Toolbar row, or the Tune button at the end of the row. A pinned button does what its tools-panel tile does. On by default, so the keyboard is one row taller until it is switched off. Not run on a device.
 - Debug and benchmark builds sign with a fixed debug keystore (`signing/debug.keystore`). A newer debug APK installs over an older one signed with that key. A phone that already has a debug build signed with a different key needs one uninstall before this APK will install. Release signing is unchanged.

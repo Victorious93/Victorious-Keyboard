@@ -22,7 +22,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 class SnyggStylesheetTest {
-    private val SCHEMA_LINE = """"${'$'}schema": "https://schemas.florisboard.org/snygg/v2/stylesheet""""
+    private val SCHEMA_LINE = """"${'$'}schema": "https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet""""
 
     @Nested
     inner class BasicTests {
@@ -48,7 +48,7 @@ class SnyggStylesheetTest {
         @Test
         fun `basic deserialization`() {
             val stylesheet = SnyggStylesheet.fromJson(BasicStylesheetJson).getOrThrow()
-            assertEquals("https://schemas.florisboard.org/snygg/v2/stylesheet", stylesheet.schema)
+            assertEquals(SnyggStylesheet.SCHEMA_V2, stylesheet.schema)
             assertEquals(3, stylesheet.rules.size)
 
             val defines = stylesheet.rules[SnyggAnnotationRule.Defines]
@@ -164,7 +164,7 @@ class SnyggStylesheetTest {
         @Test
         fun `basic serialization`() {
             val stylesheet = SnyggStylesheet(
-                schema = "https://schemas.florisboard.org/snygg/v2/stylesheet",
+                schema = "https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet",
                 rules = mapOf(
                     SnyggElementRule("smartbar") to SnyggSinglePropertySet(
                         mapOf(
@@ -181,7 +181,7 @@ class SnyggStylesheetTest {
             )
             @Language("json")
             val expectedJson =
-                """{"${'$'}schema":"https://schemas.florisboard.org/snygg/v2/stylesheet","smartbar":{"background":"rgba(255,0,0,1)","shape":"rectangle()"},"key:pressed":{"shape":"circle()"}}"""
+                """{"${'$'}schema":"https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet","smartbar":{"background":"rgba(255,0,0,1)","shape":"rectangle()"},"key:pressed":{"shape":"circle()"}}"""
             val actualJson = stylesheet.toJson().getOrThrow()
             assertEquals(expectedJson, actualJson)
         }
@@ -434,7 +434,7 @@ class SnyggStylesheetTest {
             }
             @Language("json")
             val expectedJson =
-                """{"${'$'}schema":"https://schemas.florisboard.org/snygg/v2/stylesheet","@font `Comic Sans`":[{"src":"uri(`flex:/path/to/font.ttf`)"}]}"""
+                """{"${'$'}schema":"https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet","@font `Comic Sans`":[{"src":"uri(`flex:/path/to/font.ttf`)"}]}"""
             val actualJson = stylesheet.toJson().getOrThrow()
             assertEquals(expectedJson, actualJson)
         }
@@ -453,7 +453,7 @@ class SnyggStylesheetTest {
             }
             @Language("json")
             val expectedJson =
-                """{"${'$'}schema":"https://schemas.florisboard.org/snygg/v2/stylesheet","@font `Comic Sans`":[{"src":"uri(`flex:/path/to/font.ttf`)"},{"src":"uri(`flex:/path/to/font2.ttf`)"}]}"""
+                """{"${'$'}schema":"https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet","@font `Comic Sans`":[{"src":"uri(`flex:/path/to/font.ttf`)"},{"src":"uri(`flex:/path/to/font2.ttf`)"}]}"""
             val actualJson = stylesheet.toJson().getOrThrow()
             assertEquals(expectedJson, actualJson)
         }
@@ -515,6 +515,28 @@ class SnyggStylesheetTest {
             val stylesheet = SnyggStylesheet.fromJson(json, config).getOrThrow()
 
             assertEquals(3, stylesheet.rules.size)
+        }
+
+        @Test
+        fun `legacy FlorisBoard v2 schema is accepted and normalised to the Victorious schema`() {
+            val json = """{"${'$'}schema": "${SnyggStylesheet.LEGACY_SCHEMA_V2}", "element": {"background": "#ff0000"}}"""
+            val stylesheet = SnyggStylesheet.fromJson(json).getOrThrow()
+            assertEquals(SnyggStylesheet.SCHEMA_V2, stylesheet.schema)
+            assertEquals(SnyggStylesheet.SCHEMA_V2, SnyggStylesheet.fromJson(stylesheet.toJson().getOrThrow()).getOrThrow().schema)
+        }
+
+        @Test
+        fun `Victorious v2 schema is accepted`() {
+            val json = """{"${'$'}schema": "${SnyggStylesheet.SCHEMA_V2}", "element": {"background": "#ff0000"}}"""
+            assertEquals(SnyggStylesheet.SCHEMA_V2, SnyggStylesheet.fromJson(json).getOrThrow().schema)
+        }
+
+        @Test
+        fun `Victorious v1 schema is unsupported and a foreign host is invalid`() {
+            val v1 = """{"${'$'}schema": "https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v1/stylesheet"}"""
+            assertIs<SnyggUnsupportedSchemaException>(SnyggStylesheet.fromJson(v1).exceptionOrNull())
+            val foreign = """{"${'$'}schema": "https://example.com/snygg/v2/stylesheet"}"""
+            assertIs<SnyggInvalidSchemaException>(SnyggStylesheet.fromJson(foreign).exceptionOrNull())
         }
 
         @Test

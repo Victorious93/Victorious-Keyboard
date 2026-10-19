@@ -1,7 +1,6 @@
 <resources>
     <!-- Locked to ProjectUrls. The upstream repository stays here for the About credit only. -->
     <string name="florisboard__repo_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard</string>
-    <string name="florisboard__upstream_url" translatable="false">https://github.com/florisboard/florisboard</string>
     <string name="florisboard__issue_tracker_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/issues</string>
     <string name="florisboard__privacy_policy_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/PRIVACY.md</string>
     <string name="florisboard__changelog_url" translatable="false">https://github.com/Victorious93/Victorious-Keyboard/blob/main/CHANGELOG.md</string>

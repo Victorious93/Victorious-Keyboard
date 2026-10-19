@@ -123,7 +123,7 @@ fun AboutScreen() = FlorisScreen {
             icon = Icons.Outlined.Info,
             title = stringRes(R.string.about__based_on__title),
             summary = stringRes(R.string.about__based_on__summary),
-            onClick = { context.launchUrl(R.string.florisboard__upstream_url) },
+            onClick = { navController.navigate(Routes.Settings.ProjectLicense) },
         )
         Preference(
             icon = Icons.Outlined.Description,

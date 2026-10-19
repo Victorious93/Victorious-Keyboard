@@ -5,7 +5,7 @@
     "version": "0.1.1",
     "title": "Default composers",
     "description": "Default composers which are always available.",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>", "thanhhocse96 <thanh.hoquang@pm.me>" ],
+    "maintainers": [ "Victorious Keyboard Contributors", "patrickgold", "thanhhocse96" ],
     "license": "apache-2.0"
   },
   "composers": [

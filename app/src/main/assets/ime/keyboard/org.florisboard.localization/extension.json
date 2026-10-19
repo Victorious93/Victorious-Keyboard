@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "title": "Default subtype presets / popup mappings",
     "description": "Default subtype presets and popup mappings which are always available.",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>" ],
+    "maintainers": [ "Victorious Keyboard Contributors", "patrickgold" ],
     "license": "apache-2.0"
   },
   "dependencies": [

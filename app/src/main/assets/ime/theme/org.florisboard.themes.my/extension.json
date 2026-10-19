@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "title": "Victorious Keyboard default themes (Material You)",
     "description": "Default Material You themes (both day and night) for the keyboard UI",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>", "lm41 <lm41@lm41.xyz>" ],
+    "maintainers": [ "Victorious Keyboard Contributors", "patrickgold", "lm41" ],
     "license": "apache-2.0"
   },
   "themes": [

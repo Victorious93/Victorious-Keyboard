@@ -21,8 +21,8 @@ package dev.patrickgold.florisboard.app
  * constants (the string resources in `strings_dont_translate.xml` are kept in lockstep and checked
  * by [dev.patrickgold.florisboard.app.ProjectUrlsTest]).
  *
- * [UPSTREAM_REPO] is attribution for FlorisBoard, the project this keyboard is derived from. It is
- * the link on the About screen's "Based on FlorisBoard" row and is not a product link.
+ * There is deliberately no link to FlorisBoard: the About screen's "Based on FlorisBoard" row is a plain
+ * credit that opens the in-app licence screen.
  */
 object ProjectUrls {
     const val REPO = "https://github.com/Victorious93/Victorious-Keyboard"
@@ -39,6 +39,5 @@ object ProjectUrls {
     /** Theme editor behaviour is documented in this project's README. */
     const val THEME_EDITOR_DOCS = "$README#theme-editor"
 
-    const val UPSTREAM_REPO = "https://github.com/florisboard/florisboard"
     const val UNICODE_TABLE = "https://unicode-table.com/en"
 }

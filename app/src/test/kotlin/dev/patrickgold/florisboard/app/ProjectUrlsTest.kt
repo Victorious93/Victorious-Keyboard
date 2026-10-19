@@ -17,6 +17,7 @@
 package dev.patrickgold.florisboard.app
 
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -28,7 +29,6 @@ class ProjectUrlsTest : FunSpec({
         ProjectUrls.ISSUES shouldBe "https://github.com/Victorious93/Victorious-Keyboard/issues"
         ProjectUrls.PRIVACY shouldBe "https://github.com/Victorious93/Victorious-Keyboard/blob/main/PRIVACY.md"
         ProjectUrls.README shouldBe "https://github.com/Victorious93/Victorious-Keyboard/blob/main/README.md"
-        ProjectUrls.UPSTREAM_REPO shouldBe "https://github.com/florisboard/florisboard"
     }
 
     test("string resources stay locked to the constants") {
@@ -42,7 +42,6 @@ class ProjectUrlsTest : FunSpec({
         url("florisboard__internal_key_codes_url") shouldBe ProjectUrls.KEY_CODES
         url("florisboard__spell_checker_wiki_url") shouldBe ProjectUrls.SPELL_CHECKER_DOCS
         url("florisboard__theme_editor_wiki_url") shouldBe ProjectUrls.THEME_EDITOR_DOCS
-        url("florisboard__upstream_url") shouldBe ProjectUrls.UPSTREAM_REPO
         url("florisboard__character_key_codes_url") shouldBe ProjectUrls.UNICODE_TABLE
     }
 
@@ -58,5 +57,20 @@ class ProjectUrlsTest : FunSpec({
         gradle shouldNotContain "florisboard.org"
         strings shouldNotContain "florisboard.org"
         strings shouldNotContain "beta.addons"
+    }
+
+    test("no tappable link or bundled metadata points at FlorisBoard") {
+        val about = File("src/main/kotlin/dev/patrickgold/florisboard/app/settings/about/AboutScreen.kt").readText()
+        val strings = File("src/main/res/values/strings_dont_translate.xml").readText()
+        about shouldNotContain "upstream_url"
+        strings shouldNotContain "github.com/florisboard"
+        val bundled = File("src/main/assets/ime").walkTopDown().filter { it.isFile && it.extension == "json" }
+        bundled.forEach { file ->
+            val text = file.readText()
+            withClue(file.path) {
+                text shouldNotContain "schemas.florisboard.org"
+                text shouldNotContain "patrickgold.dev"
+            }
+        }
     }
 })

@@ -24,6 +24,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
@@ -64,6 +65,7 @@ import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionButton
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsRow
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.ToggleOverflowPanelAction
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
+import dev.patrickgold.florisboard.ime.toolbar.ui.PinnedToolbarRow
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -103,6 +105,9 @@ fun Smartbar() {
         enter = VerticalEnterTransition,
         exit = VerticalExitTransition,
     ) {
+        Column {
+        // The user's pinned buttons, above the suggestions. Draws nothing when switched off or empty.
+        PinnedToolbarRow()
         when (extendedActionsPlacement) {
             ExtendedActionsPlacement.ABOVE_CANDIDATES -> {
                 SnyggColumn(FlorisImeUi.Smartbar.elementName) {
@@ -137,6 +142,7 @@ fun Smartbar() {
                     SmartbarMainRow()
                 }
             }
+        }
         }
     }
 }

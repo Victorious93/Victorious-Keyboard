@@ -182,7 +182,10 @@ private fun CandidateItem(
         elementName = elementName,
         attributes = attributes,
         selector = selector,
+        // In the classic layout every chip owns an equal cell. The chip must fill it, or a short word sits at the
+        // cell's edge with a wide gap before the next one.
         modifier = Modifier.weight(1f, fill = false).fillMaxHeight()
+            .conditional(displayMode == CandidatesDisplayMode.CLASSIC) { fillMaxWidth() }
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()

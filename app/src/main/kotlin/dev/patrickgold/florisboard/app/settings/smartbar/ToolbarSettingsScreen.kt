@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotPolicy
+import dev.patrickgold.florisboard.ime.toolbar.PinnedToolbar
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandDto
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -72,6 +73,84 @@ fun ToolbarSettingsScreen() = FlorisScreen {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
+
+        GroupTitle(stringRes(R.string.settings__toolbar__group_row))
+        Text(
+            text = stringRes(R.string.settings__toolbar__row_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        ToggleRow(stringRes(R.string.settings__toolbar__row_on), config.pinnedRow) {
+            ToolbarRuntime.update(context) { it.copy(pinnedRow = !it.pinnedRow) }
+        }
+        val pinnedIds = PinnedToolbar.sanitized(config.pinned)
+        if (pinnedIds.isEmpty()) {
+            Text(
+                text = stringRes(R.string.settings__toolbar__row_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
+        for ((index, id) in pinnedIds.withIndex()) {
+            val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
+            ItemRow(text = name, hidden = false) {
+                TextButton(
+                    onClick = { ToolbarRuntime.update(context) { it.pinnedEarlier(id) } },
+                    enabled = index > 0,
+                ) {
+                    Text(stringRes(R.string.settings__toolbar__earlier))
+                }
+                TextButton(
+                    onClick = { ToolbarRuntime.update(context) { it.pinnedLater(id) } },
+                    enabled = index < pinnedIds.lastIndex,
+                ) {
+                    Text(stringRes(R.string.settings__toolbar__later))
+                }
+                TextButton(onClick = { ToolbarRuntime.update(context) { it.unpinning(id) } }) {
+                    Text(stringRes(R.string.settings__toolbar__unpin))
+                }
+            }
+        }
+        TextButton(
+            onClick = { ToolbarRuntime.update(context) { it.withDefaultPinned() } },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(stringRes(R.string.settings__toolbar__row_restore))
+        }
+        val candidates = PinnedToolbar.candidates(config.pinned, showScreenshot)
+        val full = pinnedIds.size >= PinnedToolbar.MAX
+        Text(
+            text = if (full) {
+                stringRes(R.string.settings__toolbar__row_full, "n" to PinnedToolbar.MAX)
+            } else {
+                stringRes(R.string.settings__toolbar__row_add)
+            },
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
+        )
+        for (tab in ToolsTab.entries) {
+            val inTab = candidates.filter { ToolsCatalog.tabOf(it) == tab }
+            if (inTab.isEmpty()) continue
+            Text(
+                text = stringRes(ToolsPanelItems.tabLabel(tab)),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp),
+            )
+            for (id in inTab) {
+                val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
+                ItemRow(text = name, hidden = false) {
+                    TextButton(
+                        onClick = { ToolbarRuntime.update(context) { it.pinning(id) } },
+                        enabled = !full,
+                    ) {
+                        Text(stringRes(R.string.settings__toolbar__pin))
+                    }
+                }
+            }
+        }
 
         GroupTitle(stringRes(R.string.settings__toolbar__group_editor))
         ToggleRow(stringRes(R.string.settings__toolbar__shell_history), config.shellHistoryEnabled) {

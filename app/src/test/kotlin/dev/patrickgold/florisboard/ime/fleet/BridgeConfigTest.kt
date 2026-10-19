@@ -38,4 +38,27 @@ class BridgeConfigTest : FunSpec({
         service shouldContain "getPackagesForUid"
         service shouldContain "GET_SIGNING_CERTIFICATES"
     }
+
+    test("the input port checks for password fields and never reads or logs the editor") {
+        val port = File("src/main/kotlin/dev/patrickgold/florisboard/ime/fleet/ExternalInputPort.kt").readText()
+        port shouldContain "isPasswordLike()"
+        for (forbidden in listOf(
+            "getTextBeforeCursor", "getTextAfterCursor", "getSelectedText", "getExtractedText", "textBeforeSelection",
+            "selectedText", "activeContent", "Log.", "Timber", "println", "toolbar", "Toolbar", "clipboard", "Clipboard",
+        )) {
+            port shouldNotContain forbidden
+        }
+    }
+
+    test("the service delegates all input rules to BridgeInput and logs nothing") {
+        val service = File("src/main/kotlin/com/victorious/keyboard/fleet/KeyboardBridgeService.kt").readText()
+        service shouldContain "BridgeInput.handle("
+        service shouldNotContain "Log."
+        service shouldNotContain "Timber"
+        service shouldNotContain "println"
+    }
+
+    test("the manifest still has no INTERNET permission") {
+        File("src/main/AndroidManifest.xml").readText() shouldNotContain "android.permission.INTERNET"
+    }
 })

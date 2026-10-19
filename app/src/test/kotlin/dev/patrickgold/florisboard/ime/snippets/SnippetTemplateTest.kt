@@ -72,6 +72,30 @@ class SnippetTemplateTest : FunSpec({
         (SnippetTemplate.render("end{{cursor}}", ctx()) as RenderResult.Rendered).cursorBackCodePoints shouldBe 0
     }
 
+    test("exact single-brace tokens expand and other braces stay literal") {
+        text("{date} {time}") shouldBe "2026-03-07 09:05"
+        text("{DATE}") shouldBe "2026-03-07"
+        text("clip={clipboard}", ctx("PASTE")) shouldBe "clip=PASTE"
+        text("{clipboard}", ctx()) shouldBe ""
+        val caret = SnippetTemplate.render("fn({cursor})", ctx()) as RenderResult.Rendered
+        caret.text shouldBe "fn()"
+        caret.cursorBackCodePoints shouldBe 1
+        val first = SnippetTemplate.render("{cursor}x{{cursor}}", ctx()) as RenderResult.Rendered
+        first.text shouldBe "x"
+        first.cursorBackCodePoints shouldBe 1
+        text("{ return; }") shouldBe "{ return; }"
+        text("{date:yyyy}") shouldBe "{date:yyyy}"
+        text("{datetime}") shouldBe "{datetime}"
+        text("{selection}") shouldBe "{selection}"
+        text("{date}}") shouldBe "{date}}"
+        text("\\{date}") shouldBe "{date}"
+        text("{{date}}") shouldBe "2026-03-07"
+        text("{clipboard}", ctx(clip = "{date} {cursor}")) shouldBe "{date} {cursor}"
+        SnippetTemplate.usesPlaceholder("see {clipboard}", "clipboard") shouldBe true
+        SnippetTemplate.usesPlaceholder("see \\{clipboard}", "clipboard") shouldBe false
+        SnippetTemplate.usesPlaceholder("{ return clipboard }", "clipboard") shouldBe false
+    }
+
     test("a backslash escapes the opening braces") {
         text("\\{{date}}") shouldBe "{{date}}"
         // There is no way to escape the backslash itself: only the three characters \{{ are special, so two backslashes

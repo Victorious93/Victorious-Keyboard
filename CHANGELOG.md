@@ -4,6 +4,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 
 ## [Unreleased]
 
+### Added
+- Snippet variables. Inserting a snippet expands exact `{date}`, `{time}`, `{clipboard}` and `{cursor}` tokens, in addition to the existing `{{date}}` form. `{cursor}` places the caret. `{date:pattern}`, `{datetime}`, `{selection}` and other braces such as `{ return; }` stay as written. A value taken from the clipboard is not scanned again. No network access.
+
 ### Fixed
 - Hub bridge: an allowed Droidcommand app was always refused. The service read the caller's process id after Messenger had already posted the message, so it saw itself. It now uses the id Messenger stamped on the message. A missing stamp is refused.
 - Fleet commands: a late reply from a provider could be applied to the next command. Replies are matched to the request id, and a reply with a missing or older id is ignored.

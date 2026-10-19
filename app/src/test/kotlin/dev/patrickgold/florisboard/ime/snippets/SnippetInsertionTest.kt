@@ -63,7 +63,12 @@ class SnippetInsertionTest : FunSpec({
             InsertionPlan.Insert("{{clipboard}}{{cursor}}", null)
     }
 
-    test("cursor placement is reported in code points from the end") {
+    test("single-brace cursor and clipboard follow the same insertion rules") {
+        SnippetInsertion.plan(req("hi {cursor} there")) shouldBe InsertionPlan.Insert("hi  there", 6)
+        SnippetInsertion.plan(req("{clipboard}", clip = "{date}")) shouldBe InsertionPlan.Insert("{date}", null)
+        SnippetInsertion.plan(req("{date} {clipboard}", clip = "x", sensitive = true)) shouldBe
+            InsertionPlan.Insert("2026-03-04 ", null)
+    }
         SnippetInsertion.plan(req("a{{cursor}}é😀")) shouldBe InsertionPlan.Insert("aé😀", 2)
     }
 

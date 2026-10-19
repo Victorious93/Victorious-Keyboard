@@ -59,6 +59,7 @@ import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.ToggleOff
@@ -169,7 +170,8 @@ fun ClipboardInputLayout(
     var query by remember { mutableStateOf("") }
     val capturedQuery by keyboardManager.clipboardSearch.collectAsState()
     LaunchedEffect(capturedQuery) {
-        if (capturedQuery != null) query = capturedQuery
+        val current = capturedQuery
+        if (current != null) query = current
     }
     LaunchedEffect(lane) {
         if (lane != ClipLane.REGULAR) keyboardManager.clipboardSearch.value = null

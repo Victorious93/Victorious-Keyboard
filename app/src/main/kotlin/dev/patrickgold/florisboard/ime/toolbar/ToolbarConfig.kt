@@ -32,7 +32,25 @@ data class ToolbarConfig(
     val bracketPairing: Boolean = false,
     val recentCommands: List<String> = emptyList(),
     val page: String = ToolbarPage.TERMINAL.name,
+    /** Buttons pinned to the toolbar row above the suggestions; `null` = the defaults (see [PinnedToolbar]). */
+    val pinned: List<String>? = null,
+    /** Whether the toolbar row is drawn at all. */
+    val pinnedRow: Boolean = true,
 ) {
+    fun pinnedActions(screenshotShown: Boolean): List<ToolbarActionId> =
+        PinnedToolbar.resolve(pinned, screenshotShown)
+
+    fun pinning(id: ToolbarActionId): ToolbarConfig = copy(pinned = PinnedToolbar.adding(pinned, id))
+
+    fun unpinning(id: ToolbarActionId): ToolbarConfig = copy(pinned = PinnedToolbar.removing(pinned, id))
+
+    fun pinnedEarlier(id: ToolbarActionId): ToolbarConfig = copy(pinned = PinnedToolbar.movingEarlier(pinned, id))
+
+    fun pinnedLater(id: ToolbarActionId): ToolbarConfig = copy(pinned = PinnedToolbar.movingLater(pinned, id))
+
+    /** The default pinned buttons again. The row switch is left as the user set it. */
+    fun withDefaultPinned(): ToolbarConfig = copy(pinned = null)
+
     fun hiddenSet(): Set<String> = hidden.toSet()
 
     fun pageOrder(page: ToolbarPage): List<String> = order[page.name].orEmpty()

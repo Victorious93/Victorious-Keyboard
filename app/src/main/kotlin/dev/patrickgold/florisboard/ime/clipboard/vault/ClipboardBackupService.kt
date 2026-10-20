@@ -187,6 +187,8 @@ class ClipboardBackupService(
     private val vault: VaultEntryRepository? = null,
     private val suggestionsExport: () -> String? = { null },
     private val suggestionsImport: (document: String, mode: ImportMode) -> Unit = { _, _ -> },
+    private val toolbarExport: () -> String? = { null },
+    private val toolbarImport: (document: String, mode: ImportMode) -> Unit = { _, _ -> },
 ) {
     /** The default file name offered in the system file picker. */
     fun suggestedFileName(format: ExportFormat): String =
@@ -271,10 +273,20 @@ class ClipboardBackupService(
         val meta = ExportMeta(now, appVersion, skippedUnsupported = unsupported)
         val encrypted = pw != null
         val suggestions = suggestionsExport()?.takeIf { it.isNotBlank() }?.toByteArray(Charsets.UTF_8)
+        val toolbar = toolbarExport()?.takeIf { it.isNotBlank() }?.toByteArray(Charsets.UTF_8)
         val bytes = if (pw == null) {
-            BackupWriter.writeZip(regularOut + vaultOut, meta, lanes, suggestions)
+            BackupWriter.writeZip(regularOut + vaultOut, meta, lanes, suggestions, toolbar)
         } else {
-            BackupWriter.writePasswordZip(regularOut + vaultOut, meta, lanes, pw, random, iterations, suggestions)
+            BackupWriter.writePasswordZip(
+                regularOut + vaultOut,
+                meta,
+                lanes,
+                pw,
+                random,
+                iterations,
+                suggestions,
+                toolbar,
+            )
         }
         ZipExportResult(
             bytes = bytes,
@@ -346,6 +358,9 @@ class ClipboardBackupService(
         repo.apply(planned.regular)
         inspection.parsed.suggestionsDocument?.takeIf { it.isNotBlank() }?.let {
             suggestionsImport(it, mode)
+        }
+        inspection.parsed.toolbarDocument?.takeIf { it.isNotBlank() }?.let {
+            toolbarImport(it, mode)
         }
         onStage(RestoreStage.DONE)
         val vaultPlan = planned.vault

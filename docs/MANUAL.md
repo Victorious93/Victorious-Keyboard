@@ -66,7 +66,7 @@ The row above the keys shows word suggestions while you type.
 6. Learn from my typing starts off. While it is off, new words are not saved. While it is on, new words stay on this phone only. Passwords, Incognito, and boxes that ask for no personalised learning are skipped.
 7. Settings → Typing → My suggestions stores your own phrases. Long-press a suggestion, or text you have selected, to add it. An optional shortcut shows the phrase when you type that shortcut. Long-press a saved phrase to delete it.
 8. When you are not in the middle of a word, a recent clipboard chip can still show in the strip. Tap it to paste that clip.
-9. The button on the left of the strip opens the tools panel.
+9. The button on the left of the strip opens the tools panel. Long-press that button to open the tools settings. Up to four pinned tools can sit on the strip as small icons next to that button. Pinning nothing leaves the strip as suggestions and the tools button.
 
 Suggestions stay off in password boxes and in boxes that ask for no suggestions.
 
@@ -80,7 +80,14 @@ TODO: photograph the tools panel tabs. `docs/manual/img/tools-panel.txt` is a pl
 2. Tap a tab: Clipboard, AI, Terminal, Code, or Quick. A Fleet tab appears beside them when a fleet app you trust is connected.
 3. Each tile is an icon with a name. Switches such as Incognito show On or Off.
 4. Tap the same tools button, or the back control, to return to the keys.
-5. Settings → Smartbar → Tools panel hides tiles, changes their order, and adds your own commands on the Terminal tab. A command you add is inserted as text. It is not run.
+5. Settings → Smartbar → Tools panel, also opened by a long-press on the tools button, is where the panel is arranged.
+   - Show or hide each tile.
+   - Reorder tiles by dragging the handle, or with Earlier and Later.
+   - Pin up to four tools. They appear as small icons on the suggestion strip, next to the tools button. A pin does what its tile does. Pinning nothing keeps the strip as it is.
+   - Choose the tile size (fit the panel, small, medium, or large) and the number of columns (fit the width, or 2 to 5).
+   - Reset layout puts the tiles, order, pins, size, and columns back. Your saved commands and shell history stay.
+   - A slash command you created, and a fleet action the keyboard has seen, can be a tile on the Quick tab or a pin. A slash pin inserts the command. A fleet pin asks that app. Neither is run as a shell command.
+   - Your own commands on the Terminal tab are inserted as text. They are not run.
 
 Clipboard tab:
 
@@ -195,6 +202,7 @@ Clipboard ZIP:
 4. A ZIP that includes the Vault requires a password. There is no way to recover a lost password. The item text is encrypted inside the file.
 5. Images and other clips that are not text are skipped.
 6. Import from ZIP checks the file, asks for the password when the file has one, and lets you merge with what you have or replace it. Vault rows go back to the Vault.
+7. When you have changed the tools layout, the same ZIP includes it as `toolbar.json`. Shell history is not in that file. Importing a damaged layout changes nothing. Replace takes the layout from the file and keeps the shell history already on this phone. Merge adds hidden tiles and extra tiles, and keeps a size, column count, pin list, or order you already set.
 
 Snippets:
 

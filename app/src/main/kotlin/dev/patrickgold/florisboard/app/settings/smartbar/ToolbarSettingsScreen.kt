@@ -16,7 +16,9 @@
 
 package dev.patrickgold.florisboard.app.settings.smartbar
 
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,15 +36,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotPolicy
+import dev.patrickgold.florisboard.ime.slash.CustomSlashCommand
+import dev.patrickgold.florisboard.ime.toolbar.KnownTool
 import dev.patrickgold.florisboard.ime.toolbar.PinnedToolbar
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandDto
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
+import dev.patrickgold.florisboard.ime.toolbar.ToolRef
+import dev.patrickgold.florisboard.ime.toolbar.ToolsLayout
+import dev.patrickgold.florisboard.slashCommands
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommandRules
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
@@ -65,6 +75,8 @@ fun ToolbarSettingsScreen() = FlorisScreen {
         val context = LocalContext.current
         val prefs by FlorisPreferenceStore
         val showScreenshot by prefs.tools.screenshotTile.observeAsState()
+        val slashManager by context.slashCommands()
+        val slashItems by slashManager.items.collectAsState()
         LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
         val config by ToolbarRuntime.config.collectAsState()
         Text(
@@ -84,8 +96,8 @@ fun ToolbarSettingsScreen() = FlorisScreen {
         ToggleRow(stringRes(R.string.settings__toolbar__row_on), config.pinnedRow) {
             ToolbarRuntime.update(context) { it.copy(pinnedRow = !it.pinnedRow) }
         }
-        val pinnedIds = PinnedToolbar.sanitized(config.pinned)
-        if (pinnedIds.isEmpty()) {
+        val pinnedRefs = PinnedToolbar.tokens(config.pinned)
+        if (pinnedRefs.isEmpty()) {
             Text(
                 text = stringRes(R.string.settings__toolbar__row_empty),
                 style = MaterialTheme.typography.bodyMedium,
@@ -93,22 +105,26 @@ fun ToolbarSettingsScreen() = FlorisScreen {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }
-        for ((index, id) in pinnedIds.withIndex()) {
-            val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
-            ItemRow(text = name, hidden = false) {
+        for ((index, ref) in pinnedRefs.withIndex()) {
+            ItemRow(text = toolLabel(ref, slashItems, config.knownFleet), hidden = false) {
+                DragHandle(enabled = pinnedRefs.size > 1) { delta ->
+                    ToolbarRuntime.update(context) {
+                        if (delta < 0) it.pinnedEarlierRef(ref) else it.pinnedLaterRef(ref)
+                    }
+                }
                 TextButton(
-                    onClick = { ToolbarRuntime.update(context) { it.pinnedEarlier(id) } },
+                    onClick = { ToolbarRuntime.update(context) { it.pinnedEarlierRef(ref) } },
                     enabled = index > 0,
                 ) {
                     Text(stringRes(R.string.settings__toolbar__earlier))
                 }
                 TextButton(
-                    onClick = { ToolbarRuntime.update(context) { it.pinnedLater(id) } },
-                    enabled = index < pinnedIds.lastIndex,
+                    onClick = { ToolbarRuntime.update(context) { it.pinnedLaterRef(ref) } },
+                    enabled = index < pinnedRefs.lastIndex,
                 ) {
                     Text(stringRes(R.string.settings__toolbar__later))
                 }
-                TextButton(onClick = { ToolbarRuntime.update(context) { it.unpinning(id) } }) {
+                TextButton(onClick = { ToolbarRuntime.update(context) { it.unpinningRef(ref) } }) {
                     Text(stringRes(R.string.settings__toolbar__unpin))
                 }
             }
@@ -120,7 +136,7 @@ fun ToolbarSettingsScreen() = FlorisScreen {
             Text(stringRes(R.string.settings__toolbar__row_restore))
         }
         val candidates = PinnedToolbar.candidates(config.pinned, showScreenshot)
-        val full = pinnedIds.size >= PinnedToolbar.MAX
+        val full = pinnedRefs.size >= PinnedToolbar.MAX
         Text(
             text = if (full) {
                 stringRes(R.string.settings__toolbar__row_full, "n" to PinnedToolbar.MAX)
@@ -231,6 +247,97 @@ fun ToolbarSettingsScreen() = FlorisScreen {
             Text(stringRes(R.string.settings__toolbar__add))
         }
 
+        GroupTitle(stringRes(R.string.settings__toolbar__group_layout))
+        LayoutChoice(
+            selected = config.tileSize,
+            options = listOf(
+                ToolsLayout.FIT to stringRes(R.string.settings__toolbar__size_fit),
+                ToolsLayout.SMALL to stringRes(R.string.settings__toolbar__size_small),
+                ToolsLayout.MEDIUM to stringRes(R.string.settings__toolbar__size_medium),
+                ToolsLayout.LARGE to stringRes(R.string.settings__toolbar__size_large),
+            ),
+            onPick = { name -> ToolbarRuntime.update(context) { it.withTileSize(name) } },
+        )
+        LayoutChoice(
+            selected = config.columns.toString(),
+            options = listOf(
+                "0" to stringRes(R.string.settings__toolbar__columns_fit),
+                "2" to stringRes(R.string.settings__toolbar__columns_n, "n" to 2),
+                "3" to stringRes(R.string.settings__toolbar__columns_n, "n" to 3),
+                "4" to stringRes(R.string.settings__toolbar__columns_n, "n" to 4),
+                "5" to stringRes(R.string.settings__toolbar__columns_n, "n" to 5),
+            ),
+            onPick = { name -> ToolbarRuntime.update(context) { it.withColumns(name.toInt()) } },
+        )
+        TextButton(
+            onClick = { ToolbarRuntime.update(context) { it.resetLayout() } },
+            modifier = Modifier.padding(horizontal = 8.dp),
+        ) {
+            Text(stringRes(R.string.settings__toolbar__reset))
+        }
+
+        GroupTitle(stringRes(R.string.settings__toolbar__group_extra))
+        Text(
+            text = stringRes(R.string.settings__toolbar__extra_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        val extraShown = ToolsLayout.visibleExtras(config.extraTiles, config.hiddenSet())
+        val extraOffers = extraOffers(slashItems, config.knownFleet)
+        if (extraOffers.isEmpty() && extraShown.isEmpty()) {
+            Text(
+                text = stringRes(R.string.settings__toolbar__extra_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
+        for ((index, ref) in extraShown.withIndex()) {
+            ItemRow(text = toolLabel(ref, slashItems, config.knownFleet), hidden = false) {
+                DragHandle(enabled = extraShown.size > 1) { delta ->
+                    ToolbarRuntime.update(context) { current ->
+                        val from = ToolsLayout.visibleExtras(current.extraTiles, current.hiddenSet()).indexOf(ref)
+                        if (from < 0) current else current.movingExtra(from, from + delta)
+                    }
+                }
+                TextButton(
+                    onClick = { ToolbarRuntime.update(context) { it.movingExtra(index, index - 1) } },
+                    enabled = index > 0,
+                ) {
+                    Text(stringRes(R.string.settings__toolbar__earlier))
+                }
+                TextButton(
+                    onClick = { ToolbarRuntime.update(context) { it.movingExtra(index, index + 1) } },
+                    enabled = index < extraShown.lastIndex,
+                ) {
+                    Text(stringRes(R.string.settings__toolbar__later))
+                }
+                TextButton(onClick = { ToolbarRuntime.update(context) { it.hiding(ref) } }) {
+                    Text(stringRes(R.string.settings__toolbar__hide))
+                }
+            }
+        }
+        for ((ref, name) in extraOffers) {
+            if (ref in extraShown) continue
+            val pinned = ref in pinnedRefs
+            ItemRow(text = name, hidden = false) {
+                TextButton(onClick = { ToolbarRuntime.update(context) { it.showingExtra(ref) } }) {
+                    Text(stringRes(R.string.settings__toolbar__add_tile))
+                }
+                TextButton(
+                    onClick = {
+                        ToolbarRuntime.update(context) { current ->
+                            if (ref in PinnedToolbar.tokens(current.pinned)) current.unpinningRef(ref) else current.pinningRef(ref)
+                        }
+                    },
+                    enabled = pinned || !full,
+                ) {
+                    Text(if (pinned) stringRes(R.string.settings__toolbar__unpin) else stringRes(R.string.settings__toolbar__pin))
+                }
+            }
+        }
+
         GroupTitle(stringRes(R.string.settings__toolbar__group_buttons))
         TextButton(
             onClick = { ToolbarRuntime.update(context) { it.withDefaultTools() } },
@@ -251,12 +358,22 @@ fun ToolbarSettingsScreen() = FlorisScreen {
                 if (id == ToolbarActionId.SCREENSHOT && !showScreenshot) continue
                 val hidden = id !in shown
                 val name = ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
+                val place = shown.indexOf(id)
                 ItemRow(text = name, hidden = hidden) {
+                    DragHandle(enabled = !hidden && shown.size > 1) { delta ->
+                        ToolbarRuntime.update(context) { it.moving(tab, id, delta) }
+                    }
                     TextButton(
                         onClick = { ToolbarRuntime.update(context) { it.movingEarlier(tab, id) } },
-                        enabled = !hidden && shown.indexOf(id) > 0,
+                        enabled = !hidden && place > 0,
                     ) {
                         Text(stringRes(R.string.settings__toolbar__earlier))
+                    }
+                    TextButton(
+                        onClick = { ToolbarRuntime.update(context) { it.movingLater(tab, id) } },
+                        enabled = !hidden && place >= 0 && place < shown.lastIndex,
+                    ) {
+                        Text(stringRes(R.string.settings__toolbar__later))
                     }
                     TextButton(onClick = { ToolbarRuntime.update(context) { it.hiding(id.name) } }) {
                         Text(if (hidden) stringRes(R.string.settings__toolbar__show) else stringRes(R.string.settings__toolbar__hide))
@@ -265,6 +382,67 @@ fun ToolbarSettingsScreen() = FlorisScreen {
             }
         }
     }
+}
+
+@Composable
+private fun DragHandle(enabled: Boolean, onDelta: (Int) -> Unit) {
+    val label = stringRes(R.string.settings__toolbar__drag)
+    Text(
+        text = "⋮⋮",
+        color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .semantics { contentDescription = label }
+            .pointerInput(enabled) {
+                if (!enabled) return@pointerInput
+                var accum = 0f
+                val step = 28.dp.toPx()
+                detectVerticalDragGestures(
+                    onDragEnd = { accum = 0f },
+                    onDragCancel = { accum = 0f },
+                    onVerticalDrag = { _, dy ->
+                        accum += dy
+                        if (kotlin.math.abs(accum) < step) return@detectVerticalDragGestures
+                        val delta = if (accum < 0) -1 else 1
+                        accum = 0f
+                        onDelta(delta)
+                    },
+                )
+            }
+            .padding(horizontal = 4.dp),
+    )
+}
+
+@Composable
+private fun LayoutChoice(selected: String, options: List<Pair<String, String>>, onPick: (String) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        for ((value, label) in options) {
+            TextButton(onClick = { onPick(value) }, enabled = value != selected) {
+                Text(if (value == selected) label + " ✓" else label)
+            }
+        }
+    }
+}
+
+@Composable
+private fun toolLabel(ref: String, slash: List<CustomSlashCommand>, fleet: List<KnownTool>): String {
+    val id = ToolbarActionId.entries.firstOrNull { it.name == ref }
+    if (id != null) return ToolsPanelItems.item(id)?.let { stringRes(it.label) } ?: ToolsCatalog.label(id)
+    val slashId = ToolRef.slashId(ref)
+    if (slashId != null) return slash.firstOrNull { it.id == slashId }?.name ?: slashId
+    return fleet.firstOrNull { it.ref == ref }?.label ?: ToolRef.fleetParts(ref)?.second ?: ref
+}
+
+private fun extraOffers(slash: List<CustomSlashCommand>, fleet: List<KnownTool>): List<Pair<String, String>> {
+    val out = ArrayList<Pair<String, String>>()
+    for (command in slash) {
+        if (!command.enabled) continue
+        val ref = ToolRef.slash(command.id)
+        if (ToolRef.isSlash(ref)) out.add(ref to command.name)
+    }
+    for (tool in fleet) {
+        if (ToolRef.isFleet(tool.ref)) out.add(tool.ref to tool.label)
+    }
+    return out
 }
 
 @Composable

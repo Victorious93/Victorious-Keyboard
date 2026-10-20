@@ -23,8 +23,6 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
-private fun names(list: List<ToolbarActionId>) = list.map { it.name }
-
 class PinnedToolbarTest : FunSpec({
     test("never edited: the defaults, and every default has an icon or glyph") {
         PinnedToolbar.sanitized(null) shouldBe PinnedToolbar.defaults
@@ -70,7 +68,7 @@ class PinnedToolbarTest : FunSpec({
     test("the row is drawn only when it is on and has a button") {
         PinnedToolbar.rowVisible(true, listOf(ToolbarActionId.PASTE)) shouldBe true
         PinnedToolbar.rowVisible(false, listOf(ToolbarActionId.PASTE)) shouldBe false
-        PinnedToolbar.rowVisible(true, emptyList()) shouldBe false
+        PinnedToolbar.rowVisible(true, emptyList<String>()) shouldBe false
     }
 
     test("adding appends once, and ignores buttons the panel does not offer") {
@@ -80,11 +78,10 @@ class PinnedToolbarTest : FunSpec({
         PinnedToolbar.adding(one, ToolbarActionId.PIPE) shouldBe one
     }
 
-    test("the first edit of a never-edited row starts from the defaults") {
-        val next = PinnedToolbar.adding(null, ToolbarActionId.CTRL_C)
-        next shouldBe names(PinnedToolbar.defaults) + "CTRL_C"
-        PinnedToolbar.removing(null, ToolbarActionId.PASTE) shouldBe
-            names(PinnedToolbar.defaults.filter { it != ToolbarActionId.PASTE })
+    test("a layout with no saved pins stays empty, and the first pin is only that button") {
+        PinnedToolbar.tokens(null) shouldBe emptyList()
+        PinnedToolbar.adding(null, ToolbarActionId.CTRL_C) shouldBe listOf("CTRL_C")
+        PinnedToolbar.removing(null, ToolbarActionId.PASTE) shouldBe emptyList()
     }
 
     test("adding to a full row changes nothing") {
@@ -116,31 +113,33 @@ class PinnedToolbarTest : FunSpec({
 
     test("ToolbarConfig: edits go through the same rules and keep the other settings") {
         val start = ToolbarConfig(bracketPairing = true, hidden = listOf("COPY"))
-        val edited = start.unpinning(ToolbarActionId.EMOJI).pinning(ToolbarActionId.CTRL_C).pinnedEarlier(ToolbarActionId.CTRL_C)
+        val edited = start.pinning(ToolbarActionId.COPY).pinning(ToolbarActionId.CTRL_C).pinnedEarlier(ToolbarActionId.CTRL_C)
         edited.bracketPairing shouldBe true
         edited.hidden shouldBe listOf("COPY")
-        edited.pinnedActions(true).last() shouldNotBe ToolbarActionId.CTRL_C
-        edited.pinnedActions(true) shouldContain ToolbarActionId.CTRL_C
+        edited.pinnedActions(true) shouldBe listOf(ToolbarActionId.CTRL_C, ToolbarActionId.COPY)
         edited.pinnedActions(true) shouldNotContain ToolbarActionId.EMOJI
         // Hiding a button in the tools panel does not unpin it.
-        edited.pinnedActions(true) shouldContain ToolbarActionId.COPY
+        edited.unpinning(ToolbarActionId.EMOJI).pinnedActions(true) shouldContain ToolbarActionId.COPY
     }
 
     test("ToolbarConfig: restoring the defaults keeps the row switch") {
         val config = ToolbarConfig(pinned = listOf("PASTE"), pinnedRow = false).withDefaultPinned()
         config.pinned shouldBe null
         config.pinnedRow shouldBe false
-        config.pinnedActions(true) shouldBe PinnedToolbar.defaults
+        config.pinnedActions(true) shouldBe emptyList()
     }
 
-    test("a toolbar file written before the pinned row existed reads as the defaults with the row on") {
+    test("a toolbar file written before the pinned row existed reads as no pins, with the strip switch on") {
         val old = """{"hidden":["COPY"],"shellHistoryEnabled":true,"page":"CODE"}"""
         val config = ToolbarConfigCodec.decode(old)
         config.hidden shouldBe listOf("COPY")
         config.shellHistoryEnabled shouldBe true
         config.pinned shouldBe null
         config.pinnedRow shouldBe true
-        config.pinnedActions(true) shouldBe PinnedToolbar.defaults
+        config.pinnedActions(true) shouldBe emptyList()
+        config.tileSize shouldBe ToolsLayout.FIT
+        config.columns shouldBe ToolsLayout.COLUMNS_ADAPTIVE
+        config.extraTiles shouldBe emptyList()
     }
 
     test("pinned buttons and the row switch survive a save and load") {
@@ -152,9 +151,20 @@ class PinnedToolbarTest : FunSpec({
         ToolbarConfigCodec.decode(ToolbarConfigCodec.encode(ToolbarConfig(pinned = emptyList()))).pinned shouldBe emptyList()
     }
 
-    test("a damaged file falls back to the defaults instead of failing") {
+    test("a damaged file falls back to no pins instead of failing") {
         val config = ToolbarConfigCodec.decode("""{"pinned": "not a list""")
-        config.pinnedActions(true) shouldBe PinnedToolbar.defaults
-        ToolbarConfigCodec.decode("""{"pinned": 5}""").pinnedActions(true) shouldBe PinnedToolbar.defaults
+        config.pinnedActions(true) shouldBe emptyList()
+        ToolbarConfigCodec.decode("""{"pinned": 5}""").pinnedActions(true) shouldBe emptyList()
+    }
+
+    test("slash commands and fleet actions pin, and they count toward the cap of four") {
+        val slash = ToolRef.slash("sig")
+        val fleet = ToolRef.fleet("com.example.app", "ask")
+        val stored = PinnedToolbar.addingToken(PinnedToolbar.addingToken(null, slash), fleet)
+        stored shouldBe listOf(slash, fleet)
+        PinnedToolbar.resolveTokens(stored, screenshotShown = true) shouldBe stored
+        val full = listOf("PASTE", "COPY", "CUT", "UNDO")
+        PinnedToolbar.addingToken(full, slash) shouldBe full
+        PinnedToolbar.addingToken(listOf(slash, slash, "NOPE"), ToolbarActionId.PASTE.name) shouldBe listOf(slash, "PASTE")
     }
 })

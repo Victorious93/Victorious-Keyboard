@@ -59,6 +59,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionButton
@@ -106,8 +107,6 @@ fun Smartbar() {
         exit = VerticalExitTransition,
     ) {
         Column {
-        // The user's pinned buttons, above the suggestions. Draws nothing when switched off or empty.
-        PinnedToolbarRow()
         when (extendedActionsPlacement) {
             ExtendedActionsPlacement.ABOVE_CANDIDATES -> {
                 SnyggColumn(FlorisImeUi.Smartbar.elementName) {
@@ -180,10 +179,12 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         SnyggIconButton(
             elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
             onClick = { keyboardManager.setToolsOpen(!keyboardManager.toolsOpen.value) },
+            onLongClick = { FlorisImeService.launchSettingsAt("settings/smartbar/toolbar") },
             modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f),
         ) {
             SnyggIcon(imageVector = toolsIcon)
         }
+        PinnedToolbarRow()
         if (shouldShowInlineSuggestionsUi) {
             InlineSuggestionsUi(inlineSuggestions)
         } else {

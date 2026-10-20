@@ -23,6 +23,7 @@ import dev.patrickgold.florisboard.lib.fleet.FleetTrust
 import dev.patrickgold.florisboard.lib.fleet.CertDigest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -88,6 +89,10 @@ object FileManagerProtocol {
         "8C:1F:E3:C9:E5:34:F2:71:05:C0:68:8F:45:28:D7:7E:47:11:AE:0A:79:DD:08:D1:E8:59:30:B9:E9:48:85:F2"
 
     const val NO_SESSION = "NO_SESSION"
+    const val NO_SESSION_IDLE = "no_session"
+    const val EXTERNAL_CONTROL_DISABLED = "external_control_disabled"
+    const val PLAYER_VOLUME_STEP = 10
+    const val PLAYER_VOLUME_START = 50
     const val WHAT_REQUEST = 1
     const val WHAT_RESPONSE = 2
     const val KEY_REQUEST = "request"
@@ -164,6 +169,22 @@ object FileManagerProtocol {
         return bridgePackage(installed, grants, seekEnabled) != null
     }
 
+    /** File Manager reports an idle player as `no_session`. Older replies used `NO_SESSION`. */
+    fun isNoSession(error: String): Boolean = error == NO_SESSION_IDLE || error == NO_SESSION
+
+    /** The bridge answers only while File Manager's own external-control switch is on. */
+    fun isExternalControlOff(error: String): Boolean = error == EXTERNAL_CONTROL_DISABLED
+
+    /**
+     * The next absolute player level. [current] null starts at [PLAYER_VOLUME_START].
+     * This is the player's own volume, not the system music stream.
+     */
+    fun nextPlayerLevel(current: Int?, louder: Boolean): Int {
+        val base = (current ?: PLAYER_VOLUME_START).coerceIn(0, 100)
+        val delta = if (louder) PLAYER_VOLUME_STEP else -PLAYER_VOLUME_STEP
+        return (base + delta).coerceIn(0, 100)
+    }
+
     /** Pins this certificate. Refuses any other package, and a fingerprint that is not 32 bytes. */
     fun pin(grants: List<FleetGrant>, packageName: String, certSha256: String): List<FleetGrant>? {
         if (!allowed(packageName)) return null
@@ -236,7 +257,7 @@ object FileManagerProtocol {
         } catch (_: Exception) {
             null
         } ?: return FileManagerReply.Unreadable
-        val error = obj["error"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
+        val error = errorText(obj["error"])
         val ok = obj["ok"]?.jsonPrimitive?.booleanOrNull
         if (error != null || ok == false) return FileManagerReply.Failed(error ?: "error")
         if (obj["playing"] != null || obj["title"] != null || obj["positionMs"] != null) {
@@ -249,6 +270,13 @@ object FileManagerProtocol {
             )
         }
         return if (ok == true) FileManagerReply.Ok else FileManagerReply.Unreadable
+    }
+
+    private fun errorText(value: kotlinx.serialization.json.JsonElement?): String? {
+        val primitive = value as? JsonPrimitive
+        if (primitive != null && primitive.isString) return primitive.content.takeIf { it.isNotBlank() }
+        val objectError = value as? JsonObject ?: return null
+        return objectError["category"]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
     }
 
     private fun cleanTitle(raw: String): String =
@@ -272,6 +300,7 @@ sealed interface MediaPlan {
     data class Keys(val keyCode: Int) : MediaPlan
     data class Volume(val direction: Int) : MediaPlan
     data class Bridge(val body: String, val fallback: MediaPlan?) : MediaPlan
+    data object Unavailable : MediaPlan
 }
 
 sealed interface MediaOutcome {
@@ -280,6 +309,7 @@ sealed interface MediaOutcome {
     data class Bridged(val state: FileManagerReply.State?) : MediaOutcome
     data class FellBack(val error: String) : MediaOutcome
     data class NoSession(val error: String) : MediaOutcome
+    data class ExternalControl(val fellBack: Boolean) : MediaOutcome
     data object Unavailable : MediaOutcome
 }
 
@@ -292,8 +322,9 @@ interface MediaSink {
 
 object MediaControl {
     /**
-     * Volume buttons always adjust the music stream. Transport buttons use File Manager only when
-     * seek is on and the certificate is approved. A bridge command that has a media key falls back to that key.
+     * Volume buttons always adjust the music stream. They never send `media.volume`.
+     * Transport buttons use File Manager only when seek is on and the certificate is approved.
+     * A bridge command that has a media key falls back to that key.
      */
     fun plan(command: MediaCommand, useBridge: Boolean, id: String): MediaPlan {
         val direction = when (command) {
@@ -308,6 +339,16 @@ object MediaControl {
         return MediaPlan.Bridge(body, key)
     }
 
+    /**
+     * Absolute player volume over `media.volume`. This is not the system music stream.
+     * Without the bridge there is nothing to call, and the system volume is left alone.
+     */
+    fun planPlayerVolume(level: Int, useBridge: Boolean, id: String): MediaPlan {
+        if (!useBridge) return MediaPlan.Unavailable
+        val body = FileManagerProtocol.encode("media.volume", id, level = level) ?: return MediaPlan.Unavailable
+        return MediaPlan.Bridge(body, fallback = null)
+    }
+
     fun run(plan: MediaPlan, sink: MediaSink): MediaOutcome = when (plan) {
         is MediaPlan.Keys -> {
             sendKey(plan.keyCode, sink)
@@ -317,6 +358,7 @@ object MediaControl {
             sink.volume(MediaCodes.STREAM_MUSIC, plan.direction, MediaCodes.FLAG_SHOW_UI)
             MediaOutcome.Volume
         }
+        MediaPlan.Unavailable -> MediaOutcome.Unavailable
         is MediaPlan.Bridge -> {
             val reply = try {
                 FileManagerProtocol.parse(sink.exchange(plan.body))
@@ -333,11 +375,21 @@ object MediaControl {
     }
 
     private fun fallback(plan: MediaPlan?, error: String, sink: MediaSink): MediaOutcome {
+        val noSession = FileManagerProtocol.isNoSession(error)
+        val externalOff = FileManagerProtocol.isExternalControlOff(error)
         if (plan == null) {
-            return if (error == FileManagerProtocol.NO_SESSION) MediaOutcome.NoSession(error) else MediaOutcome.Unavailable
+            return when {
+                noSession -> MediaOutcome.NoSession(error)
+                externalOff -> MediaOutcome.ExternalControl(fellBack = false)
+                else -> MediaOutcome.Unavailable
+            }
         }
         run(plan, sink)
-        return if (error == FileManagerProtocol.NO_SESSION) MediaOutcome.FellBack(error) else MediaOutcome.FellBack(error)
+        return when {
+            noSession -> MediaOutcome.FellBack(error)
+            externalOff -> MediaOutcome.ExternalControl(fellBack = true)
+            else -> MediaOutcome.FellBack(error)
+        }
     }
 
     private fun sendKey(keyCode: Int, sink: MediaSink) {

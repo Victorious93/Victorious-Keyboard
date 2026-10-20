@@ -234,11 +234,37 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         val bridge = mediaBridgePackage()
         scope.launch(Dispatchers.IO) {
             val outcome = dev.patrickgold.florisboard.ime.media.MediaRuntime.perform(appContext, command, bridge)
-            if (outcome is dev.patrickgold.florisboard.ime.media.MediaOutcome.NoSession) {
-                withContext(Dispatchers.Main) {
-                    appContext.showShortToastSync(R.string.media__no_session)
-                }
-            }
+            showMediaHint(outcome)
+        }
+    }
+
+    /** Last player-volume level sent to File Manager. Not the system music volume. */
+    private var playerLevel: Int? = null
+
+    /** Quieter or louder inside the player. Volume keys stay on the system stream. */
+    fun adjustPlayerVolume(louder: Boolean) {
+        val bridge = mediaBridgePackage()
+        val remembered = playerLevel
+        scope.launch(Dispatchers.IO) {
+            val (outcome, level) = dev.patrickgold.florisboard.ime.media.MediaRuntime.performPlayerVolume(
+                appContext,
+                louder,
+                remembered,
+                bridge,
+            )
+            if (outcome is dev.patrickgold.florisboard.ime.media.MediaOutcome.Bridged) playerLevel = level
+            showMediaHint(outcome)
+        }
+    }
+
+    private suspend fun showMediaHint(outcome: dev.patrickgold.florisboard.ime.media.MediaOutcome) {
+        val message = when (outcome) {
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.NoSession -> R.string.media__no_session
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.ExternalControl -> R.string.media__external_control
+            else -> return
+        }
+        withContext(Dispatchers.Main) {
+            appContext.showShortToastSync(message)
         }
     }
 

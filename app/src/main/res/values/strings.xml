@@ -1770,8 +1770,11 @@
     <string name="media__forward">Fast-forward</string>
     <string name="media__vol_down">Volume down</string>
     <string name="media__vol_up">Volume up</string>
+    <string name="media__player_down">Player quieter</string>
+    <string name="media__player_up">Player louder</string>
     <string name="media__close">Back to keys</string>
     <string name="media__no_session">Nothing is playing</string>
+    <string name="media__external_control">Turn on external control in Victorious File Manager. Its media bridge stays off until that switch is on.</string>
     <string name="settings__fleet__file_manager_seek">File Manager seek</string>
     <string name="settings__fleet__file_manager_seek_summary">Use Victorious File Manager for exact seek when it is approved. Off by default. Other players still get media keys.</string>
     <string name="settings__fleet__file_manager_missing">Victorious File Manager is not installed.</string>

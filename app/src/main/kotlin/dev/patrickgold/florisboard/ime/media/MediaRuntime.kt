@@ -50,10 +50,26 @@ object MediaRuntime {
     }
 
     fun nowPlaying(context: Context, bridgePackage: String?): FileManagerReply.State? {
-        if (bridgePackage == null) return null
-        val body = FileManagerProtocol.encode("media.state", "m" + ids.getAndIncrement()) ?: return null
+        return bridgeReply(context, bridgePackage) as? FileManagerReply.State
+    }
+
+    /** One `media.state` reply. A missing bridge is unreadable. Titles are not logged. */
+    fun bridgeReply(context: Context, bridgePackage: String?): FileManagerReply {
+        if (bridgePackage == null) return FileManagerReply.Unreadable
+        val body = FileManagerProtocol.encode("media.state", "m" + ids.getAndIncrement()) ?: return FileManagerReply.Unreadable
         val raw = FileManagerClient(context.applicationContext).exchange(body, bridgePackage)
-        return FileManagerProtocol.parse(raw) as? FileManagerReply.State
+        return FileManagerProtocol.parse(raw)
+    }
+
+    /**
+     * Sets the player's own volume with `media.volume`. The system music stream is not adjusted.
+     * [current] null starts at the midpoint. The returned level is the one that was requested.
+     */
+    fun performPlayerVolume(context: Context, louder: Boolean, current: Int?, bridgePackage: String?): Pair<MediaOutcome, Int> {
+        val level = FileManagerProtocol.nextPlayerLevel(current, louder)
+        val plan = MediaControl.planPlayerVolume(level, bridgePackage != null, "v" + ids.getAndIncrement())
+        val outcome = MediaControl.run(plan, AndroidSink(context.applicationContext, bridgePackage))
+        return outcome to level
     }
 }
 

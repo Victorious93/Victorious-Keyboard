@@ -290,7 +290,7 @@ TODO: photograph the screenshot helper setup. `docs/manual/img/screenshot.txt` i
 The Media tile is on the tools panel's Quick tab. It opens player buttons in place of the keys. Those buttons control the player. They do not type into the app you are focused on, and they do not read what you type.
 
 1. Play/Pause, Previous, Next, Rewind, and Fast-forward send the usual media keys. Any player that listens for those keys can use them. Nothing has to be paired.
-2. Volume down and Volume up change the music volume and show the system volume bar.
+2. Volume down and Volume up change the phone's music volume and show the system volume bar.
 3. Close returns to the keys.
 
 The same buttons can be added to the terminal key row under Settings → Developer & terminal. They are not on that row until you add them. A blank list keeps the usual keys.
@@ -303,8 +303,10 @@ Exact position, through Victorious File Manager, starts off.
 4. A debug install signed with the published fingerprint is already pinned. A release install has no published fingerprint yet, so tap Approve File Manager. That pins the certificate of the copy on this phone, and a different signature asks again. Release is never trusted on its own.
 5. Turn on File Manager seek.
 6. While that is on and a track is playing, the Media panel can show the track title. The title stays on the phone and is not written to a log.
-7. Rewind and fast-forward then jump about ten seconds. If nothing is playing, the keyboard falls back to the media keys, and a short message says nothing is playing. Volume buttons stay volume buttons either way.
-8. Turn File Manager seek off to use media keys only.
+7. Rewind and fast-forward then jump about ten seconds. If nothing is playing, the keyboard falls back to the media keys, and a short message says nothing is playing. Volume buttons stay the phone's volume buttons either way.
+8. Player quieter and Player louder appear only while File Manager is connected. They change the volume inside that player. They do not move the phone's volume bar.
+9. If File Manager's external control is off, the panel says to turn that switch on. The media keys still work. The bridge does not, until external control is on.
+10. Turn File Manager seek off to use media keys only.
 
 ### Theme
 
@@ -413,7 +415,7 @@ A fleet app is missing from the list. Install that app, open Settings → Tools 
 
 Hub status does not respond. It starts off. Turn it on only for the Droidcommand hub app. Other apps are refused even with the switch on.
 
-Media buttons do nothing. The player has to accept media keys. File Manager seek stays off unless you turn it on. A release install also needs Approve. "Nothing is playing" means File Manager has no track. If File Manager is not installed, the buttons stay media keys.
+Media buttons do nothing. The player has to accept media keys. File Manager seek stays off unless you turn it on. A release install also needs Approve. "Nothing is playing" means File Manager has no track. If the panel says to turn on external control, that switch is inside Victorious File Manager and the bridge stays off until it is on. If File Manager is not installed, the buttons stay media keys.
 
 The app crashed. The crash screen stays on the phone. Nothing is sent unless you copy it into a report yourself. Read it before you share it, in case it contains private text.
 

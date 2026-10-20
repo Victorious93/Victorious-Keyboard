@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
+import dev.patrickgold.florisboard.ime.media.FileManagerProtocol
 import dev.patrickgold.florisboard.ime.media.FileManagerReply
 import dev.patrickgold.florisboard.ime.media.MediaCommand
 import dev.patrickgold.florisboard.ime.media.MediaRuntime
@@ -51,11 +52,19 @@ fun MediaPanel(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     var title by remember { mutableStateOf("") }
+    var hint by remember { mutableStateOf("") }
+    var bridgeOn by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {
             val bridge = keyboardManager.mediaBridgePackage()
-            val state = withContext(Dispatchers.IO) { MediaRuntime.nowPlaying(context, bridge) }
-            title = if (state is FileManagerReply.State) state.title else ""
+            bridgeOn = bridge != null
+            val reply = withContext(Dispatchers.IO) { MediaRuntime.bridgeReply(context, bridge) }
+            title = if (reply is FileManagerReply.State) reply.title else ""
+            hint = if (reply is FileManagerReply.Failed && FileManagerProtocol.isExternalControlOff(reply.error)) {
+                context.getString(R.string.media__external_control)
+            } else {
+                ""
+            }
             delay(2_000)
         }
     }
@@ -63,7 +72,7 @@ fun MediaPanel(modifier: Modifier = Modifier) {
         Row(modifier = Modifier.fillMaxWidth()) {
             SnyggText(
                 elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
-                text = title.ifBlank { stringRes(R.string.tools__action__media) },
+                text = hint.ifBlank { title.ifBlank { stringRes(R.string.tools__action__media) } },
                 modifier = Modifier.weight(1f),
             )
             SnyggChip(
@@ -91,6 +100,25 @@ fun MediaPanel(modifier: Modifier = Modifier) {
                 R.string.media__vol_up to MediaCommand.VOLUME_UP,
             ),
         )
+        if (bridgeOn) {
+            PlayerVolumeRow()
+        }
+    }
+}
+
+@Composable
+private fun PlayerVolumeRow() {
+    val context = LocalContext.current
+    val keyboardManager by context.keyboardManager()
+    Row(modifier = Modifier.fillMaxWidth()) {
+        for ((label, louder) in listOf(R.string.media__player_down to false, R.string.media__player_up to true)) {
+            SnyggChip(
+                elementName = FlorisImeUi.ClipboardFilterChip.elementName,
+                onClick = { keyboardManager.adjustPlayerVolume(louder) },
+                text = stringRes(label),
+                modifier = Modifier.padding(top = 8.dp, end = 8.dp),
+            )
+        }
     }
 }
 

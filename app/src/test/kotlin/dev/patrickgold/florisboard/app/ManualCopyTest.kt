@@ -28,6 +28,7 @@ class ManualCopyTest : FunSpec({
         File("src/main/assets/manual/MANUAL.md").readText() shouldBe manual
         manual shouldContain "File Manager seek"
         manual shouldContain "Media tile"
+        manual shouldContain "external control"
         manual shouldContain "Pin up to four tools"
         manual shouldContain "toolbar.json"
     }

@@ -89,6 +89,25 @@ class MediaControlTest : FunSpec({
         sink.presses.shouldBeEmpty()
     }
 
+    test("player volume uses media.volume and never the music stream") {
+        FileManagerProtocol.nextPlayerLevel(null, louder = true) shouldBe 60
+        FileManagerProtocol.nextPlayerLevel(null, louder = false) shouldBe 40
+        FileManagerProtocol.nextPlayerLevel(5, louder = false) shouldBe 0
+        FileManagerProtocol.nextPlayerLevel(95, louder = true) shouldBe 100
+        val sink = FakeSink("""{"ok":true}""")
+        MediaControl.run(MediaControl.planPlayerVolume(60, useBridge = true, id = "p"), sink) shouldBe
+            MediaOutcome.Bridged(null)
+        sink.sent.single() shouldContain "\"op\":\"media.volume\""
+        sink.sent.single() shouldContain "\"level\":60"
+        sink.volumes.shouldBeEmpty()
+        sink.presses.shouldBeEmpty()
+        val off = FakeSink("""{"ok":true}""")
+        MediaControl.run(MediaControl.planPlayerVolume(40, useBridge = false, id = "p"), off) shouldBe
+            MediaOutcome.Unavailable
+        off.sent.shouldBeEmpty()
+        off.volumes.shouldBeEmpty()
+    }
+
     test("an approved bridge sends the command and falls back to the media key on NO_SESSION") {
         val sink = FakeSink("""{"ok":false,"error":"NO_SESSION"}""")
         val outcome = MediaControl.run(MediaControl.plan(MediaCommand.PLAY_PAUSE, useBridge = true, id = "m1"), sink)
@@ -98,6 +117,30 @@ class MediaControlTest : FunSpec({
             KeyEvent.ACTION_DOWN to KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
             KeyEvent.ACTION_UP to KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
         )
+        val idle = FakeSink("""{"ok":false,"error":"no_session"}""")
+        MediaControl.run(MediaControl.plan(MediaCommand.NEXT, useBridge = true, id = "n"), idle) shouldBe
+            MediaOutcome.FellBack("no_session")
+        idle.presses shouldBe listOf(
+            KeyEvent.ACTION_DOWN to KeyEvent.KEYCODE_MEDIA_NEXT,
+            KeyEvent.ACTION_UP to KeyEvent.KEYCODE_MEDIA_NEXT,
+        )
+    }
+
+    test("external_control_disabled is its own result and does not change the music stream") {
+        val sink = FakeSink("""{"ok":false,"error":"external_control_disabled"}""")
+        MediaControl.run(MediaControl.plan(MediaCommand.PLAY_PAUSE, useBridge = true, id = "m"), sink) shouldBe
+            MediaOutcome.ExternalControl(fellBack = true)
+        sink.presses shouldBe listOf(
+            KeyEvent.ACTION_DOWN to KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+            KeyEvent.ACTION_UP to KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+        )
+        sink.volumes.shouldBeEmpty()
+        val player = FakeSink("""{"ok":false,"error":{"category":"external_control_disabled"}}""")
+        MediaControl.run(MediaControl.planPlayerVolume(40, useBridge = true, id = "p"), player) shouldBe
+            MediaOutcome.ExternalControl(fellBack = false)
+        player.volumes.shouldBeEmpty()
+        player.presses.shouldBeEmpty()
+        player.sent.single() shouldContain "\"op\":\"media.volume\""
     }
 
     test("rewind and fast-forward over the bridge are ten-second seeks, with a key fallback") {

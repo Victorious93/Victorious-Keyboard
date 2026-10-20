@@ -1786,6 +1786,16 @@
     <string name="settings__developer__group_mode">Operating mode</string>
     <string name="settings__developer__group_row">Terminal key row</string>
     <string name="settings__developer__row_hint">The row sits between the suggestion strip and the keys. Keys send real key events, so Ctrl+C reaches a terminal as an interrupt, not as text.</string>
+    <string name="settings__developer__key_order_hint">Choose and reorder the keys. A blank list keeps the usual row. A macro sends a saved sequence, such as Ctrl+C or a command followed by Enter. It is inserted, not run.</string>
+    <string name="settings__developer__move_up">Up</string>
+    <string name="settings__developer__move_down">Down</string>
+    <string name="settings__developer__remove">Remove</string>
+    <string name="settings__developer__add_key">Add</string>
+    <string name="settings__developer__macro_command">Command</string>
+    <string name="settings__developer__add_command_enter">Add command + Enter</string>
+    <string name="settings__developer__macro_ctrl">Ctrl letter</string>
+    <string name="settings__developer__add_ctrl">Add Ctrl key</string>
+    <string name="settings__developer__reset_row">Reset row</string>
     <string name="snippets__expansion__title">Expansion</string>
     <string name="snippets__expansion__link_summary_on">On. Typing an abbreviation and a trigger key expands it</string>
     <string name="snippets__expansion__link_summary_off">Off. Snippets are inserted from the picker only</string>

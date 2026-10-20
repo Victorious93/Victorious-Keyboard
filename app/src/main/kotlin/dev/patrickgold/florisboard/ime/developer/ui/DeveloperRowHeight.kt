@@ -54,9 +54,11 @@ fun rememberTerminalRowPlan(): TerminalRowPlan {
     val customText by prefs.devrow.customSymbols.observeAsState()
     val customMode by prefs.devrow.customSymbolsMode.observeAsState()
     val custom = remember(customText) { CustomSymbols.parse(customText).keys }
+    val keyOrder by prefs.devrow.keyOrder.observeAsState()
+    val macros by prefs.devrow.macros.observeAsState()
     val packageName = info.packageName
     val typeNull = info.inputAttributes.type == InputAttributes.Type.NULL
-    return remember(policy, mode, profile, terminalKeys, navigationKeys, symbols, custom, customMode, packageName, typeNull) {
+    return remember(policy, mode, profile, terminalKeys, navigationKeys, symbols, custom, customMode, packageName, typeNull, keyOrder, macros) {
         TerminalRowPolicy.plan(
             policy = policy,
             mode = mode,
@@ -65,6 +67,8 @@ fun rememberTerminalRowPlan(): TerminalRowPlan {
             customMode = customMode,
             packageName = packageName,
             typeNull = typeNull,
+            keyOrder = keyOrder,
+            macros = macros,
         )
     }
 }

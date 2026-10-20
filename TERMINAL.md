@@ -28,6 +28,9 @@ apps, in `TYPE_NULL` fields, and while Developer or Termux mode is active; in ot
 old *Developer row* switch (`devrow__enabled`) is no longer read. `TerminalRowPolicy.plan` (pure, JVM-tested) is the
 single decision for whether the row shows and what it holds; the row and the height that full-height panels reserve for
 it both use it. Termux mode forces terminal keys, navigation keys and Shell symbols; other modes use your switches.
+The same screen can reorder the keys (Esc, Tab, Ctrl, Alt, arrows, `|`, `~`, `/`, and the rest of that list) and add
+macro keys. A macro sends a saved sequence: Ctrl plus a letter, or text followed by Enter. The text is inserted, not
+run, and it is not logged. A blank order keeps today's row. Not run on a device.
 
 When shown, one horizontally scrollable row sits between the Smartbar and the keyboard:
 `Esc Tab Ctrl Alt ← ↓ ↑ → Home End PgUp PgDn` then the profile's symbols. It reuses the Smartbar action-key theme

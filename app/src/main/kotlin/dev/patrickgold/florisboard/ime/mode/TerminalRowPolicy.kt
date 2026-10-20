@@ -21,6 +21,7 @@ import dev.patrickgold.florisboard.ime.developer.DevKey
 import dev.patrickgold.florisboard.ime.developer.DeveloperRows
 import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.developer.RowOptions
+import dev.patrickgold.florisboard.ime.developer.TerminalRowLayout
 
 /**
  * When the extra Esc/Tab/Ctrl/Alt/arrow row is drawn. The enum constant names are persisted.
@@ -92,6 +93,8 @@ object TerminalRowPolicy {
         customMode: CustomSymbolsMode,
         packageName: String?,
         typeNull: Boolean,
+        keyOrder: String = "",
+        macros: String = "",
     ): TerminalRowPlan {
         val active = OperatingMode.sanitize(mode)
         val allowed = shouldShow(policy, packageName, typeNull) ||
@@ -105,7 +108,7 @@ object TerminalRowPolicy {
             custom = custom,
             customMode = customMode,
         )
-        val keys = DeveloperRows.row(preset.profile, options)
+        val keys = TerminalRowLayout.arrange(DeveloperRows.row(preset.profile, options), keyOrder, macros)
         return if (keys.isEmpty()) TerminalRowPlan.Hidden else TerminalRowPlan(preset.profile, options, keys)
     }
 }

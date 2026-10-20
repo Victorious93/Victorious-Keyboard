@@ -29,6 +29,19 @@ sealed interface DevKeyAction {
 
     /** A sticky/lockable modifier key, see `ModifierStateMachine`. */
     data class Modifier(val modifier: TerminalModifier) : DevKeyAction
+
+    /**
+     * A saved sequence. Text is inserted. Enter and Ctrl plus a letter are real key events.
+     * The keyboard does not run the text as a command.
+     */
+    data class Play(val steps: List<MacroStep>) : DevKeyAction
+}
+
+/** One step of a macro key. Persisted by [TerminalRowLayout], not by enum name. */
+sealed interface MacroStep {
+    data class Text(val text: String) : MacroStep
+    data object Enter : MacroStep
+    data class Ctrl(val letter: Char) : MacroStep
 }
 
 data class DevKey(val label: String, val action: DevKeyAction, val description: String = label)

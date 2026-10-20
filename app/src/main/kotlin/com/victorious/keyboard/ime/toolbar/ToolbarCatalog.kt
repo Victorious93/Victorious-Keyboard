@@ -46,6 +46,7 @@ enum class ToolbarActionId {
     AI_REWRITE, AI_GRAMMAR, AI_CONTINUE, AI_SUMMARIZE, AI_TRANSLATE, AI_SHELL, AI_ASK,
     SCREENSHOT,
     MEDIA,
+    TEXT_TOOLS,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)
@@ -159,6 +160,7 @@ object ToolbarCatalog {
         act(ToolbarActionId.EMOJI, ToolbarPage.PRIVACY, "Emoji"),
         act(ToolbarActionId.SETTINGS, ToolbarPage.PRIVACY, "Settings"),
         act(ToolbarActionId.DEVROW, ToolbarPage.PRIVACY, "Dev row"),
+        act(ToolbarActionId.TEXT_TOOLS, ToolbarPage.CODE, "Text"),
     )
 
     /** Everyday command names the user can insert. Nothing here is run, and none of it is an attack recipe. */

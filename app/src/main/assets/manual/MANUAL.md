@@ -107,6 +107,8 @@ Terminal tab: Ctrl, Alt, Esc, Tab, the arrow keys, Home, End, Page up, Page down
 
 Code tab, used on text you have selected: Camel, Snake, Kebab, Pascal, Indent, Outdent, Comment, JSON, Base64 encode, Base64 decode, UUID, and Time.
 
+Text Tools is the first tile on the Code tab. It transforms the text you have selected. If nothing is selected, it uses the clipboard. It shows a preview first. Replace writes the result back where it came from (the selection, or the clipboard). Insert puts it at the caret and leaves a selection in place. Copy puts it on the clipboard. The transforms are Base64 encode and decode, URL encode and decode, hex encode and decode, JSON pretty and minify, MD5, SHA-1, SHA-256, UPPER, lower, Title, camelCase, snake_case, kebab-case, trim lines, sort lines, dedupe lines, ROT13, extract URLs, extract emails, extract IP addresses, JWT decode (the header and the payload only; the signature is not checked), UNIX time to a date, a date to UNIX time, and escape for the shell, JSON, and a regex. Nothing is sent off the phone, and the text is not written to a log. A result that came from the Vault can be replaced or inserted in the editor. It is not copied out.
+
 Quick tab: Incognito, Learn words, Emoji, Voice input, One-handed, Bottom gap, Next colors, Settings, Screenshot, and Media.
 
 - Voice input switches to a voice keyboard Android already has, if one is installed. This app does not record the microphone itself.

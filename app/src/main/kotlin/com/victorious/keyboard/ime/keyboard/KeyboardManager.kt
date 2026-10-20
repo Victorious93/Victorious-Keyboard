@@ -143,7 +143,11 @@ import com.victorious.keyboard.ime.clipboard.vault.parseTagColumn
 import com.victorious.keyboard.ime.theme.colors.KeyboardPaletteCodec
 import com.victorious.keyboard.ime.theme.colors.KeyboardPalettes
 import com.victorious.keyboard.ime.toolbar.ShellHistoryPolicy
+import com.victorious.keyboard.ime.toolbar.TextToolPlace
+import com.victorious.keyboard.ime.toolbar.TextToolWrite
+import com.victorious.keyboard.ime.toolbar.TextTools
 import com.victorious.keyboard.ime.toolbar.TextTransform
+import com.victorious.keyboard.ime.toolbar.TextToolPreview
 import com.victorious.keyboard.ime.toolbar.TextTransforms
 import com.victorious.keyboard.ime.toolbar.ToolbarActionId
 import com.victorious.keyboard.ime.toolbar.ToolbarCatalog
@@ -211,17 +215,91 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     /** Media controls replace the key area. They send media keys, not editor input. */
     val mediaOpen = MutableStateFlow(false)
 
+    /** Text Tools preview. Null while the tile is closed. The text is not logged. */
+    val textTools = MutableStateFlow<TextToolPreview?>(null)
+
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
         if (open) {
             mediaOpen.value = false
+            textTools.value = null
             fleet.refresh()
         }
     }
 
     fun setMediaOpen(open: Boolean) {
         mediaOpen.value = open
-        if (open) toolsOpen.value = false
+        if (open) {
+            toolsOpen.value = false
+            textTools.value = null
+        }
+    }
+
+    fun closeTextTools() {
+        textTools.value = null
+    }
+
+    fun openTextTools() {
+        val session = clipEditor.value
+        val selection = if (session != null) {
+            if (session.body.hasSelection) session.body.selectedText else ""
+        } else {
+            hostSelection()
+        }
+        val vault = session?.origin == ClipEditorOrigin.VAULT || session?.sensitive == true
+        val preview = TextTools.open(selection, currentClipboardText(), vault) ?: run {
+            appContext.showShortToastSync(R.string.toolbar__select_text)
+            return
+        }
+        toolsOpen.value = false
+        mediaOpen.value = false
+        textTools.value = preview
+    }
+
+    fun chooseTextTool(op: TextTransform) {
+        val current = textTools.value ?: return
+        textTools.value = TextTools.withOp(current, op)
+    }
+
+    fun applyTextTool(place: TextToolPlace) {
+        val preview = textTools.value ?: return
+        when (val write = TextTools.write(preview, place)) {
+            TextToolWrite.Blocked -> {
+                if (preview.output == null) {
+                    appContext.showShortToastSync(R.string.toolbar__transform_failed)
+                } else {
+                    appContext.showShortToastSync(R.string.local_ai__vault_copy)
+                }
+            }
+            is TextToolWrite.OntoClipboard -> {
+                clipboardManager.addNewPlaintext(write.text)
+                appContext.showShortToastSync(R.string.text_tools__copied)
+                textTools.value = null
+            }
+            is TextToolWrite.IntoField -> {
+                writeTextTool(write.text, write.replaceSelection)
+                textTools.value = null
+            }
+        }
+    }
+
+    private fun writeTextTool(text: String, replaceSelection: Boolean) {
+        val session = clipEditor.value
+        if (session != null) {
+            val body = if (replaceSelection || !session.body.hasSelection) {
+                session.body.insert(text)
+            } else {
+                val caret = session.body.end
+                session.body.copy(start = caret, end = caret).insert(text)
+            }
+            clipEditor.value = session.copy(body = body, focus = EditorField.BODY, revision = session.revision + 1)
+            return
+        }
+        if (!replaceSelection) {
+            val end = editorInstance.activeContent.selection.end
+            editorInstance.setSelection(end, end)
+        }
+        editorInstance.commitText(text)
     }
 
     fun mediaBridgePackage(): String? = com.victorious.keyboard.ime.media.FileManagerInstall.bridgePackage(
@@ -376,6 +454,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
                 toolsOpen.value = false
                 mediaOpen.value = false
+                textTools.value = null
                 fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
@@ -1790,6 +1869,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.AI_SHELL -> startLocalAi(AiTask.SHELL)
             ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
             ToolbarActionId.MEDIA -> setMediaOpen(true)
+            ToolbarActionId.TEXT_TOOLS -> openTextTools()
             ToolbarActionId.SCREENSHOT -> scope.launch {
                 if (!prefs.tools.screenshotTile.get()) return@launch
                 withContext(Dispatchers.Main) { ScreenshotCapture.onTile(appContext) }

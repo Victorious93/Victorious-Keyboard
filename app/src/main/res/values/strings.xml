@@ -1602,7 +1602,7 @@
     <string name="toolbar__transform_failed">Could not transform that text</string>
     <string name="toolbar__select_text">Select some text first</string>
     <string name="settings__toolbar__title">Tools panel</string>
-    <string name="settings__toolbar__summary">The tools button on the left of the suggestion strip opens this panel in place of the keys. Hide or reorder its buttons here, and add your own commands to the Terminal tab. Commands are inserted as text and never run. Shell history is off until you turn it on, and it skips incognito, passwords, and the vault.</string>
+    <string name="settings__toolbar__summary">The tools button on the left of the suggestion strip opens this panel in place of the keys. Long-press that button to open this screen. Hide or reorder tiles, pin up to four of them on the strip, and choose the tile size and columns. Commands are inserted as text and never run. Shell history is off until you turn it on, and it skips incognito, passwords, and the vault.</string>
     <string name="settings__toolbar__shell_history">Remember recent commands</string>
     <string name="settings__toolbar__bracket_pairing">Auto-pair brackets in the editor</string>
     <string name="settings__toolbar__restore">Show every button</string>
@@ -1612,16 +1612,29 @@
     <string name="settings__toolbar__tag">Tag</string>
     <string name="settings__toolbar__add">Add command</string>
     <string name="settings__toolbar__earlier">Earlier</string>
-    <string name="settings__toolbar__later" comment="Button: move a pinned toolbar button one place to the right">Later</string>
-    <string name="settings__toolbar__pin" comment="Button: add a button to the toolbar row">Pin</string>
-    <string name="settings__toolbar__unpin" comment="Button: take a button off the toolbar row">Remove</string>
-    <string name="settings__toolbar__group_row" comment="Group title">Toolbar row</string>
-    <string name="settings__toolbar__row_hint">A row of your own buttons above the suggestions. A button here does exactly what its tile in the tools panel does.</string>
-    <string name="settings__toolbar__row_on">Show the toolbar row</string>
-    <string name="settings__toolbar__row_empty">Nothing is pinned, so the row is not shown.</string>
-    <string name="settings__toolbar__row_restore">Restore the default row</string>
-    <string name="settings__toolbar__row_add">Add a button</string>
-    <string name="settings__toolbar__row_full">The row is full ({n} buttons). Remove one to add another.</string>
+    <string name="settings__toolbar__later" comment="Button: move a tile or pin one place later">Later</string>
+    <string name="settings__toolbar__pin" comment="Button: pin a tool on the suggestion strip">Pin</string>
+    <string name="settings__toolbar__unpin" comment="Button: take a pin off the suggestion strip">Remove</string>
+    <string name="settings__toolbar__group_row" comment="Group title">Pinned tools</string>
+    <string name="settings__toolbar__row_hint">Up to four small icons on the suggestion strip, next to the tools button. A pin does what its tile does. Pinning nothing leaves the strip as suggestions and the tools button.</string>
+    <string name="settings__toolbar__row_on">Show pinned tools</string>
+    <string name="settings__toolbar__row_empty">Nothing is pinned, so the strip stays as it is.</string>
+    <string name="settings__toolbar__row_restore">Clear pinned tools</string>
+    <string name="settings__toolbar__row_add">Pin a tool</string>
+    <string name="settings__toolbar__row_full">Four tools are pinned ({n}). Remove one to pin another.</string>
+    <string name="settings__toolbar__group_layout" comment="Group title">Tile layout</string>
+    <string name="settings__toolbar__size_fit">Fit the panel</string>
+    <string name="settings__toolbar__size_small">Small tiles</string>
+    <string name="settings__toolbar__size_medium">Medium tiles</string>
+    <string name="settings__toolbar__size_large">Large tiles</string>
+    <string name="settings__toolbar__columns_fit">Fit the width</string>
+    <string name="settings__toolbar__columns_n">{n} columns</string>
+    <string name="settings__toolbar__reset">Reset layout</string>
+    <string name="settings__toolbar__drag" comment="Drag handle that reorders a tile">Drag</string>
+    <string name="settings__toolbar__group_extra" comment="Group title">Slash commands and fleet actions</string>
+    <string name="settings__toolbar__extra_hint">These can be tiles on the Quick tab or pins on the strip. A slash pin inserts the command. A fleet pin asks that app. Nothing is run as a shell command.</string>
+    <string name="settings__toolbar__extra_empty">None yet. Add a slash command, or open the tools panel while a fleet app is connected.</string>
+    <string name="settings__toolbar__add_tile">Add tile</string>
     <string name="settings__toolbar__hide">Hide</string>
     <string name="settings__toolbar__show">Show</string>
     <string name="settings__toolbar__hidden">hidden</string>

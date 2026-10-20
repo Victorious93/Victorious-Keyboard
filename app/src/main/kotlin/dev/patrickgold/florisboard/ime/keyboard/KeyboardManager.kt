@@ -1548,6 +1548,57 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         insertAtTarget(text, cursorBackFor(text))
     }
 
+    /**
+     * A pin on the suggestion strip. A built-in name does what its tile does. A slash pin inserts the rendered
+     * template and never runs it. A fleet pin asks that app. Password fields stop before slash text or a fleet ask.
+     * Nothing here is logged.
+     */
+    fun performStripPin(ref: String) {
+        val action = ToolbarActionId.entries.firstOrNull { it.name == ref }
+        if (action != null) {
+            performToolbarAction(action)
+            return
+        }
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
+        val slashId = dev.patrickgold.florisboard.ime.toolbar.ToolRef.slashId(ref)
+        if (slashId != null) {
+            insertSlashPin(slashId)
+            return
+        }
+        val fleet = dev.patrickgold.florisboard.ime.toolbar.ToolRef.fleetParts(ref) ?: return
+        askFleet(fleet.first, fleet.second)
+    }
+
+    private fun insertSlashPin(id: String) {
+        val command = slashCommands.snapshot().firstOrNull { it.id == id && it.enabled } ?: return
+        val template = command.template
+        val content = editorInstance.activeContent
+        val vars = dev.patrickgold.florisboard.ime.slash.SlashVars(
+            date = dev.patrickgold.florisboard.ime.slash.SlashClock.date(java.time.Instant.now(), java.time.ZoneId.systemDefault()),
+            time = dev.patrickgold.florisboard.ime.slash.SlashClock.time(java.time.Instant.now(), java.time.ZoneId.systemDefault()),
+            clipboard = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "clipboard")) {
+                currentClipboardText().orEmpty()
+            } else {
+                ""
+            },
+            selection = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "selection")) {
+                content.selectedText
+            } else {
+                ""
+            },
+        )
+        val rendered = dev.patrickgold.florisboard.ime.slash.SlashTemplate.render(template, vars)
+        val back = rendered.cursorBackCodePoints
+        if (clipEditor.value != null) {
+            val presses = if (back == null) 0 else CaretPlacement.leftPresses(rendered.text, back)
+            insertAtTarget(rendered.text, presses)
+            return
+        }
+        if (rendered.text.isEmpty()) return
+        editorInstance.commitText(rendered.text)
+        if (back != null) moveCaretLeft(InsertionPlan.Insert(rendered.text, back))
+    }
+
     fun performToolbarAction(id: ToolbarActionId) {
         ToolbarCatalog.symbol(id)?.let { symbol ->
             insertAtTarget(symbol, cursorBackFor(symbol))

@@ -152,6 +152,7 @@ object BackupWriter {
         meta: ExportMeta,
         lanes: Map<String, String> = emptyMap(),
         suggestionsJson: ByteArray? = null,
+        toolbarJson: ByteArray? = null,
     ): ByteArray {
         val sorted = packed(entries, lanes)
         val entriesBytes = json.encodeToString(BackupEntries.serializer(), BackupEntries(sorted))
@@ -166,11 +167,13 @@ object BackupWriter {
                 sorted.vaultCount(),
             ),
         ).toByteArray(Charsets.UTF_8)
-        val members = ArrayList<Pair<String, ByteArray>>(3)
+        val members = ArrayList<Pair<String, ByteArray>>(4)
         members.add(MANIFEST_NAME to manifestBytes)
         members.add(ENTRIES_NAME to entriesBytes)
         val extra = suggestionsJson?.takeIf { it.isNotEmpty() }
         if (extra != null) members.add(SUGGESTIONS_NAME to extra)
+        val layout = toolbarJson?.takeIf { it.isNotEmpty() }
+        if (layout != null) members.add(TOOLBAR_NAME to layout)
         return zipMembers(*members.toTypedArray())
     }
 
@@ -186,9 +189,15 @@ object BackupWriter {
         random: SecureRandom = SecureRandom(),
         iterations: Int = BackupCrypto.DEFAULT_ITERATIONS,
         suggestionsJson: ByteArray? = null,
+        toolbarJson: ByteArray? = null,
     ): ByteArray {
         val sorted = packed(entries, lanes)
-        val cipher = BackupCrypto.encrypt(writeZip(entries, meta, lanes, suggestionsJson), password, random, iterations)
+        val cipher = BackupCrypto.encrypt(
+            writeZip(entries, meta, lanes, suggestionsJson, toolbarJson),
+            password,
+            random,
+            iterations,
+        )
         val manifestBytes = json.encodeToString(
             BackupManifest.serializer(),
             manifest(
@@ -280,6 +289,7 @@ object BackupWriter {
     internal const val CONTENT_NAME = "content.vkbk"
     /** Optional custom-suggestion list. Omitted when empty. Not included in [entriesSha256]. */
     internal const val SUGGESTIONS_NAME = "suggestions.json"
+    internal const val TOOLBAR_NAME = "toolbar.json"
 }
 
 /**
@@ -396,7 +406,8 @@ object BackupReader {
         val upgraded = BackupMigrations.upgradeEntries(manifest.formatVersion, parseObject(plain))
         val parsed = finish(manifest, decodeElement(BackupEntries.serializer(), upgraded).entries, limits)
         val suggestions = members[BackupWriter.SUGGESTIONS_NAME]?.toString(Charsets.UTF_8)?.takeIf { it.isNotEmpty() }
-        return if (suggestions == null) parsed else parsed.copy(suggestionsDocument = suggestions)
+        val toolbar = members[BackupWriter.TOOLBAR_NAME]?.toString(Charsets.UTF_8)?.takeIf { it.isNotEmpty() }
+        return parsed.copy(suggestionsDocument = suggestions, toolbarDocument = toolbar)
     }
 
     private fun validateManifest(m: BackupManifest) {
@@ -494,6 +505,7 @@ object BackupReader {
         BackupWriter.ENTRIES_NAME,
         BackupWriter.CONTENT_NAME,
         BackupWriter.SUGGESTIONS_NAME,
+        BackupWriter.TOOLBAR_NAME,
     )
 
     private fun isUnsafeName(n: String): Boolean =

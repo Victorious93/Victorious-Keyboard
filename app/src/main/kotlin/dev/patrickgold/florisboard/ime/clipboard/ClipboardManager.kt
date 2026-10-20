@@ -845,6 +845,17 @@ class ClipboardManager(
         vault = vaultRepository,
         suggestionsExport = { appContext.customSuggestions().value.exportDocumentOrNull() },
         suggestionsImport = { document, mode -> appContext.customSuggestions().value.importDocument(document, mode) },
+        toolbarExport = {
+            dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime.ensure(appContext)
+            dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime.exportDocument()
+        },
+        toolbarImport = { document, mode ->
+            dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime.importDocument(
+                appContext,
+                document,
+                replace = mode == dev.patrickgold.florisboard.ime.clipboard.backup.ImportMode.REPLACE,
+            )
+        },
     )
 
     /**

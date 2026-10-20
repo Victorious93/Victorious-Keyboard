@@ -29,20 +29,24 @@ import android.os.Message
 import android.os.Messenger
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.fleet.ExternalInputPort
+import dev.patrickgold.florisboard.ime.fleet.RemoteControlPort
 import dev.patrickgold.florisboard.lib.fleet.BridgeInput
 import dev.patrickgold.florisboard.lib.fleet.BridgeProtocol
 import dev.patrickgold.florisboard.lib.fleet.CertDigest
+import dev.patrickgold.florisboard.lib.fleet.RemoteEnvelope
 
 /**
- * Bridge for the Droidcommand hub. External control is off until the user turns it on. An allowed caller may ask for
- * status, type text, or press keys; the rules live in [BridgeInput] and the editor work in [ExternalInputPort], not
- * here. The reply never includes what the user typed. The caller's UID is the one Messenger stamped on the
- * message. Reading it later on this handler would see this process instead of the caller.
+ * Bridge for the Droidcommand hub. External control is off until the user turns it on. The old operations may type
+ * through [BridgeInput]. The remote-control envelope v1 ([RemoteEnvelope]) never does: it only reports status,
+ * changes mode or theme, or sends media keys. The reply never includes what the user typed. The caller's UID is
+ * the one Messenger stamped on the message. Reading it later on this handler would see this process instead of the caller.
  */
 class KeyboardBridgeService : Service() {
     private val prefs by FlorisPreferenceStore
     private val messenger = Messenger(Incoming())
     private val port by lazy { ExternalInputPort(applicationContext) }
+    private val remote by lazy { RemoteControlPort(applicationContext) }
+    private val nonces = RemoteEnvelope.NonceCache()
 
     override fun onBind(intent: Intent?): IBinder? {
         if (intent?.action != BridgeProtocol.ACTION) return null
@@ -60,7 +64,11 @@ class KeyboardBridgeService : Service() {
             }
             val response = try {
                 if (callerUid == null) {
-                    BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+                    if (RemoteEnvelope.peekOp(request) in RemoteEnvelope.OPS) {
+                        RemoteEnvelope.handle(request, false, false, "", 0L, nonces, remote)
+                    } else {
+                        BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+                    }
                 } else {
                     answer(request, callerUid)
                 }
@@ -91,6 +99,18 @@ class KeyboardBridgeService : Service() {
                 }
             } else {
                 false
+            }
+            val source = packages.filter { it in BridgeProtocol.allowedPackages }.minOrNull().orEmpty()
+            if (RemoteEnvelope.peekOp(request) in RemoteEnvelope.OPS) {
+                return RemoteEnvelope.handle(
+                    request,
+                    authorized,
+                    enabled,
+                    source,
+                    System.currentTimeMillis(),
+                    nonces,
+                    remote,
+                )
             }
             return BridgeInput.handle(request, authorized, enabled, port)
         } finally {

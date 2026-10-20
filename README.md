@@ -192,13 +192,15 @@ Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 | | |
 |---|---|
 | Application ID | `com.victorious.keyboard` (debug: `com.victorious.keyboard.debug`) |
-| Version | `0.1.0-alpha01` (version code `120`) |
+| Version | `0.1.0-alpha01` (version code stays at or above `120` and only increases) |
 | Android | 8.0+ (`minSdk` 26); compile/target API 36 |
 | Permissions | `VIBRATE`, `POST_NOTIFICATIONS` (setup flow) |
 | Internet | **None** — no `INTERNET` permission |
 | Analytics / ads / telemetry | None |
 | Data | On-device only; clipboard, snippets, and learned words stay out of Android auto-backup |
 | Distribution | Debug pre-release on GitHub Releases. Signed with the Android debug key, not a store build |
+
+Version numbering is inherited from FlorisBoard. That is an allowed fork exception: this project did not start a new version sequence. Until the approved namespace rename lands, the Kotlin packages and the Gradle namespace remain `dev.patrickgold.florisboard`. The application id is already `com.victorious.keyboard` (debug `.debug`, bench `.bench`).
 
 Privacy: [PRIVACY.md](PRIVACY.md).
 

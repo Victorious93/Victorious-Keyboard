@@ -14,6 +14,8 @@ It belongs to the Droidcommand fleet as the phone's keyboard. The fleet is the s
 
 The look you get at first is a squared black keyboard: a near-black background, dark keys, light letters, and only slightly rounded corners.
 
+The version number is inherited from FlorisBoard. That is an allowed fork exception: the numbers were not started over. Until the approved package rename lands, the code inside the app still uses the name dev.patrickgold.florisboard. The app you install is still Victorious Keyboard. Android's keyboard list is not renamed by that inner name.
+
 ## Install and first run
 
 ![Enable the keyboard](manual/img/enable-keyboard.txt)
@@ -386,6 +388,10 @@ The keyboard can use commands from other apps on this phone. This is the command
 10. Removing the other app drops the link. The keyboard stays.
 
 Hub status, on the same screen, is the bridge to the Droidcommand hub. It starts off. Only the Droidcommand hub app (and its debug build) is allowed to call it, and only after you turn the switch on. With the switch on, the hub can ask whether the keyboard is running, type into the focused box, and press Enter, Tab, arrows, or Ctrl plus a letter. It cannot read the box. Typed text is never shared. Password boxes are refused. Turn Hub status off to stop all of that.
+
+Remote control uses that same Hub status switch and stays off until you turn it on. Only the Droidcommand hub app can call it. A remote command can ask whether the keyboard is running, switch Standard, Developer, or Termux, switch the keyboard theme, or send play, pause, next, previous, rewind, fast-forward, and volume. Volume from this switch is the phone's music volume. It can also ask for node status. That answer says only whether this keyboard is running. It does not include what you type, the clipboard, or the Vault. It cannot type into the box you are focused on, and it cannot read what you type, the clipboard, or the Vault. A command marked destructive is not run. The phone shows a notice instead. The node-status question is not destructive, so it does not show that notice. Exact track position and the player's own volume are not available from this switch. Each request expires, and a repeated request is refused.
+
+A settings backup is separate from that remote switch. Export keeps themes, layouts, and keyboard settings, including which tools are pinned on the toolbar. It does not include clipboard history, what you type, the Vault, or snippet text. Import can preview the change first. Applying it asks you to confirm on this phone. Skip leaves your current rows, overwrite replaces them, and merge keeps yours when the same id is in both. Import never turns remote control on. A remote app cannot request this backup.
 
 File Manager seek, on the same screen, is separate from Hub status. It starts off. The debug build of Victorious File Manager is pinned to its published certificate. The release build has no published certificate yet, so it waits until you tap Approve, and it is never trusted automatically. The keyboard looks for the app when you open this screen. If it is not installed, media keys still work. The link is only for playback. It does not read what you type, the clipboard, or the Vault.
 

@@ -208,9 +208,64 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     /** Tools panel replaces the key area. It is not an [ImeUiMode], so clipboard and emoji stay as they are. */
     val toolsOpen = MutableStateFlow(false)
 
+    /** Media controls replace the key area. They send media keys, not editor input. */
+    val mediaOpen = MutableStateFlow(false)
+
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
-        if (open) fleet.refresh()
+        if (open) {
+            mediaOpen.value = false
+            fleet.refresh()
+        }
+    }
+
+    fun setMediaOpen(open: Boolean) {
+        mediaOpen.value = open
+        if (open) toolsOpen.value = false
+    }
+
+    fun mediaBridgePackage(): String? = dev.patrickgold.florisboard.ime.media.FileManagerInstall.bridgePackage(
+        appContext,
+        prefs.fleet.fileManagerSeek.get(),
+        prefs.fleet.grants.get(),
+    )
+
+    fun performMedia(command: dev.patrickgold.florisboard.ime.media.MediaCommand) {
+        val bridge = mediaBridgePackage()
+        scope.launch(Dispatchers.IO) {
+            val outcome = dev.patrickgold.florisboard.ime.media.MediaRuntime.perform(appContext, command, bridge)
+            showMediaHint(outcome)
+        }
+    }
+
+    /** Last player-volume level sent to File Manager. Not the system music volume. */
+    private var playerLevel: Int? = null
+
+    /** Quieter or louder inside the player. Volume keys stay on the system stream. */
+    fun adjustPlayerVolume(louder: Boolean) {
+        val bridge = mediaBridgePackage()
+        val remembered = playerLevel
+        scope.launch(Dispatchers.IO) {
+            val (outcome, level) = dev.patrickgold.florisboard.ime.media.MediaRuntime.performPlayerVolume(
+                appContext,
+                louder,
+                remembered,
+                bridge,
+            )
+            if (outcome is dev.patrickgold.florisboard.ime.media.MediaOutcome.Bridged) playerLevel = level
+            showMediaHint(outcome)
+        }
+    }
+
+    private suspend fun showMediaHint(outcome: dev.patrickgold.florisboard.ime.media.MediaOutcome) {
+        val message = when (outcome) {
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.NoSession -> R.string.media__no_session
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.ExternalControl -> R.string.media__external_control
+            else -> return
+        }
+        withContext(Dispatchers.Main) {
+            appContext.showShortToastSync(message)
+        }
     }
 
     /** The tools panel tab shown when it opens. Kept in memory only: switching tabs never writes to disk. */
@@ -320,6 +375,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
                 toolsOpen.value = false
+                mediaOpen.value = false
                 fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
@@ -1437,6 +1493,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 is DevStep.Text -> editorInstance.commitText(step.text)
                 is DevStep.CursorLeft ->
                     editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), step.count)
+                is DevStep.Media -> performMedia(step.command)
             }
         }
         if (resolution.consumesModifiers) terminalModifiers.consume()
@@ -1732,6 +1789,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.AI_TRANSLATE -> startLocalAi(AiTask.TRANSLATE)
             ToolbarActionId.AI_SHELL -> startLocalAi(AiTask.SHELL)
             ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
+            ToolbarActionId.MEDIA -> setMediaOpen(true)
             ToolbarActionId.SCREENSHOT -> scope.launch {
                 if (!prefs.tools.screenshotTile.get()) return@launch
                 withContext(Dispatchers.Main) { ScreenshotCapture.onTile(appContext) }

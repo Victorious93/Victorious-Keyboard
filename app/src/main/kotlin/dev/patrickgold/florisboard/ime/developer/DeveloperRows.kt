@@ -35,6 +35,9 @@ sealed interface DevKeyAction {
      * The keyboard does not run the text as a command.
      */
     data class Play(val steps: List<MacroStep>) : DevKeyAction
+
+    /** A media key. It is not sent to the focused app. */
+    data class Media(val command: dev.patrickgold.florisboard.ime.media.MediaCommand) : DevKeyAction
 }
 
 /** One step of a macro key. Persisted by [TerminalRowLayout], not by enum name. */

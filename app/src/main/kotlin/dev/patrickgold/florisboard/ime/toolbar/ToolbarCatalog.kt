@@ -45,6 +45,7 @@ enum class ToolbarActionId {
     INCOGNITO, LEARNING, BOTTOM_GAP, ONE_HAND, THEME, VOICE, EMOJI, SETTINGS, DEVROW,
     AI_REWRITE, AI_GRAMMAR, AI_CONTINUE, AI_SUMMARIZE, AI_TRANSLATE, AI_SHELL, AI_ASK,
     SCREENSHOT,
+    MEDIA,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)

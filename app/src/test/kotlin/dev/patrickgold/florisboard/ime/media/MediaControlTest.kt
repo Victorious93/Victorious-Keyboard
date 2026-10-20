@@ -26,6 +26,7 @@ import dev.patrickgold.florisboard.ime.developer.LanguageProfile
 import dev.patrickgold.florisboard.ime.developer.RowOptions
 import dev.patrickgold.florisboard.ime.developer.TerminalRowLayout
 import dev.patrickgold.florisboard.ime.terminal.Modifiers
+import dev.patrickgold.florisboard.lib.fleet.CertDigest
 import dev.patrickgold.florisboard.lib.fleet.FleetGrant
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -38,6 +39,7 @@ import io.kotest.matchers.string.shouldNotContain
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 import kotlinx.serialization.json.long
 
 class MediaControlTest : FunSpec({
@@ -211,6 +213,99 @@ class MediaControlTest : FunSpec({
         FileManagerProtocol.bridgePackage(both, pinned + debug, seekEnabled = true) shouldBe FileManagerProtocol.PACKAGE
         FileManagerProtocol.bridgePackage(both.reversed(), listOf(debug), seekEnabled = true) shouldBe
             FileManagerProtocol.PACKAGE_DEBUG
+    }
+
+    test("the debug certificate is pinned, release is not auto-trusted, and a missing app is ignored") {
+        val debugCert = CertDigest.normalize(FileManagerProtocol.DEBUG_CERT_SHA256)
+        debugCert.length shouldBe 64
+        FileManagerProtocol.pinnedCert(FileManagerProtocol.PACKAGE) shouldBe ""
+        FileManagerProtocol.pinnedCert(FileManagerProtocol.PACKAGE_DEBUG) shouldBe FileManagerProtocol.DEBUG_CERT_SHA256
+        FileManagerProtocol.actionFor(FileManagerProtocol.PACKAGE) shouldBe FileManagerProtocol.ACTION
+        FileManagerProtocol.actionFor(FileManagerProtocol.PACKAGE_DEBUG) shouldBe FileManagerProtocol.ACTION_DEBUG
+        FileManagerProtocol.actionFor("ai.victorious.victorfiles").shouldBeNull()
+
+        FileManagerProtocol.trusted(
+            FileManagerProtocol.PACKAGE_DEBUG,
+            debugCert,
+            grant = null,
+            seekEnabled = true,
+        ) shouldBe true
+        FileManagerProtocol.trusted(
+            FileManagerProtocol.PACKAGE_DEBUG,
+            debugCert,
+            grant = null,
+            seekEnabled = false,
+        ) shouldBe false
+        FileManagerProtocol.trusted(
+            FileManagerProtocol.PACKAGE,
+            debugCert,
+            grant = null,
+            seekEnabled = true,
+        ) shouldBe false
+        FileManagerProtocol.trusted(
+            FileManagerProtocol.PACKAGE_DEBUG,
+            "AB".repeat(32),
+            grant = null,
+            seekEnabled = true,
+        ) shouldBe false
+        val switchedOff = FleetGrant(
+            FileManagerProtocol.PACKAGE_DEBUG,
+            debugCert,
+            approved = true,
+            enabled = false,
+        )
+        FileManagerProtocol.trusted(
+            FileManagerProtocol.PACKAGE_DEBUG,
+            debugCert,
+            switchedOff,
+            seekEnabled = true,
+        ) shouldBe false
+
+        val seen = listOf(
+            FileManagerProtocol.Seen(
+                "ai.victorious.victorfiles",
+                "ai.victorious.victorfiles.action.BRIDGE",
+                debugCert,
+            ),
+            FileManagerProtocol.Seen(
+                FileManagerProtocol.PACKAGE_DEBUG,
+                FileManagerProtocol.ACTION,
+                debugCert,
+            ),
+            FileManagerProtocol.Seen(
+                FileManagerProtocol.PACKAGE_DEBUG,
+                FileManagerProtocol.ACTION_DEBUG,
+                FileManagerProtocol.DEBUG_CERT_SHA256,
+            ),
+            FileManagerProtocol.Seen(FileManagerProtocol.PACKAGE, FileManagerProtocol.ACTION, "CD".repeat(32)),
+        )
+        FileManagerProtocol.discover(seen) shouldBe listOf(
+            FileManagerProtocol.PACKAGE to "CD".repeat(32),
+            FileManagerProtocol.PACKAGE_DEBUG to debugCert,
+        )
+        FileManagerProtocol.discover(emptyList()) shouldBe emptyList()
+        FileManagerProtocol.discover(
+            listOf(
+                FileManagerProtocol.Seen(
+                    FileManagerProtocol.PACKAGE_DEBUG,
+                    FileManagerProtocol.ACTION,
+                    debugCert,
+                ),
+            ),
+        ) shouldBe emptyList()
+        FileManagerProtocol.bridgePackage(FileManagerProtocol.discover(seen), emptyList(), seekEnabled = true) shouldBe
+            FileManagerProtocol.PACKAGE_DEBUG
+        FileManagerProtocol.bridgePackage(FileManagerProtocol.discover(seen), emptyList(), seekEnabled = false)
+            .shouldBeNull()
+
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        manifest shouldContain FileManagerProtocol.ACTION
+        manifest shouldContain FileManagerProtocol.ACTION_DEBUG
+        manifest.contains("<package ") shouldBe false
+        manifest.contains("victorfiles") shouldBe false
+        val runtime = File("src/main/kotlin/dev/patrickgold/florisboard/ime/media/MediaRuntime.kt").readText()
+        runtime shouldContain "queryIntentServices"
+        runtime shouldNotContain "victorfiles"
     }
 
     test("a blank terminal row is unchanged, and a saved order can add a media key") {

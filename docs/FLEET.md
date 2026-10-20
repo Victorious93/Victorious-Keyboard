@@ -110,9 +110,12 @@ Exact seek is optional. It is off until the user turns on File Manager seek, and
 
 | Piece | Value |
 |---|---|
-| Packages | `ai.victorious.filemanager`, and `ai.victorious.filemanager.debug` |
-| Action | `ai.victorious.filemanager.action.BRIDGE` |
-| Visibility | `<queries>` names that action, not the package |
+| Packages | `ai.victorious.filemanager` (release), `ai.victorious.filemanager.debug` |
+| Release certificate | none yet. The trust prompt pins whatever is installed. Never auto-trusted |
+| Debug certificate | `8C:1F:E3:C9:E5:34:F2:71:05:C0:68:8F:45:28:D7:7E:47:11:AE:0A:79:DD:08:D1:E8:59:30:B9:E9:48:85:F2` |
+| Release action | `ai.victorious.filemanager.action.BRIDGE` |
+| Debug action | `ai.victorious.filemanager.debug.action.BRIDGE` |
+| Visibility | `<queries>` names those actions, not the packages. The app does not have to be installed |
 | Request | `what = 1`, Bundle key `request` |
 | Reply | `what = 2`, Bundle key `response` |
 | Body | `protocol_major` 1, `op`, `id` |
@@ -121,7 +124,7 @@ Commands: `media.play`, `media.pause`, `media.toggle`, `media.next`, `media.prev
 
 `media.state` returns `playing`, `positionMs`, `durationMs`, `title`, and `source`. The Media tile shows `title` while this bridge is connected. The title is not logged. `error: "NO_SESSION"` means nothing is playing.
 
-The keyboard does not auto-trust File Manager. `FleetReleaseCert.SHA256` is empty, so an empty release fingerprint never matches. Settings → Tools → Fleet link pins the certificate of the installed package. A different certificate needs a new approval. The bridge is used only when that pin is active and File Manager seek is on. Otherwise every button is a media key.
+The debug package is auto-trusted only when its certificate is that published fingerprint and File Manager seek is on. A different debug certificate needs the trust prompt. The release package has no published fingerprint, so it is never auto-trusted: Settings → Tools → Fleet link shows Approve, and that approval is pinned to the certificate on the phone. A later certificate needs a new approval. The keyboard discovers either package by querying its bridge action. If neither service is installed, the query is empty and every button stays a media key. The older `ai.victorious.victorfiles` name is not accepted.
 
 Volume buttons stay on `adjustStreamVolume` even when the bridge is on, because `media.volume` is an absolute level. Rewind and fast-forward on the bridge are `media.seekBy` of −10 000 ms and +10 000 ms. `NO_SESSION`, or a reply the keyboard cannot read, falls back to the matching media key. A seek with no key to fall back to reports that nothing is playing.
 

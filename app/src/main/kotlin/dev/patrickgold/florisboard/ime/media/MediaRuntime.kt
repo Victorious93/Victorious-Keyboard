@@ -57,13 +57,19 @@ object MediaRuntime {
     }
 }
 
-/** Installed File Manager packages. The seek switch and the grant list come from preferences. */
+/**
+ * File Manager packages found on this phone. Neither package has to be installed. A missing service is
+ * skipped. The seek switch and the grant list come from preferences.
+ */
 object FileManagerInstall {
     fun certificates(context: Context): List<Pair<String, String>> {
-        return listOf(FileManagerProtocol.PACKAGE, FileManagerProtocol.PACKAGE_DEBUG).mapNotNull { name ->
+        val seen = listOf(FileManagerProtocol.PACKAGE, FileManagerProtocol.PACKAGE_DEBUG).mapNotNull { name ->
+            val action = FileManagerProtocol.actionFor(name) ?: return@mapNotNull null
+            if (resolve(context, name) == null) return@mapNotNull null
             val cert = certificate(context, name) ?: return@mapNotNull null
-            name to cert
+            FileManagerProtocol.Seen(name, action, cert)
         }
+        return FileManagerProtocol.discover(seen)
     }
 
     fun ready(context: Context, seekEnabled: Boolean, grantsRaw: String): Boolean {
@@ -141,7 +147,7 @@ internal class FileManagerClient(private val context: Context) {
                 latch.countDown()
             }
         }
-        val intent = Intent(FileManagerProtocol.ACTION).setComponent(component)
+        val intent = Intent().setComponent(component)
         val bound = try {
             context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         } catch (_: Exception) {
@@ -162,22 +168,24 @@ internal class FileManagerClient(private val context: Context) {
         return reply[0]
     }
 
-    private fun component(packageName: String?): ComponentName? {
-        val name = packageName ?: return null
-        if (!FileManagerProtocol.allowed(name)) return null
-        val intent = Intent(FileManagerProtocol.ACTION).setPackage(name)
-        val info = try {
-            if (Build.VERSION.SDK_INT >= 33) {
-                context.packageManager.queryIntentServices(intent, PackageManager.ResolveInfoFlags.of(0))
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.queryIntentServices(intent, 0)
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }.firstOrNull() ?: return null
-        val service = info.serviceInfo ?: return null
-        if (service.packageName != name) return null
-        return ComponentName(service.packageName, service.name)
-    }
+    private fun component(packageName: String?): ComponentName? = FileManagerInstall.resolve(context, packageName)
+}
+
+internal fun FileManagerInstall.resolve(context: Context, packageName: String?): ComponentName? {
+    val name = packageName ?: return null
+    val action = FileManagerProtocol.actionFor(name) ?: return null
+    val intent = Intent(action).setPackage(name)
+    val info = try {
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.packageManager.queryIntentServices(intent, PackageManager.ResolveInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.queryIntentServices(intent, 0)
+        }
+    } catch (_: Exception) {
+        emptyList()
+    }.firstOrNull() ?: return null
+    val service = info.serviceInfo ?: return null
+    if (service.packageName != name) return null
+    return ComponentName(service.packageName, service.name)
 }

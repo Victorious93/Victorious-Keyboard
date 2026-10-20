@@ -72,13 +72,21 @@ object MediaCodes {
 }
 
 /**
- * Victorious File Manager's media bridge. The keyboard talks to it only after the user approves that
- * package's certificate and turns File Manager seek on. Otherwise every button is a media key.
+ * Victorious File Manager's media bridge. The keyboard looks for it at runtime and keeps working when
+ * it is not installed. Seek uses the bridge only when File Manager seek is on and the certificate is
+ * trusted. The debug package is pinned to [DEBUG_CERT_SHA256]. The release package has no certificate
+ * yet, so it waits for the trust prompt and is never auto-trusted.
  */
 object FileManagerProtocol {
     const val PACKAGE = "ai.victorious.filemanager"
     const val PACKAGE_DEBUG = "ai.victorious.filemanager.debug"
     const val ACTION = "ai.victorious.filemanager.action.BRIDGE"
+    const val ACTION_DEBUG = "ai.victorious.filemanager.debug.action.BRIDGE"
+
+    /** SHA-256 of the File Manager debug signing certificate. Release has no published fingerprint. */
+    const val DEBUG_CERT_SHA256 =
+        "8C:1F:E3:C9:E5:34:F2:71:05:C0:68:8F:45:28:D7:7E:47:11:AE:0A:79:DD:08:D1:E8:59:30:B9:E9:48:85:F2"
+
     const val NO_SESSION = "NO_SESSION"
     const val WHAT_REQUEST = 1
     const val WHAT_RESPONSE = 2
@@ -101,14 +109,44 @@ object FileManagerProtocol {
 
     fun allowed(packageName: String): Boolean = packageName == PACKAGE || packageName == PACKAGE_DEBUG
 
+    /** The bridge action is the package name plus `.action.BRIDGE`. Any other package has none. */
+    fun actionFor(packageName: String): String? = when (packageName) {
+        PACKAGE -> ACTION
+        PACKAGE_DEBUG -> ACTION_DEBUG
+        else -> null
+    }
+
     /**
-     * Seek may use the bridge only when the switch is on and this exact certificate was approved.
-     * An empty release certificate never auto-trusts File Manager.
+     * The fingerprint that may auto-trust this package. Debug is the published pin. Release is empty,
+     * so a release install always needs the trust prompt.
+     */
+    fun pinnedCert(packageName: String): String = if (packageName == PACKAGE_DEBUG) DEBUG_CERT_SHA256 else ""
+
+    /**
+     * Seek may use the bridge only when the switch is on. Debug is trusted when its certificate is the
+     * published pin, or when the user approved that exact certificate. Release is trusted only after
+     * that approval. An empty pin never auto-trusts.
      */
     fun trusted(packageName: String, certSha256: String, grant: FleetGrant?, seekEnabled: Boolean): Boolean {
         if (!seekEnabled || !allowed(packageName)) return false
-        return FleetTrust.access(certSha256, "", grant) == FleetAccess.Active
+        return FleetTrust.access(certSha256, pinnedCert(packageName), grant) == FleetAccess.Active
     }
+
+    /**
+     * Packages actually found by an intent query. A missing app contributes nothing. A package other
+     * than the two File Manager ids, or a service advertising the wrong action, is ignored.
+     */
+    fun discover(seen: List<Seen>): List<Pair<String, String>> {
+        return listOf(PACKAGE, PACKAGE_DEBUG).mapNotNull { pkg ->
+            val action = actionFor(pkg) ?: return@mapNotNull null
+            val hit = seen.firstOrNull {
+                it.packageName == pkg && it.action == action && CertDigest.normalize(it.certSha256).length == 64
+            } ?: return@mapNotNull null
+            pkg to CertDigest.normalize(hit.certSha256)
+        }
+    }
+
+    data class Seen(val packageName: String, val action: String, val certSha256: String)
 
     /** The first approved package, release before debug when both are in [installed] in that order. */
     fun bridgePackage(

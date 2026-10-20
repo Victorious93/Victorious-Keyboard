@@ -297,13 +297,14 @@ The same buttons can be added to the terminal key row under Settings → Develop
 
 Exact position, through Victorious File Manager, starts off.
 
-1. Install Victorious File Manager. Turn its media bridge on in that app. It starts off there too.
-2. Open Settings → Tools → Fleet link.
-3. Tap Approve File Manager. That pins the certificate of the copy installed on this phone. A different signature asks again.
-4. Turn on File Manager seek.
-5. While that is on and a track is playing, the Media panel can show the track title. The title stays on the phone and is not written to a log.
-6. Rewind and fast-forward then jump about ten seconds. If nothing is playing, the keyboard falls back to the media keys, and a short message says nothing is playing. Volume buttons stay volume buttons either way.
-7. Turn File Manager seek off to use media keys only. If File Manager is not installed, the Media tile still sends media keys.
+1. Install Victorious File Manager when you have it. The package rename may not be on this phone yet. If it is not installed, skip the rest of this list: the Media tile still sends media keys.
+2. Turn its media bridge on in that app. It starts off there too.
+3. Open Settings → Tools → Fleet link. The keyboard looks for the installed package. It does not require the app to be there.
+4. A debug install signed with the published fingerprint is already pinned. A release install has no published fingerprint yet, so tap Approve File Manager. That pins the certificate of the copy on this phone, and a different signature asks again. Release is never trusted on its own.
+5. Turn on File Manager seek.
+6. While that is on and a track is playing, the Media panel can show the track title. The title stays on the phone and is not written to a log.
+7. Rewind and fast-forward then jump about ten seconds. If nothing is playing, the keyboard falls back to the media keys, and a short message says nothing is playing. Volume buttons stay volume buttons either way.
+8. Turn File Manager seek off to use media keys only.
 
 ### Theme
 
@@ -384,7 +385,7 @@ The keyboard can use commands from other apps on this phone. This is the command
 
 Hub status, on the same screen, is the bridge to the Droidcommand hub. It starts off. Only the Droidcommand hub app (and its debug build) is allowed to call it, and only after you turn the switch on. With the switch on, the hub can ask whether the keyboard is running, type into the focused box, and press Enter, Tab, arrows, or Ctrl plus a letter. It cannot read the box. Typed text is never shared. Password boxes are refused. Turn Hub status off to stop all of that.
 
-File Manager seek, on the same screen, is separate from Hub status. It starts off. It talks only to Victorious File Manager after you approve that app's certificate, and only for playback. It does not read what you type, the clipboard, or the Vault.
+File Manager seek, on the same screen, is separate from Hub status. It starts off. The debug build of Victorious File Manager is pinned to its published certificate. The release build has no published certificate yet, so it waits until you tap Approve, and it is never trusted automatically. The keyboard looks for the app when you open this screen. If it is not installed, media keys still work. The link is only for playback. It does not read what you type, the clipboard, or the Vault.
 
 ## Troubleshooting
 
@@ -412,7 +413,7 @@ A fleet app is missing from the list. Install that app, open Settings → Tools 
 
 Hub status does not respond. It starts off. Turn it on only for the Droidcommand hub app. Other apps are refused even with the switch on.
 
-Media buttons do nothing. The player has to accept media keys. File Manager seek stays off unless you turn it on in both apps and approve the certificate. "Nothing is playing" means File Manager has no track.
+Media buttons do nothing. The player has to accept media keys. File Manager seek stays off unless you turn it on. A release install also needs Approve. "Nothing is playing" means File Manager has no track. If File Manager is not installed, the buttons stay media keys.
 
 The app crashed. The crash screen stays on the phone. Nothing is sent unless you copy it into a report yourself. Read it before you share it, in case it contains private text.
 

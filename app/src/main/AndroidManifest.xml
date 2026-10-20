@@ -23,9 +23,12 @@
         <intent>
             <action android:name="com.victorious.keyboard.action.COMMAND_PROVIDER"/>
         </intent>
-        <!-- File Manager's bridge. The package is not named here; visibility follows the action. -->
+        <!-- File Manager's bridge. The package is not named here, and the app does not have to be installed. -->
         <intent>
             <action android:name="ai.victorious.filemanager.action.BRIDGE"/>
+        </intent>
+        <intent>
+            <action android:name="ai.victorious.filemanager.debug.action.BRIDGE"/>
         </intent>
     </queries>
 

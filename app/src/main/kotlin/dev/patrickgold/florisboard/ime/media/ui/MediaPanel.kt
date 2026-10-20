@@ -52,7 +52,7 @@ fun MediaPanel(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     var title by remember { mutableStateOf("") }
-    var hint by remember { mutableStateOf("") }
+    var externalOff by remember { mutableStateOf(false) }
     var bridgeOn by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -60,11 +60,7 @@ fun MediaPanel(modifier: Modifier = Modifier) {
             bridgeOn = bridge != null
             val reply = withContext(Dispatchers.IO) { MediaRuntime.bridgeReply(context, bridge) }
             title = if (reply is FileManagerReply.State) reply.title else ""
-            hint = if (reply is FileManagerReply.Failed && FileManagerProtocol.isExternalControlOff(reply.error)) {
-                context.getString(R.string.media__external_control)
-            } else {
-                ""
-            }
+            externalOff = reply is FileManagerReply.Failed && FileManagerProtocol.isExternalControlOff(reply.error)
             delay(2_000)
         }
     }
@@ -72,7 +68,11 @@ fun MediaPanel(modifier: Modifier = Modifier) {
         Row(modifier = Modifier.fillMaxWidth()) {
             SnyggText(
                 elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
-                text = hint.ifBlank { title.ifBlank { stringRes(R.string.tools__action__media) } },
+                text = when {
+                    externalOff -> stringRes(R.string.media__external_control)
+                    title.isNotBlank() -> title
+                    else -> stringRes(R.string.tools__action__media)
+                },
                 modifier = Modifier.weight(1f),
             )
             SnyggChip(

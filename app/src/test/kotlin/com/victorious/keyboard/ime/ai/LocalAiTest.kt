@@ -125,9 +125,10 @@ class LocalAiTest : FunSpec({
         generated.user shouldContain "list the files here"
         generated.user shouldNotContain "exploit steps"
         AiPrompt.plan(sample(task = AiTask.SHORTER, source = AiSource.SELECTION, selection = "")).shouldBeInstanceOf<AiPlan.Refuse>().reason shouldBe AiRefusal.EMPTY
-        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_SHORTER
-        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_EXPLAIN
-        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_GENERATE
+        val ai = ToolsCatalog.actions(ToolsTab.AI)
+        (ToolbarActionId.AI_SHORTER in ai) shouldBe true
+        (ToolbarActionId.AI_EXPLAIN in ai) shouldBe true
+        (ToolbarActionId.AI_GENERATE in ai) shouldBe true
     }
 
     test("shell prompt is one command and is not an attack recipe") {

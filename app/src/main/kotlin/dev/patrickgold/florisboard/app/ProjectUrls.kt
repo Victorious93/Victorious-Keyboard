@@ -34,10 +34,10 @@ object ProjectUrls {
     const val COMMIT = "$REPO/commit/{hash}"
     const val KEY_CODES = "$REPO/blob/main/app/src/main/kotlin/dev/patrickgold/florisboard/ime/text/key/KeyCode.kt"
 
-    /** Spell-checker behaviour is documented in this project's README. */
-    const val SPELL_CHECKER_DOCS = "$README#spell-checker"
-    /** Theme editor behaviour is documented in this project's README. */
-    const val THEME_EDITOR_DOCS = "$README#theme-editor"
+    /** In-app Help screen. The old spell-checker and theme-editor links open this, not a website. */
+    const val MANUAL = "ui://florisboard/settings/manual"
+    const val SPELL_CHECKER_DOCS = MANUAL
+    const val THEME_EDITOR_DOCS = MANUAL
 
     const val UNICODE_TABLE = "https://unicode-table.com/en"
 }

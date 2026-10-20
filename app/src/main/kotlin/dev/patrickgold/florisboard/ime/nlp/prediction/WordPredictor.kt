@@ -82,6 +82,15 @@ object WordPredictor {
                 )
             }
             .toList()
+        // "word." is one edit from "word" and "words". Committing that on the next key inserts
+        // the dictionary word after the period (word.words) because a period is not its own word.
+        // The same distance-1 trap turns "file.t" into "filet" and "com." into "come".
+        // A dotted token, a URL, or an email is kept. Completions that literally continue it
+        // (a learned "file.txt") may still be shown, and they are never auto-committed.
+        if (typed.any { it == '.' || it == '@' || it == '/' || it == ':' }) {
+            val known = needle in pool || needle in knownWords || typed in knownWords
+            return keepTypedWord(typed, needle, completions, known, limit)
+        }
         // A word that is already real — English list, user dictionary, learned, or a pack entry —
         // is kept. The AI pack stores "RoPE", which normalizes to "rope" and is one edit from
         // "hope"; without this check space would replace hope.

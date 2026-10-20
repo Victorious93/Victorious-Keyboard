@@ -42,7 +42,7 @@ it can and should do is carry its own name and not present upstream's identity a
 | "FlorisBoard App Assets" label, extension-store sentence, crash titles in 20+ locales | English text rebranded; the translated copies that said FlorisBoard were deleted so those locales fall back to English until retranslated |
 | "Visit Addons Store" button (opened upstream's `beta.addons.florisboard.org`) | **removed**; Extensions screen now only offers import |
 | Typing-screen feedback link (upstream discussion thread) | now points to this repository's issue tracker |
-| Two help links to upstream wiki pages (spell-checker service, theme editor) | **kept**: they document inherited features; replace when we have our own docs |
+| Spell-checker and theme-editor help links | Open the in-app manual (`ui://florisboard/settings/manual`), which is also Settings → Help |
 | Identifiers: Kotlin package `dev.patrickgold.florisboard`, preference keys, `floris_user_dictionary` file, `florisboard://` URI scheme, MIME types | **kept on purpose**: renaming would corrupt stored settings and make upstream merges unmanageable (`CLAUDE.md`). Not user-visible |
 | Built-in extension ids | Settings shows `com.victorious.keyboard.*`. Each pack lists its old `org.florisboard.*` id as an alias, so saved themes, layouts, and subtypes still resolve. Asset folders keep the old names |
 | Copyright headers, `LICENSE`, About → licences | **kept, required** by Apache-2.0 §4 |

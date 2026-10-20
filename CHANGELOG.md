@@ -5,11 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- User manual. `docs/MANUAL.md` is written in everyday language and bundled in the app. Settings → Help renders that copy offline. The old spell-checker and theme-editor help links open the same screen. Picture slots under `docs/manual/img/` are TODO placeholders. Header art is `docs/manual/header.svg`.
 - Custom terminal key row. Settings → Developer & terminal lists the keys (Esc, Tab, Ctrl, Alt, arrows, `|`, `~`, `/`, and the rest). Move them, remove them, or add them back. A macro key sends a saved sequence: Ctrl plus a letter, or a command followed by Enter. The command is inserted, not run, and it is not logged. Leave the order blank to keep the usual row. No network access.
 - Clipboard tile search. On the regular clipboard tab, Search takes what you type (the keys do not go to the app while it is on), and Pinned and Favorites narrow the list. Clear resets them. Vault stays on its own tab. The query is not logged. No network access.
 - Snippet variables. Inserting a snippet expands exact `{date}`, `{time}`, `{clipboard}` and `{cursor}` tokens, in addition to the existing `{{date}}` form. `{cursor}` places the caret. `{date:pattern}`, `{datetime}`, `{selection}` and other braces such as `{ return; }` stay as written. A value taken from the clipboard is not scanned again. No network access.
 
 ### Fixed
+- Typing `word.word`, a file name, a domain, an email, a URL, or a version such as `1.2.3` no longer inserts a dictionary word after the period. A dotted token was one edit from a real word (`word.` → `words`, `file.t` → `filet`, `com.` → `come`) and the next non-letter committed it. The period is not its own word, so that commit was inserted with no space. Those tokens are not corrected. A period glued to a letter or digit does not auto-space or auto-capitalize; `word. ` still does. A period after an ordinary typo can still correct that word. Not run on a device.
 - Hub bridge: an allowed Droidcommand app was always refused. The service read the caller's process id after Messenger had already posted the message, so it saw itself. It now uses the id Messenger stamped on the message. A missing stamp is refused.
 - Fleet commands: a late reply from a provider could be applied to the next command. Replies are matched to the request id, and a reply with a missing or older id is ignored.
 - Clipboard tile: an image or video clip with a missing or non-numeric uri crashed the keyboard. Those clips now show a short message. A video thumbnail no longer throws when width or height metadata is missing, and the metadata reader is released.

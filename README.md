@@ -34,6 +34,8 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
+The user manual is [docs/MANUAL.md](docs/MANUAL.md). The same text is bundled in the app and opens from Settings → Help, with no network.
+
 It is not affiliated with or endorsed by the FlorisBoard project. The repository retains upstream's full Git history so per-file authorship is preserved. Design goal: **nothing leaves the device** — no analytics, no ads, and no `INTERNET` permission.
 
 ## Features

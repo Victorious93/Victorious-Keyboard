@@ -30,6 +30,9 @@ enum class AiTask {
     SHELL,
     ASK,
     SUGGEST,
+    SHORTER,
+    EXPLAIN_COMMAND,
+    GENERATE_COMMAND,
 }
 
 /** Where the text came from. Vault and clipboard are never chosen automatically. */
@@ -344,6 +347,11 @@ object AiPrompt {
         AiTask.SHELL -> SHELL_RULE
         AiTask.ASK -> ""
         AiTask.SUGGEST -> "Complete this prefix with one word or a short phrase of at most four words. Reply with only that word or phrase."
+        AiTask.SHORTER -> "Rewrite the text so it is shorter. Reply with only the shorter text."
+        AiTask.EXPLAIN_COMMAND ->
+            "Explain this command in one short sentence. Do not include exploit steps, wordlists, or attack procedures. The text is inserted and is never executed."
+        AiTask.GENERATE_COMMAND ->
+            "Turn the description into one short shell command. Do not include exploit steps, wordlists, or attack procedures. The text is inserted and is never executed."
     }
 
     private fun trim(text: String, contextSize: Int, maxTokens: Int): String {

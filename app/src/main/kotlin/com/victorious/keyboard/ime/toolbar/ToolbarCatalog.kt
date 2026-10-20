@@ -48,6 +48,7 @@ enum class ToolbarActionId {
     MEDIA,
     TEXT_TOOLS,
     HISTORY, HIST_UP, HIST_DN,
+    AI_SHORTER, AI_EXPLAIN, AI_GENERATE,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)
@@ -132,6 +133,9 @@ object ToolbarCatalog {
         act(ToolbarActionId.AI_TRANSLATE, ToolbarPage.AI, "Translate"),
         act(ToolbarActionId.AI_SHELL, ToolbarPage.AI, "Shell"),
         act(ToolbarActionId.AI_ASK, ToolbarPage.AI, "Ask"),
+        act(ToolbarActionId.AI_SHORTER, ToolbarPage.AI, "Shorter"),
+        act(ToolbarActionId.AI_EXPLAIN, ToolbarPage.AI, "Explain"),
+        act(ToolbarActionId.AI_GENERATE, ToolbarPage.AI, "Command"),
         act(ToolbarActionId.SEL_WORD, ToolbarPage.EDIT, "Word"),
         act(ToolbarActionId.SEL_LINE, ToolbarPage.EDIT, "Line"),
         act(ToolbarActionId.SEL_ALL, ToolbarPage.EDIT, "All"),

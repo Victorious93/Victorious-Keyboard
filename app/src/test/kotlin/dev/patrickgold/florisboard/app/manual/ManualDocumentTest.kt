@@ -68,8 +68,8 @@ class ManualDocumentTest : FunSpec({
             ManualDocument.Span("code", code = true),
         )
         ManualDocument.inlines("a **unclosed")[0].text shouldBe "a **unclosed"
-        val blocks = ManualDocument.parse("```\nline\n")
-        blocks.single() shouldBe ManualDocument.Block.Code("line")
+        ManualDocument.parse("```\nline").single() shouldBe ManualDocument.Block.Code("line")
+        ManualDocument.parse("```\nline\n```").single() shouldBe ManualDocument.Block.Code("line")
         ManualDocument.parse("") shouldBe emptyList()
     }
 

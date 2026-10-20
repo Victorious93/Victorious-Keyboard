@@ -47,6 +47,7 @@ enum class ToolbarActionId {
     SCREENSHOT,
     MEDIA,
     TEXT_TOOLS,
+    HISTORY, HIST_UP, HIST_DN,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)
@@ -161,6 +162,9 @@ object ToolbarCatalog {
         act(ToolbarActionId.SETTINGS, ToolbarPage.PRIVACY, "Settings"),
         act(ToolbarActionId.DEVROW, ToolbarPage.PRIVACY, "Dev row"),
         act(ToolbarActionId.TEXT_TOOLS, ToolbarPage.CODE, "Text"),
+        act(ToolbarActionId.HISTORY, ToolbarPage.TERMINAL, "Hist"),
+        act(ToolbarActionId.HIST_UP, ToolbarPage.TERMINAL, "H-up"),
+        act(ToolbarActionId.HIST_DN, ToolbarPage.TERMINAL, "H-dn"),
     )
 
     /** Everyday command names the user can insert. Nothing here is run, and none of it is an attack recipe. */
@@ -267,6 +271,8 @@ object ToolbarCatalog {
 
 data class PromptTemplate(val id: String, val title: String, val body: String)
 
+data class HistoryMove(val index: Int?, val text: String?, val restoreDraft: Boolean = false)
+
 object ShellHistoryPolicy {
     const val CAP = 30
     const val MAX_COMMAND = 500
@@ -277,7 +283,23 @@ object ShellHistoryPolicy {
         passwordLike: Boolean,
         vaultHold: Boolean,
         editorOpen: Boolean,
-    ): Boolean = enabled && !incognito && !passwordLike && !vaultHold && !editorOpen
+        terminalApp: Boolean,
+    ): Boolean = enabled && terminalApp && !incognito && !passwordLike && !vaultHold && !editorOpen
+
+    /**
+     * Step through [history], newest first. Up from the draft lands on the newest line. Down from the newest
+     * line sets [HistoryMove.restoreDraft] so the caller can put the typed line back.
+     */
+    fun move(history: List<String>, index: Int?, older: Boolean): HistoryMove {
+        if (history.isEmpty()) return HistoryMove(null, null)
+        if (older) {
+            val next = if (index == null) 0 else (index + 1).coerceAtMost(history.lastIndex)
+            return HistoryMove(next, history[next])
+        }
+        if (index == null || index == 0) return HistoryMove(null, null, restoreDraft = index == 0)
+        val next = index - 1
+        return HistoryMove(next, history[next])
+    }
 
     fun commandFrom(textBeforeCursor: String): String? {
         val line = textBeforeCursor.substringAfterLast('\n').trim()

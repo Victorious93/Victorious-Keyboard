@@ -38,6 +38,9 @@ sealed interface DevKeyAction {
 
     /** A media key. It is not sent to the focused app. */
     data class Media(val command: com.victorious.keyboard.ime.media.MediaCommand) : DevKeyAction
+
+    /** Recall an older or newer locally saved terminal line. The shell decides whether that is allowed. */
+    data class History(val older: Boolean) : DevKeyAction
 }
 
 /** One step of a macro key. Persisted by [TerminalRowLayout], not by enum name. */

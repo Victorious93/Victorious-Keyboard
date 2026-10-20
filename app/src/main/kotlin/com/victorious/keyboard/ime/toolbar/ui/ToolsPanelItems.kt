@@ -126,6 +126,9 @@ object ToolsPanelItems {
         ToolbarActionId.CTRL_L to t("^L", R.string.tools__action__ctrl_l),
         ToolbarActionId.CTRL_R to t("^R", R.string.tools__action__ctrl_r),
         ToolbarActionId.DEVROW to v(Icons.Outlined.Keyboard, R.string.tools__action__devrow),
+        ToolbarActionId.HISTORY to v(Icons.Outlined.History, R.string.tools__action__history),
+        ToolbarActionId.HIST_UP to t("↑", R.string.tools__action__hist_up),
+        ToolbarActionId.HIST_DN to t("↓", R.string.tools__action__hist_dn),
 
         ToolbarActionId.TEXT_TOOLS to v(Icons.Outlined.Build, R.string.tools__action__text_tools),
         ToolbarActionId.CAMEL to t("aB", R.string.tools__action__camel),

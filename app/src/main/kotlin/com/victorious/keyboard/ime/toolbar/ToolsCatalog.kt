@@ -81,6 +81,9 @@ object ToolsCatalog {
             ToolbarActionId.CTRL_L,
             ToolbarActionId.CTRL_R,
             ToolbarActionId.DEVROW,
+            ToolbarActionId.HISTORY,
+            ToolbarActionId.HIST_UP,
+            ToolbarActionId.HIST_DN,
         ),
         ToolsTab.CODE to listOf(
             ToolbarActionId.TEXT_TOOLS,

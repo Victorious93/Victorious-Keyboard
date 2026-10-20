@@ -34,6 +34,9 @@ sealed interface DevStep {
 
     /** A media button. The shell must not send this into the focused editor. */
     data class Media(val command: com.victorious.keyboard.ime.media.MediaCommand) : DevStep
+
+    /** Recall a saved terminal line. [older] is up; down is the newer line. */
+    data class History(val older: Boolean) : DevStep
 }
 
 /** [consumesModifiers]: one-shot Ctrl/Alt were used by a key event and must be spent. */
@@ -59,6 +62,7 @@ object DeveloperKeyResolver {
         is DevKeyAction.Insert -> resolveInsert(action, mods)
         is DevKeyAction.Play -> resolvePlay(action)
         is DevKeyAction.Media -> DevResolution(listOf(DevStep.Media(action.command)), false)
+        is DevKeyAction.History -> DevResolution(listOf(DevStep.History(action.older)), false)
     }
 
     private fun resolvePlay(action: DevKeyAction.Play): DevResolution {

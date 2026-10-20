@@ -128,6 +128,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
         val field = currentField()
+        if (com.victorious.keyboard.ime.profile.AppProfileRuntime.effect.value.suggestions == false) return emptyList()
         if (!LearningGate.allowsPrediction(prefs.suggestion.predictionEnabled.get(), field)) return emptyList()
         val learned = if (LearningGate.allowsLearning(prefs.suggestion.learnFromTyping.get(), field)) {
             learnedSnapshot()
@@ -141,7 +142,11 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             learned = learned,
             maxCandidates = maxCandidateCount,
             knownWords = knownWords(current),
-            level = prefs.suggestion.autocorrectLevel.get(),
+            level = if (com.victorious.keyboard.ime.profile.AppProfileRuntime.effect.value.autocorrectOff) {
+                com.victorious.keyboard.ime.nlp.prediction.AutocorrectLevel.OFF
+            } else {
+                prefs.suggestion.autocorrectLevel.get()
+            },
         ).map { prediction ->
             WordSuggestionCandidate(
                 text = prediction.text,

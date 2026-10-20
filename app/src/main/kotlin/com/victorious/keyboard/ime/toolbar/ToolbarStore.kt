@@ -53,6 +53,10 @@ object ToolbarRuntime {
         update(context) { ToolbarLayoutTransfer.apply(it, document, replace) }
     }
 
+    fun clearHistory(context: Context) {
+        update(context) { it.copy(recentCommands = emptyList()) }
+    }
+
     fun remember(context: Context, command: String) {
         update(context) { current ->
             current.copy(recentCommands = ShellHistoryPolicy.remember(current.recentCommands, command))

@@ -223,11 +223,13 @@ class NlpManager(context: Context) {
         }
     }
 
-    fun isSuggestionOn(): Boolean =
-        prefs.suggestion.enabled.get()
+    fun isSuggestionOn(): Boolean {
+        if (com.victorious.keyboard.ime.profile.AppProfileRuntime.effect.value.suggestions == false) return false
+        return prefs.suggestion.enabled.get()
             || prefs.suggestion.predictionEnabled.get()
             || prefs.emoji.suggestionEnabled.get()
             || providerForcesSuggestionOn(subtypeManager.activeSubtype)
+    }
 
     fun mayLearnFromCurrentField(): Boolean {
         val info = editorInstance.activeInfo

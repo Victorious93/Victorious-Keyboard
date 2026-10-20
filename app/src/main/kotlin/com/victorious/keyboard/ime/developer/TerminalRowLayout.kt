@@ -62,6 +62,8 @@ object TerminalRowLayout {
         media("media_ff", "FF", com.victorious.keyboard.ime.media.MediaCommand.FAST_FORWARD)
         media("media_vol_down", "Vol-", com.victorious.keyboard.ime.media.MediaCommand.VOLUME_DOWN)
         media("media_vol_up", "Vol+", com.victorious.keyboard.ime.media.MediaCommand.VOLUME_UP)
+        add(Slot("hist_up", DevKey("H+", DevKeyAction.History(older = true), "Older command")))
+        add(Slot("hist_dn", DevKey("H-", DevKeyAction.History(older = false), "Newer command")))
     }
 
     /** Esc, Tab, Ctrl, Alt, then the arrows and the other navigation keys, in today's order. */

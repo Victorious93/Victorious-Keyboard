@@ -42,6 +42,7 @@ import com.victorious.keyboard.ime.smartbar.IncognitoDisplayMode
 import com.victorious.keyboard.ime.smartbar.InlineSuggestionsStyleCache
 import com.victorious.keyboard.ime.clipedit.ui.ClipEditorPanel
 import com.victorious.keyboard.ime.ai.ui.LocalAiPanel
+import com.victorious.keyboard.ime.toolbar.ui.CommandHistoryPanel
 import com.victorious.keyboard.ime.toolbar.ui.TextToolsPanel
 import com.victorious.keyboard.ime.smartbar.Smartbar
 import com.victorious.keyboard.ime.toolbar.ToolbarRuntime
@@ -78,11 +79,15 @@ fun TextInputLayout(
         val clipEditor by keyboardManager.clipEditor.collectAsState()
         val aiPanel by localAi.panel.collectAsState()
         val textTools by keyboardManager.textTools.collectAsState()
+        val commandHistory by keyboardManager.commandHistory.collectAsState()
         if (aiPanel != null) {
             LocalAiPanel()
         }
         if (textTools != null && aiPanel == null) {
             TextToolsPanel()
+        }
+        if (commandHistory != null && aiPanel == null && textTools == null) {
+            CommandHistoryPanel()
         }
         if (clipEditor != null) {
             ClipEditorPanel()
@@ -90,7 +95,7 @@ fun TextInputLayout(
         val toolsOpen by keyboardManager.toolsOpen.collectAsState()
         val mediaOpen by keyboardManager.mediaOpen.collectAsState()
         val terminalRow = rememberTerminalRowPlan()
-        if (terminalRow.visible && !state.isActionsOverflowVisible && !toolsOpen && !mediaOpen && aiPanel == null && textTools == null && clipEditor == null) {
+        if (terminalRow.visible && !state.isActionsOverflowVisible && !toolsOpen && !mediaOpen && aiPanel == null && textTools == null && commandHistory == null && clipEditor == null) {
             val size by prefs.devrow.size.observeAsState()
             val holdMs by prefs.devrow.holdDelayMs.observeAsState()
             val repeatMs by prefs.devrow.repeatIntervalMs.observeAsState()

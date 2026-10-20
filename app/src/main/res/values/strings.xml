@@ -1788,6 +1788,16 @@
     <string name="tools__action__outdent">Outdent</string>
     <string name="tools__action__comment">Comment</string>
     <string name="tools__action__text_tools">Text Tools</string>
+    <string name="tools__action__history">History</string>
+    <string name="tools__action__hist_up">Older command</string>
+    <string name="tools__action__hist_dn">Newer command</string>
+    <string name="history__title">Command history</string>
+    <string name="history__empty">No commands saved yet.</string>
+    <string name="history__older">Older</string>
+    <string name="history__newer">Newer</string>
+    <string name="history__clear">Clear</string>
+    <string name="history__close">Close</string>
+    <string name="history__unavailable">Command history is off, or this app is not a terminal. It stays off in password fields and incognito.</string>
     <string name="tools__action__json">Format JSON</string>
     <string name="tools__action__b64e">Base64 encode</string>
     <string name="tools__action__b64d">Base64 decode</string>

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Victorious-Keyboard logo" width="200">
+</p>
+
 <div align="center">
 
 <img src="docs/branding/logo.png" alt="Victorious Keyboard logo" width="240" height="240">

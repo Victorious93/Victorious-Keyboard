@@ -23,11 +23,12 @@ import java.io.File
 
 /** The manual shipped in the app is the same file as `docs/MANUAL.md`. */
 class ManualCopyTest : FunSpec({
-    test("the asset copy matches the docs manual and describes media keys") {
+    test("the asset copy matches the docs manual and describes media keys and the tools layout") {
         val manual = File("../docs/MANUAL.md").readText()
         File("src/main/assets/manual/MANUAL.md").readText() shouldBe manual
         manual shouldContain "File Manager seek"
         manual shouldContain "Media tile"
         manual shouldContain "Pin up to four tools"
+        manual shouldContain "toolbar.json"
     }
 })

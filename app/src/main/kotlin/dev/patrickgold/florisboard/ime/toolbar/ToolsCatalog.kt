@@ -133,13 +133,27 @@ object ToolsCatalog {
     }
 
     /** [id] moved one place earlier among the visible buttons of its tab; the new order to store. */
-    fun movingEarlier(tab: ToolsTab, hidden: Set<String>, order: List<String>, id: ToolbarActionId): List<String> {
-        val current = visible(tab, hidden, order).toMutableList()
-        val index = current.indexOf(id)
-        if (index <= 0) return current.map { it.name }
-        current[index] = current[index - 1]
-        current[index - 1] = id
-        return current.map { it.name }
+    fun movingEarlier(tab: ToolsTab, hidden: Set<String>, order: List<String>, id: ToolbarActionId): List<String> =
+        moving(tab, hidden, order, id, -1)
+
+    /** [id] moved one place later among the visible buttons of its tab; the new order to store. */
+    fun movingLater(tab: ToolsTab, hidden: Set<String>, order: List<String>, id: ToolbarActionId): List<String> =
+        moving(tab, hidden, order, id, 1)
+
+    /** [id] moved by [delta] places (−1 earlier, +1 later), or to an absolute index when [to] is set. */
+    fun moving(
+        tab: ToolsTab,
+        hidden: Set<String>,
+        order: List<String>,
+        id: ToolbarActionId,
+        delta: Int = 0,
+        to: Int? = null,
+    ): List<String> {
+        val current = visible(tab, hidden, order).map { it.name }
+        val from = current.indexOf(id.name)
+        if (from < 0) return current
+        val destination = to ?: (from + delta)
+        return ToolsLayout.move(current, from, destination)
     }
 
     fun label(id: ToolbarActionId): String =

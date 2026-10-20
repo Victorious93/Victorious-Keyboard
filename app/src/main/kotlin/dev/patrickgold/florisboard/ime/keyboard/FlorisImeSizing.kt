@@ -18,7 +18,6 @@ package dev.patrickgold.florisboard.ime.keyboard
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
@@ -37,8 +36,6 @@ import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsChipMargin
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboard
-import dev.patrickgold.florisboard.ime.toolbar.PinnedToolbar
-import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.window.LocalWindowController
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
@@ -88,17 +85,11 @@ object FlorisImeSizing {
         val smartbarLayout by prefs.smartbar.layout.observeAsState()
         val extendedActionsExpanded by prefs.smartbar.extendedActionsExpanded.observeAsState()
         val extendedActionsPlacement by prefs.smartbar.extendedActionsPlacement.observeAsState()
-        // The pinned toolbar row is one more row above the suggestions; same rule as `PinnedToolbarRow`.
-        val context = LocalContext.current
-        LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
-        val toolbarConfig = ToolbarRuntime.config.collectAsState()
-        val showScreenshot by prefs.tools.screenshotTile.observeAsState()
+        // Pinned tools sit on this row, next to the tools button, so they do not add a row.
         return remember {
             derivedStateOf {
-                val config = toolbarConfig.value
-                val pinnedRow = if (PinnedToolbar.rowVisible(config.pinnedRow, config.pinnedActions(showScreenshot))) 1 else 0
                 if (smartbarEnabled) {
-                    pinnedRow + if (smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_EXTENDED &&
+                    if (smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_EXTENDED &&
                         extendedActionsExpanded &&
                         extendedActionsPlacement != ExtendedActionsPlacement.OVERLAY_APP_UI) {
                         2

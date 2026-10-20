@@ -38,6 +38,7 @@ import dev.patrickgold.florisboard.extensionManager
 import dev.patrickgold.florisboard.ime.smartbar.CachedInlineSuggestionsChipStyleSet
 import dev.patrickgold.florisboard.lib.devtools.flogInfo
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.ext.ExtensionMeta
 import dev.patrickgold.florisboard.lib.io.ZipUtils
 import dev.patrickgold.florisboard.lib.util.TimeUtils.javaLocalTime
@@ -90,7 +91,13 @@ class ThemeManager(context: Context) {
             _indexedThemeConfigs.value = buildMap {
                 for (themeExtension in themeExtensions) {
                     for (themeComponent in themeExtension.themes) {
-                        put(ExtensionComponentName(themeExtension.meta.id, themeComponent.id), themeComponent)
+                        ExtensionIds.indexComponent(
+                            this,
+                            themeExtension.meta.id,
+                            themeExtension.meta.aliases,
+                            themeComponent.id,
+                            themeComponent,
+                        )
                     }
                 }
             } to version

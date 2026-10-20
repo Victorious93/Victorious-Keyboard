@@ -12,8 +12,13 @@ Status: **pure-Kotlin core JVM-tested; install screen and database wiring compil
   stop being flagged as typos in apps that use the system spell checker.
 * **Word prediction reads the bundled pack zips directly**, not the user-dictionary rows. With *Word prediction* on
   (the default), the suggestion bar offers current-word completions, a next-word guess, and a close correction.
-  A correction is auto-committed on space only when it is one edit away, the typed token is at least 4 characters, and
-  the token is not already in the lexicon. *Learn from my typing* is off by default. When it is on, new words and the
+  A correction is auto-committed on space (and on other non-letters) only when it is one edit away, the typed token
+  is at least 4 characters, and the token is not already in the lexicon. A token that already contains `.`, `@`, `/`,
+  or `:` is never corrected and never auto-committed, so `word.word`, `file.txt`, `example.com`, `user@mail.com`,
+  `https://…`, and `1.2.3` stay as typed. The next key does not insert a dictionary word after the period. A period
+  glued to a letter or digit does not add a space and does not capitalize the next letter. `word. ` (period, then a
+  space the user typed) still starts a sentence, and a period after a plain word can still correct that word
+  (`helo` + `.` → `hello.`). *Learn from my typing* is off by default. When it is on, new words and the
   word that came before them are stored in `noBackupFilesDir/prediction/learned-words.json` (not backed up, never
   logged). Passwords, incognito, and fields with `IME_FLAG_NO_PERSONALIZED_LEARNING` or no-suggestions are not stored,
   and prediction itself does not run in password or no-suggestions fields. The static packs have no sentence pairs, so

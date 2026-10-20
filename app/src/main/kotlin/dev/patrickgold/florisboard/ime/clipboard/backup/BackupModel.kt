@@ -104,6 +104,11 @@ data class ParsedBackup(
      * Null when the member was absent. A present member is still untrusted until the suggestion codec accepts it.
      */
     val suggestionsDocument: String? = null,
+    /**
+     * Optional `toolbar.json` member. It is not part of `entriesSha256`.
+     * Null when the member was absent. A present member is still untrusted until the toolbar codec accepts it.
+     */
+    val toolbarDocument: String? = null,
 ) {
     fun laneOf(id: String): String = lanes[id] ?: LANE_REGULAR
 }

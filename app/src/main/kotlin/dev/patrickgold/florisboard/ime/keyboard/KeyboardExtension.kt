@@ -23,6 +23,7 @@ import dev.patrickgold.florisboard.ime.text.composing.Composer
 import dev.patrickgold.florisboard.lib.ext.Extension
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponent
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.ext.ExtensionEditor
 import dev.patrickgold.florisboard.lib.ext.ExtensionMeta
 import kotlinx.serialization.SerialName
@@ -59,7 +60,7 @@ data class KeyboardExtension(
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCoreComposer(id: String): ExtensionComponentName {
     return ExtensionComponentName(
-        extensionId = "org.florisboard.composers",
+        extensionId = ExtensionIds.COMPOSERS,
         componentId = id,
     )
 }
@@ -67,7 +68,7 @@ inline fun extCoreComposer(id: String): ExtensionComponentName {
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCoreCurrencySet(id: String): ExtensionComponentName {
     return ExtensionComponentName(
-        extensionId = "org.florisboard.currencysets",
+        extensionId = ExtensionIds.CURRENCY_SETS,
         componentId = id,
     )
 }
@@ -75,7 +76,7 @@ inline fun extCoreCurrencySet(id: String): ExtensionComponentName {
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCoreLayout(id: String): ExtensionComponentName {
     return ExtensionComponentName(
-        extensionId = "org.florisboard.layouts",
+        extensionId = ExtensionIds.LAYOUTS,
         componentId = id,
     )
 }
@@ -83,7 +84,7 @@ inline fun extCoreLayout(id: String): ExtensionComponentName {
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCorePunctuationRule(id: String): ExtensionComponentName {
     return ExtensionComponentName(
-        extensionId = "org.florisboard.localization",
+        extensionId = ExtensionIds.LOCALIZATION,
         componentId = id,
     )
 }
@@ -91,7 +92,7 @@ inline fun extCorePunctuationRule(id: String): ExtensionComponentName {
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCorePopupMapping(id: String): ExtensionComponentName {
     return ExtensionComponentName(
-        extensionId = "org.florisboard.localization",
+        extensionId = ExtensionIds.LOCALIZATION,
         componentId = id,
     )
 }

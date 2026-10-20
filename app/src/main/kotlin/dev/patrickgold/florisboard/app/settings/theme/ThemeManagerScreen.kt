@@ -39,6 +39,7 @@ import dev.patrickgold.florisboard.extensionManager
 import dev.patrickgold.florisboard.ime.theme.ThemeExtensionComponent
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.themeManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.jetpref.material.ui.JetPrefListItem
@@ -119,7 +120,7 @@ fun ThemeManagerScreen(action: ThemeManagerScreenAction?) = FlorisScreen {
                         },
                         icon = {
                             RadioButton(
-                                selected = activeThemeId.extensionId == extensionId &&
+                                selected = ExtensionIds.same(activeThemeId.extensionId, extensionId) &&
                                     activeThemeId.componentId == config.id,
                                 onClick = null,
                             )

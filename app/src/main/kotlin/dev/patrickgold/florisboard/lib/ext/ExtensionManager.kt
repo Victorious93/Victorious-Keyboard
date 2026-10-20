@@ -145,7 +145,9 @@ class ExtensionManager(context: Context) {
     }
 
     fun getExtensionById(id: String): Extension? {
-        return extensions.value.find { it.meta.id == id }
+        val all = extensions.value
+        return all.find { it.meta.id == id }
+            ?: all.find { ExtensionIds.matches(it.meta.id, it.meta.aliases, id) }
     }
 
     fun canDelete(ext: Extension): Boolean {

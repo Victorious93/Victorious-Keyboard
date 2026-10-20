@@ -98,13 +98,13 @@ The caller is authorized only by UID, then package, then certificate. The allowl
 
 Top-level fields are flat: `op`, `requestId`, `targetNodeRef`, `actionRef`, `params`, `nonce`, `timestampMs`, `ttlMs`, `destructive`, `trigger`. Optional `protocol_major` and `protocol_minor` must be 1 when they are present. `targetNodeRef` and `trigger` are informational. `ttlMs` defaults to 120000 and cannot be above 300000.
 
-`op` is one of `capabilities.get`, `remote.command`, `macro.step`, `macro.run`, `node.status.get`.
+`op` is one of `capabilities.get`, `remote.command`, `macro.step`, `macro.run`, `node.status.get`, `config.export`, `config.import`.
 
 `macro.step` adds `macroId`, `stepIndex`, and `onError` (`abort` or `continue`). `macro.run` adds `macroId`, `steps`, and `dryRun`. A step object is `actionRef`, `params`, and optional `destructive` and `onError`. `dryRun` checks the steps and does not perform them and does not show a prompt.
 
 The nonce is 128 bits, 32 hex digits, dashes allowed. A request is expired when `now > timestampMs + ttlMs`, or when the timestamp is more than 120000 ms away from now. A nonce is remembered for the authenticated package for 10 minutes. A repeat in that window is `replay_detected`, including a repeat of an expired request. Two packages do not share a nonce.
 
-`capabilities.get` returns, for each action, `name`, `kind` (`read`, `action`, or `destructive`), `remoteAllowed`, and `requiresConfirm`. `node.status.get` is advertised as `kind` `read`, `remoteAllowed` true, `requiresConfirm` false.
+`capabilities.get` returns, for each action, `name`, `kind` (`read`, `action`, or `destructive`), `remoteAllowed`, and `requiresConfirm`. `node.status.get` is advertised as `kind` `read`, `remoteAllowed` true, `requiresConfirm` false. `config.export` is advertised as `kind` `action`, `remoteAllowed` false, `requiresConfirm` false. `config.import` is advertised as `kind` `action`, `remoteAllowed` false, `requiresConfirm` true.
 
 `node.status.get` is its own op. It is not an `actionRef` under `remote.command`. The same nonce, expiry, and caller checks apply. `destructive` on this op is ignored, so the read is never held for confirmation. `params` may be empty, which means this keyboard, or `params.nodeId` must equal this app's application id. Any other id is `not_found`. Other `params` keys are ignored and are not copied into the reply.
 
@@ -119,6 +119,12 @@ The result is one snapshot. This keyboard reports the `node_health` domain only.
 | `domains` | One entry: `name` `node_health`, `state` `ok` when the keyboard service is running and `down` when it is not, `detail` `ime running` or `ime stopped` |
 
 The snapshot does not include typed text, clipboard contents, or Vault data. A detail that names a secret is refused as `invalid_parameters`. A keyboard that is not the current input method still answers `ok: true` with `state` `down`.
+
+`config.export` and `config.import` are standalone ops. They are not an `actionRef` under `remote.command`. They use the same nonce, expiry, and caller checks. A remote caller is `capability_off` for both, including a dry run, and the reply does not copy `params`. An `actionRef` on either op is `invalid_parameters`. The hub switch off is still `external_control_disabled`, before that refusal. Nothing is exported or written on this path, and the on-device notice is not shown.
+
+The local codec is preferences only: themes, layouts, and keyboard settings, including the toolbar layout (pinned buttons, the pinned row, page, hidden buttons, order, bracket pairing, and shell history on or off). Clipboard history, typed text, the Vault, snippet bodies, developer-row macros, and command text are not entries. A toolbar pin whose id is `CLIPBOARD` is a layout id and is kept. A value that names a password, token, secret, or similar is refused. `wrapping` `none` with `clearPayload` is the local-dev form. A real bundle uses `raw-aes-256-gcm` (AES-256-GCM, 12-byte IV, 128-bit tag, AAD `packageName|schemaVersion|sourceNodeRef`). `android-keystore` wrapping is not implemented.
+
+Import order is parse, duplicate package names, decrypt, secret-name scan, then policy. `dryRun` reports the diff and writes nothing, and it does not need confirmation. Any other import returns `confirmation_required` until the on-device caller passes confirmation. Conflict modes are `skip` (keep the live row and do not add the imported id), `overwrite` (replace the live row and add missing ids), and `merge-by-id` (live wins on a collision, imported ids fill gaps). The default is `skip`. A confirmed import forces `fleet__external_control` to false even when the payload said true. A missing package entry is `not_found`. A well-formed ciphertext that does not decrypt is `internal`. Unknown bundle versions fail closed.
 
 ```json
 {"op":"node.status.get","requestId":"r3","params":{},

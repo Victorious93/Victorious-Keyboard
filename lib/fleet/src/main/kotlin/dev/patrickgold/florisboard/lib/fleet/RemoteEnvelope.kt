@@ -53,7 +53,12 @@ object RemoteEnvelope {
     const val OP_MACRO_STEP = "macro.step"
     const val OP_MACRO_RUN = "macro.run"
     const val OP_NODE_STATUS = "node.status.get"
-    val OPS = setOf(OP_CAPABILITIES, OP_COMMAND, OP_MACRO_STEP, OP_MACRO_RUN, OP_NODE_STATUS)
+    const val OP_CONFIG_EXPORT = "config.export"
+    const val OP_CONFIG_IMPORT = "config.import"
+    val OPS = setOf(
+        OP_CAPABILITIES, OP_COMMAND, OP_MACRO_STEP, OP_MACRO_RUN, OP_NODE_STATUS,
+        OP_CONFIG_EXPORT, OP_CONFIG_IMPORT,
+    )
 
     const val ERR_INVALID = "invalid_parameters"
     const val ERR_NOT_PAIRED = "not_paired"
@@ -93,6 +98,8 @@ object RemoteEnvelope {
         Capability("media.seekBy", "action", true, false),
         Capability("media.state", "read", true, false),
         Capability(OP_NODE_STATUS, "read", true, false),
+        Capability(OP_CONFIG_EXPORT, "action", false, false),
+        Capability(OP_CONFIG_IMPORT, "action", false, true),
     )
 
     private val byName = CAPABILITIES.associateBy { it.name }
@@ -192,6 +199,7 @@ object RemoteEnvelope {
             when (request.op) {
                 OP_CAPABILITIES -> capabilities(request)
                 OP_NODE_STATUS -> nodeStatus(request, now, port)
+                OP_CONFIG_EXPORT, OP_CONFIG_IMPORT -> configRemoteRefused(request)
                 OP_COMMAND -> runAction(request, request.actionRef, request.params, request.destructive, port, dry = false)
                     .let { outcome -> reply(request.op, request.requestId, outcome.error.isEmpty(), outcome.error, result = outcome.result) }
                 OP_MACRO_STEP -> macroStep(request, port)
@@ -252,7 +260,11 @@ object RemoteEnvelope {
         port: Port,
         dry: Boolean,
     ): Outcome {
-        if (actionRef == OP_NODE_STATUS || actionRef in INPUT_OPS || actionRef !in byName) return Outcome(ERR_UNSUPPORTED)
+        if (actionRef == OP_NODE_STATUS || actionRef == OP_CONFIG_EXPORT || actionRef == OP_CONFIG_IMPORT ||
+            actionRef in INPUT_OPS || actionRef !in byName
+        ) {
+            return Outcome(ERR_UNSUPPORTED)
+        }
         val capability = byName.getValue(actionRef)
         if (!capability.remoteAllowed) return Outcome(ERR_UNSUPPORTED)
         if (destructive || capability.requiresConfirm || capability.kind == "destructive") {
@@ -342,6 +354,12 @@ object RemoteEnvelope {
             "media.seekBy" -> if (only("deltaMs") && params["deltaMs"]?.longOrNull != null) ParamShape.SESSION else null
             else -> null
         }
+    }
+
+    /** A remote caller cannot export or import. The local codec is [ConfigBackup]. */
+    private fun configRemoteRefused(request: Request): String {
+        if (request.actionRef.isNotEmpty()) return reply(request.op, request.requestId, false, ERR_INVALID)
+        return reply(request.op, request.requestId, false, ERR_OFF)
     }
 
     /**

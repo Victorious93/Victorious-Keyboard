@@ -368,6 +368,8 @@ Hub status, on the same screen, is the bridge to the Droidcommand hub. It starts
 
 Remote control uses that same Hub status switch and stays off until you turn it on. Only the Droidcommand hub app can call it. A remote command can ask whether the keyboard is running, switch Standard, Developer, or Termux, switch the keyboard theme, or send play, pause, next, previous, rewind, fast-forward, and volume. It can also ask for node status. That answer says only whether this keyboard is running. It does not include what you type, the clipboard, or the Vault. It cannot type into the box you are focused on, and it cannot read what you type, the clipboard, or the Vault. A command marked destructive is not run. The phone shows a notice instead. The node-status question is not destructive, so it does not show that notice. Exact track position is not available from this switch. Each request expires, and a repeated request is refused.
 
+A settings backup is separate from that remote switch. Export keeps themes, layouts, and keyboard settings, including which tools are pinned on the toolbar. It does not include clipboard history, what you type, the Vault, or snippet text. Import can preview the change first. Applying it asks you to confirm on this phone. Skip leaves your current rows, overwrite replaces them, and merge keeps yours when the same id is in both. Import never turns remote control on. A remote app cannot request this backup.
+
 
 ## Troubleshooting
 

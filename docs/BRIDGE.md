@@ -25,7 +25,7 @@ The envelope on every reply is:
 
 Operations: `keyboard.capabilities.get`, `keyboard.status`, `keyboard.input.text` and `keyboard.input.key`.
 
-Remote-control envelope v1 uses this same service and the same allowlist. Its operations are `capabilities.get`, `remote.command`, `macro.step`, `macro.run`, and `node.status.get`. Those operations never type into the focused app. `node.status.get` reports node health only. The contract is in [FLEET.md](FLEET.md). The four operations above are unchanged.
+Remote-control envelope v1 uses this same service and the same allowlist. Its operations are `capabilities.get`, `remote.command`, `macro.step`, `macro.run`, `node.status.get`, `config.export`, and `config.import`. Those operations never type into the focused app. `node.status.get` reports node health only. `config.export` and `config.import` are advertised with `remoteAllowed` false, so a remote caller cannot dump or restore settings. The contract is in [FLEET.md](FLEET.md). The four operations above are unchanged.
 
 ## Input operations
 

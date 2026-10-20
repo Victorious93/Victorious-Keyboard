@@ -50,11 +50,24 @@ class RemoteEnvelopeTest : FunSpec({
         val names = body["capabilities"]!!.jsonArray.map { it.jsonObject.str("name") }
         names shouldBe RemoteEnvelope.CAPABILITIES.map { it.name }
         for (item in body["capabilities"]!!.jsonArray) {
-            val kind = item.jsonObject.str("kind")
+            val row = item.jsonObject
+            val expected = RemoteEnvelope.CAPABILITIES.first { it.name == row.str("name") }
+            val kind = row.str("kind")
             (kind == "read" || kind == "action" || kind == "destructive") shouldBe true
-            item.jsonObject.bool("remoteAllowed") shouldBe true
-            item.jsonObject.bool("requiresConfirm") shouldBe false
+            row.str("kind") shouldBe expected.kind
+            row.bool("remoteAllowed") shouldBe expected.remoteAllowed
+            row.bool("requiresConfirm") shouldBe expected.requiresConfirm
         }
+        val export = body["capabilities"]!!.jsonArray.map { it.jsonObject }
+            .first { it.str("name") == RemoteEnvelope.OP_CONFIG_EXPORT }
+        export.str("kind") shouldBe "action"
+        export.bool("remoteAllowed") shouldBe false
+        export.bool("requiresConfirm") shouldBe false
+        val import = body["capabilities"]!!.jsonArray.map { it.jsonObject }
+            .first { it.str("name") == RemoteEnvelope.OP_CONFIG_IMPORT }
+        import.str("kind") shouldBe "action"
+        import.bool("remoteAllowed") shouldBe false
+        import.bool("requiresConfirm") shouldBe true
         (BridgeProtocol.OP_INPUT_TEXT in names) shouldBe false
         (BridgeProtocol.OP_INPUT_KEY in names) shouldBe false
         val status = body["capabilities"]!!.jsonArray.map { it.jsonObject }
@@ -159,6 +172,71 @@ class RemoteEnvelopeTest : FunSpec({
         RemoteEnvelope.detailAllowed("clip board") shouldBe false
         RemoteEnvelope.detailAllowed("x".repeat(201)) shouldBe false
         RemoteEnvelope.peekOp("""{"op":"node.status.get"}""") shouldBe "node.status.get"
+    }
+
+    test("config.export and config.import are refused on the bridge and do not echo a bundle") {
+        val port = RecordingPort()
+        val now = 1_700_000_000_000L
+        val nonce = "00112233445566778899aabbccddee22"
+        val cache = RemoteEnvelope.NonceCache()
+        val dumped = call(
+            cache,
+            request(
+                "config.export",
+                nonce = nonce,
+                now = now,
+                params = mapOf("bundle" to "clipboard vault snippet typed"),
+            ),
+            now = now,
+            port = port,
+        )
+        dumped.str("error") shouldBe "capability_off"
+        dumped.bool("ok") shouldBe false
+        dumped.toString().contains("clipboard") shouldBe false
+        dumped.toString().contains("vault") shouldBe false
+        ("result" in dumped) shouldBe false
+        port.calls.shouldBeEmpty()
+        port.prompts shouldBe 0
+        call(cache, request("config.export", nonce = nonce, now = now), now = now, port = port)
+            .str("error") shouldBe "replay_detected"
+
+        call(RemoteEnvelope.NonceCache(), request("config.import"), authorized = false).str("error") shouldBe "unauthorized"
+        call(RemoteEnvelope.NonceCache(), request("config.import"), enabled = false)
+            .str("error") shouldBe "external_control_disabled"
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("config.import", nonce = "ab".repeat(16), now = now - 180_000),
+            now = now,
+        ).str("error") shouldBe "expired"
+
+        val destructive = RecordingPort()
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("config.import", destructive = true, params = mapOf("dryRun" to "true")),
+            port = destructive,
+        ).str("error") shouldBe "capability_off"
+        destructive.prompts shouldBe 0
+        destructive.calls.shouldBeEmpty()
+
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("config.export", action = "config.export"),
+        ).str("error") shouldBe "invalid_parameters"
+        val command = RecordingPort()
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("remote.command", action = "config.import"),
+            port = command,
+        ).str("error") shouldBe "unsupported_op"
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("remote.command", action = "config.export"),
+            port = command,
+        ).str("error") shouldBe "unsupported_op"
+        command.calls.shouldBeEmpty()
+        command.prompts shouldBe 0
+        RemoteEnvelope.peekOp("""{"op":"config.export"}""") shouldBe "config.export"
+        RemoteEnvelope.peekOp("""{"op":"config.import"}""") shouldBe "config.import"
     }
 
     test("replay is keyed by the authenticated source and the nonce, not by an envelope field") {

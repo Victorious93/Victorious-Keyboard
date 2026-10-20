@@ -104,7 +104,7 @@ class RemoteEnvelopeTest : FunSpec({
     }
 
     test("remote commands never type, and input actions are unsupported") {
-        val port = FakePort()
+        val port = RecordingPort()
         val cache = RemoteEnvelope.NonceCache()
         call(cache, request("remote.command", action = "keyboard.input.text", params = mapOf("text" to "hello")), port = port)
             .str("error") shouldBe "unsupported_op"
@@ -115,7 +115,7 @@ class RemoteEnvelopeTest : FunSpec({
     }
 
     test("status, mode, theme, and media keys reach the port and session commands do not") {
-        val port = FakePort()
+        val port = RecordingPort()
         val cache = RemoteEnvelope.NonceCache()
         val status = call(cache, request("remote.command", action = "keyboard.status"), port = port)
         status.bool("ok") shouldBe true
@@ -143,14 +143,14 @@ class RemoteEnvelopeTest : FunSpec({
         )
         call(cache, request("remote.command", nonce = "a8".repeat(16), action = "keyboard.mode", params = mapOf("mode" to "nope")), port = port)
             .str("error") shouldBe "not_found"
-        call(cache, request("remote.command", nonce = "a9".repeat(16), action = "media.next"), port = FakePort(effect = RemoteEnvelope.Effect.CAPABILITY_OFF))
+        call(cache, request("remote.command", nonce = "a9".repeat(16), action = "media.next"), port = RecordingPort(effect = RemoteEnvelope.Effect.CAPABILITY_OFF))
             .str("error") shouldBe "capability_off"
-        call(cache, request("remote.command", nonce = "b1".repeat(16), action = "media.next"), port = FakePort(blowUp = true))
+        call(cache, request("remote.command", nonce = "b1".repeat(16), action = "media.next"), port = RecordingPort(blowUp = true))
             .str("error") shouldBe "internal"
     }
 
     test("a destructive request is never run and always asks on the device") {
-        val port = FakePort()
+        val port = RecordingPort()
         val cache = RemoteEnvelope.NonceCache()
         val denied = call(
             cache,
@@ -160,7 +160,7 @@ class RemoteEnvelopeTest : FunSpec({
         denied.str("error") shouldBe "confirmation_required"
         port.calls.shouldBeEmpty()
         port.prompts shouldBe 1
-        val dry = FakePort()
+        val dry = RecordingPort()
         call(
             cache,
             request(
@@ -177,7 +177,7 @@ class RemoteEnvelopeTest : FunSpec({
     }
 
     test("macros abort, continue, and dry-run without sending input") {
-        val port = FakePort()
+        val port = RecordingPort()
         val cache = RemoteEnvelope.NonceCache()
         val aborted = call(
             cache,
@@ -213,7 +213,7 @@ class RemoteEnvelopeTest : FunSpec({
         continued["steps"]!!.jsonArray[1].jsonObject.bool("ok") shouldBe true
         port.calls shouldBe listOf("key:${RemoteEnvelope.KEY_PREVIOUS}")
 
-        val dry = FakePort()
+        val dry = RecordingPort()
         call(
             cache,
             request(
@@ -346,7 +346,7 @@ private fun call(
     source: String = "ai.droidcommand.app",
     authorized: Boolean = true,
     enabled: Boolean = true,
-    port: RemoteEnvelope.Port = FakePort(),
+    port: RemoteEnvelope.Port = RecordingPort(),
 ): JsonObject {
     val reply = RemoteEnvelope.handle(raw, authorized, enabled, source, now, cache, port)
     return Json.parseToJsonElement(reply) as JsonObject
@@ -356,7 +356,7 @@ private fun JsonObject.str(name: String) = this[name]!!.jsonPrimitive.content
 private fun JsonObject.bool(name: String) = this[name]!!.jsonPrimitive.content.toBoolean()
 private fun JsonObject.int(name: String) = this[name]!!.jsonPrimitive.content.toInt()
 
-private class FakePort(
+private class RecordingPort(
     private val effect: RemoteEnvelope.Effect = RemoteEnvelope.Effect.DONE,
     private val blowUp: Boolean = false,
 ) : RemoteEnvelope.Port {

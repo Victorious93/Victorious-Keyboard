@@ -107,6 +107,9 @@ object ToolsPanelItems {
         ToolbarActionId.AI_SUMMARIZE to v(Icons.Outlined.Summarize, R.string.tools__action__ai_summarize),
         ToolbarActionId.AI_TRANSLATE to v(Icons.Outlined.Translate, R.string.tools__action__ai_translate),
         ToolbarActionId.AI_SHELL to v(Icons.Outlined.Terminal, R.string.tools__action__ai_shell),
+        ToolbarActionId.AI_SHORTER to v(Icons.AutoMirrored.Outlined.ShortText, R.string.tools__action__ai_shorter),
+        ToolbarActionId.AI_EXPLAIN to v(Icons.Outlined.Psychology, R.string.tools__action__ai_explain),
+        ToolbarActionId.AI_GENERATE to v(Icons.Outlined.Terminal, R.string.tools__action__ai_generate),
 
         ToolbarActionId.CTRL to t("Ctrl", R.string.tools__action__ctrl),
         ToolbarActionId.ALT to t("Alt", R.string.tools__action__alt),

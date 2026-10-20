@@ -17,6 +17,9 @@
 package com.victorious.keyboard.ime.ai
 
 import com.victorious.keyboard.ime.nlp.prediction.LearningGate
+import com.victorious.keyboard.ime.toolbar.ToolbarActionId
+import com.victorious.keyboard.ime.toolbar.ToolsCatalog
+import com.victorious.keyboard.ime.toolbar.ToolsTab
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -107,6 +110,24 @@ class LocalAiTest : FunSpec({
         AiPrompt.chooseDefault("", "", "edit", false, true, false) shouldBe AiSource.EDITOR
         AiPrompt.chooseDefault("", "field", "vault text", false, true, true) shouldBe AiSource.FIELD
         AiPrompt.chooseDefault("", "", "vault text", false, true, true) shouldBe null
+    }
+
+    test("shorter, explain, and generate stay on device and are not attack recipes") {
+        val shorter = AiPrompt.plan(sample(task = AiTask.SHORTER, source = AiSource.SELECTION, selection = "a long sentence")).shouldBeInstanceOf<AiPlan.Ready>()
+        shorter.user shouldContain "shorter"
+        shorter.user shouldContain "a long sentence"
+        val explain = AiPrompt.plan(sample(task = AiTask.EXPLAIN_COMMAND, source = AiSource.SELECTION, selection = "ls -l")).shouldBeInstanceOf<AiPlan.Ready>()
+        explain.user shouldContain "one short sentence"
+        explain.user shouldContain "ls -l"
+        explain.user shouldNotContain "msfvenom"
+        val generated = AiPrompt.plan(sample(task = AiTask.GENERATE_COMMAND, source = AiSource.SELECTION, selection = "list the files here")).shouldBeInstanceOf<AiPlan.Ready>()
+        generated.user shouldContain "one short shell command"
+        generated.user shouldContain "list the files here"
+        generated.user shouldNotContain "exploit steps"
+        AiPrompt.plan(sample(task = AiTask.SHORTER, source = AiSource.SELECTION, selection = "")).shouldBeInstanceOf<AiPlan.Refuse>().reason shouldBe AiRefusal.EMPTY
+        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_SHORTER
+        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_EXPLAIN
+        ToolsCatalog.actions(ToolsTab.AI) shouldContain ToolbarActionId.AI_GENERATE
     }
 
     test("shell prompt is one command and is not an attack recipe") {

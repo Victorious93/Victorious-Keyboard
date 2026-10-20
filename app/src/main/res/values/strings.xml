@@ -1762,6 +1762,9 @@
     <string name="tools__action__ai_summarize">Summarize</string>
     <string name="tools__action__ai_translate">Translate</string>
     <string name="tools__action__ai_shell">Shell command</string>
+    <string name="tools__action__ai_shorter">Shorter</string>
+    <string name="tools__action__ai_explain">Explain this command</string>
+    <string name="tools__action__ai_generate">Generate command</string>
     <string name="tools__action__ctrl">Control</string>
     <string name="tools__action__alt">Alt</string>
     <string name="tools__action__esc">Escape</string>

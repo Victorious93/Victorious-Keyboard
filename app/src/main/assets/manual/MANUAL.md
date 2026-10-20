@@ -343,8 +343,8 @@ This is optional. The app does not include a model, and it does not download one
 2. Tap Import .gguf and pick a model file on the phone. It is copied into the app's private storage. Files of 512 MB or more ask before the copy. The limit is 4 GB and 20 models.
 3. Select the model you want. You can set context size, threads, temperature, max tokens, the language used for translate, and a system prompt. Delete model removes that copy.
 4. The model loads the first time you use it, in the background, and unloads after it has been idle or when the phone is low on memory.
-5. On the keyboard, open the tools panel → AI and tap Ask, Rewrite, Fix grammar, Continue, Summarize, Translate, or Shell. You can also type `/ai`, `/fix`, `/rewrite`, `/sum`, `/translate`, or `/shell`.
-6. The reply is inserted as text. Shell does not run the command. Cancel stops a reply that is still being written.
+5. On the keyboard, open the tools panel → AI and tap Ask, Rewrite, Fix grammar, Shorter, Explain this command, Generate command, Continue, Summarize, Translate, or Shell. You can also type `/ai`, `/fix`, `/rewrite`, `/sum`, `/translate`, or `/shell`. Shorter, Explain this command, and Generate command use the selected text. Generate command turns a description into one command.
+6. The reply is shown first. Insert puts it into the field. Nothing is sent off the phone. Shell, Explain this command, and Generate command do not run the command. Cancel stops a reply that is still being written.
 7. Clipboard text and Vault text are used only after you choose that source. A Vault result can be inserted. It is not copied to the regular clipboard.
 8. AI suggestions in the strip start off. They also need Learn from my typing. They stay off for passwords, Incognito, boxes that disallow personalised learning, and a Vault paste.
 9. With no model, or on a phone where the on-device engine is missing, the keyboard still types. The AI action explains how to import a model.

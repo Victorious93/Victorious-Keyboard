@@ -64,7 +64,7 @@ Ctrl combinations go to the app as key events with an explicit Ctrl meta state; 
 
 External control is off by default. Settings → Tools → Fleet link → Hub status is the switch.
 
-The service reads `Binder.getCallingUid()`, then the packages for that UID, then the SHA-256 of each package's signing certificate. A caller is allowed only when every package on that UID is `ai.droidcommand.app` or `ai.droidcommand.app.debug`, and each of those packages has a signing certificate.
+The service reads the UID Messenger stamped on the message while the binder call was still running (`Message.sendingUid`). The handler runs later on the main looper, so reading `Binder.getCallingUid()` there would see this process and refuse every hub. A message with no stamp is refused. It then reads the packages for that UID and the SHA-256 of each package's signing certificate. A caller is allowed only when every package on that UID is `ai.droidcommand.app` or `ai.droidcommand.app.debug`, and each of those packages has a signing certificate.
 
 | Caller | Switch | Error |
 |---|---|---|

@@ -36,7 +36,8 @@ import dev.patrickgold.florisboard.lib.fleet.CertDigest
 /**
  * Bridge for the Droidcommand hub. External control is off until the user turns it on. An allowed caller may ask for
  * status, type text, or press keys; the rules live in [BridgeInput] and the editor work in [ExternalInputPort], not
- * here. The reply never includes what the user typed.
+ * here. The reply never includes what the user typed. The caller's UID is the one Messenger stamped on the
+ * message. Reading it later on this handler would see this process instead of the caller.
  */
 class KeyboardBridgeService : Service() {
     private val prefs by FlorisPreferenceStore
@@ -51,13 +52,18 @@ class KeyboardBridgeService : Service() {
     private inner class Incoming : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             val replyTo = msg.replyTo ?: return
+            val callerUid = BridgeProtocol.callerUid(msg.sendingUid)
             val request = if (msg.what == BridgeProtocol.WHAT_REQUEST) {
                 msg.data?.getString(BridgeProtocol.KEY_REQUEST)
             } else {
                 null
             }
             val response = try {
-                answer(request)
+                if (callerUid == null) {
+                    BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+                } else {
+                    answer(request, callerUid)
+                }
             } catch (e: Exception) {
                 BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
             }
@@ -71,11 +77,10 @@ class KeyboardBridgeService : Service() {
         }
     }
 
-    private fun answer(request: String?): String {
-        val uid = Binder.getCallingUid()
+    private fun answer(request: String?, callingUid: Int): String {
         val identity = Binder.clearCallingIdentity()
         try {
-            val packages = packageManager.getPackagesForUid(uid)?.toList().orEmpty()
+            val packages = packageManager.getPackagesForUid(callingUid)?.toList().orEmpty()
             val certificatesPresent = packages.isNotEmpty() && packages.all { certificatePresent(it) }
             val authorized = BridgeProtocol.authorized(packages, certificatesPresent)
             val enabled = if (authorized) {

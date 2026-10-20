@@ -16,7 +16,6 @@
 
 package dev.patrickgold.florisboard.ime.clipboard
 
-import android.content.ContentUris
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.media.ThumbnailUtils
@@ -295,7 +294,13 @@ fun ClipboardInputLayout(
             ),
         ) {
             if (item.type == ItemType.IMAGE) {
-                val id = ContentUris.parseId(item.uri!!)
+                val id = ClipMediaRef.idOf(item.uri?.toString())
+                if (id == null) {
+                    SnyggText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Unable to show this clip",
+                    )
+                } else {
                 val file = ClipboardFileStorage.getFileForId(context, id)
                 val bitmap = remember(id) {
                     runCatching {
@@ -318,18 +323,36 @@ fun ClipboardInputLayout(
                         text = bitmap.exceptionOrNull()?.message ?: "Unknown error",
                     )
                 }
+                }
             } else if (item.type == ItemType.VIDEO) {
-                val id = ContentUris.parseId(item.uri!!)
+                val id = ClipMediaRef.idOf(item.uri?.toString())
+                if (id == null) {
+                    SnyggText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Unable to show this clip",
+                    )
+                } else {
                 val file = ClipboardFileStorage.getFileForId(context, id)
                 val bitmap = remember(id) {
                     runCatching {
                         check(file.exists()) { "Unable to resolve video at ${file.absolutePath}" }
                         val rawBitmap = if (AndroidVersion.ATLEAST_API29_Q) {
                             val dataRetriever = MediaMetadataRetriever()
-                            dataRetriever.setDataSource(file.absolutePath)
-                            val width = dataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                            val height = dataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                            ThumbnailUtils.createVideoThumbnail(file, Size(width!!.toInt(), height!!.toInt()), null)
+                            try {
+                                dataRetriever.setDataSource(file.absolutePath)
+                                val pixels = ClipMediaRef.videoPixels(
+                                    dataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH),
+                                    dataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT),
+                                )
+                                if (pixels != null) {
+                                    ThumbnailUtils.createVideoThumbnail(file, Size(pixels.first, pixels.second), null)
+                                } else {
+                                    @Suppress("DEPRECATION")
+                                    ThumbnailUtils.createVideoThumbnail(file.absolutePath, MediaStore.Video.Thumbnails.MINI_KIND)
+                                }
+                            } finally {
+                                dataRetriever.release()
+                            }
                         } else {
                             @Suppress("DEPRECATION")
                             ThumbnailUtils.createVideoThumbnail(file.absolutePath, MediaStore.Video.Thumbnails.MINI_KIND)
@@ -359,6 +382,7 @@ fun ClipboardInputLayout(
                         modifier = Modifier.fillMaxWidth(),
                         text = bitmap.exceptionOrNull()?.message ?: "Unknown error",
                     )
+                }
                 }
             } else {
                 // Clips can be up to 50k characters and there can be 500 of them: never lay out or pattern-match the

@@ -40,6 +40,14 @@ object BridgeProtocol {
 
     val allowedPackages = setOf("ai.droidcommand.app", "ai.droidcommand.app.debug")
 
+    /**
+     * UID stamped on a Messenger message while the binder call is still running.
+     * [android.os.Message.UID_NONE] is -1. After the message is posted to the main
+     * looper, `Binder.getCallingUid()` is this process, so a missing stamp must
+     * not be replaced with it.
+     */
+    fun callerUid(sendingUid: Int): Int? = if (sendingUid >= 0) sendingUid else null
+
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     fun op(raw: String?): String {

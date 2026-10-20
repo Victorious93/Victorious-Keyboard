@@ -34,7 +34,8 @@ class BridgeConfigTest : FunSpec({
         service shouldNotContain "getTextBeforeCursor"
         service shouldNotContain "commitText"
         service shouldNotContain "keystroke"
-        service shouldContain "getCallingUid"
+        service shouldContain "sendingUid"
+        service shouldNotContain "getCallingUid"
         service shouldContain "getPackagesForUid"
         service shouldContain "GET_SIGNING_CERTIFICATES"
     }

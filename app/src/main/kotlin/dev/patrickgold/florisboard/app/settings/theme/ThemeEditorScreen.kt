@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -75,6 +76,8 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.app.LocalNavController
+import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.app.apptheme.Shapes
 import dev.patrickgold.florisboard.app.ext.ExtensionComponentView
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
@@ -232,6 +235,11 @@ fun ThemeEditorScreen(
     }
 
     actions {
+        val navController = LocalNavController.current
+        FlorisIconButton(
+            onClick = { navController.navigate(Routes.Settings.Manual) },
+            icon = Icons.AutoMirrored.Filled.HelpOutline,
+        )
         FlorisIconButton(
             onClick = { showFineTuneDialog = true },
             icon = Icons.Default.Tune,

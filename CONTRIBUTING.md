@@ -13,6 +13,7 @@ honest" over "fast".
    regenerate `gradle/verification-metadata.xml` (see `BUILD.md`).
 6. State in the PR what you tested and what you could **not** test (e.g. no device). Don't claim more.
 7. Update docs in the same PR; `ROADMAP.md` status must stay truthful.
+8. A feature PR updates `docs/MANUAL.md` and the bundled copy in `app/src/main/assets/manual/MANUAL.md` in the same change. The in-app Help screen reads that copy and does not fetch it. Manual updates are part of done.
 
 ## Upstream (FlorisBoard)
 

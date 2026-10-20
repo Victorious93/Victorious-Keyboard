@@ -5,6 +5,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 ## [Unreleased]
 
 ### Added
+- User manual. `docs/MANUAL.md` is written in everyday language and bundled in the app. Settings → Help renders that copy offline. The old spell-checker and theme-editor help links open the same screen. Picture slots under `docs/manual/img/` are TODO placeholders. Header art is `docs/manual/header.svg`.
 - Custom terminal key row. Settings → Developer & terminal lists the keys (Esc, Tab, Ctrl, Alt, arrows, `|`, `~`, `/`, and the rest). Move them, remove them, or add them back. A macro key sends a saved sequence: Ctrl plus a letter, or a command followed by Enter. The command is inserted, not run, and it is not logged. Leave the order blank to keep the usual row. No network access.
 - Clipboard tile search. On the regular clipboard tab, Search takes what you type (the keys do not go to the app while it is on), and Pinned and Favorites narrow the list. Clear resets them. Vault stays on its own tab. The query is not logged. No network access.
 - Snippet variables. Inserting a snippet expands exact `{date}`, `{time}`, `{clipboard}` and `{cursor}` tokens, in addition to the existing `{{date}}` form. `{cursor}` places the caret. `{date:pattern}`, `{datetime}`, `{selection}` and other braces such as `{ return; }` stay as written. A value taken from the clipboard is not scanned again. No network access.

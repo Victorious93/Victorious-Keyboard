@@ -171,6 +171,11 @@ fun TypingScreen() = FlorisScreen {
         PreferenceGroup(title = stringRes(R.string.pref__spelling__title)) {
             val florisSpellCheckerEnabled = remember { mutableStateOf(false) }
             SpellCheckerServiceSelector(florisSpellCheckerEnabled)
+            Preference(
+                title = stringRes(R.string.settings__help),
+                summary = stringRes(R.string.settings__manual__summary),
+                onClick = { navController.navigate(Routes.Settings.Manual) },
+            )
             ListPreference(
                 prefs.spelling.languageMode,
                 icon = Icons.Default.Language,

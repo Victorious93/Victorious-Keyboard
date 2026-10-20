@@ -113,7 +113,7 @@ class RemoteEnvelopeTest : FunSpec({
         ).str("error") shouldBe "expired"
         call(
             RemoteEnvelope.NonceCache(),
-            request("node.status.get", enabled = false),
+            request("node.status.get"),
             enabled = false,
         ).str("error") shouldBe "external_control_disabled"
 

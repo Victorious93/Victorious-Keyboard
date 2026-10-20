@@ -7,7 +7,7 @@ the "VictorKeys master brief"). Everything marked **verified** was read from cod
 ## 1. What the repository is
 
 A modified distribution of FlorisBoard `v0.6.0-alpha02` (Apache-2.0, upstream credit kept, see `LICENSES.md` and the
-About screen). Kotlin + Compose, single `:app` module plus `:lib:*`, Kotlin namespace `dev.patrickgold.florisboard`,
+About screen). Kotlin + Compose, single `:app` module plus `:lib:*`, Kotlin namespace `com.victorious.keyboard`,
 application id `com.victorious.keyboard`. New features live in `ime.*` packages with a pure-Kotlin core and a thin
 Android shell (`CLAUDE.md`).
 

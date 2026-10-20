@@ -30,8 +30,8 @@
 
 -keep class com.victorious.fleet.IFleetKeyboardProvider { *; }
 -keep class com.victorious.fleet.IFleetKeyboardProvider$Stub { *; }
--keep class dev.patrickgold.florisboard.ime.ai.LlamaNative { *; }
--keep interface dev.patrickgold.florisboard.ime.ai.TokenSink { *; }
--keepclassmembers class * implements dev.patrickgold.florisboard.ime.ai.TokenSink {
+-keep class com.victorious.keyboard.ime.ai.LlamaNative { *; }
+-keep interface com.victorious.keyboard.ime.ai.TokenSink { *; }
+-keepclassmembers class * implements com.victorious.keyboard.ime.ai.TokenSink {
     boolean onToken(java.lang.String);
 }

@@ -6,7 +6,7 @@ functionality goes. Facts here were read from the source; see `AUDIT.md` for the
 ## 1. Module layout (actual)
 
 ```
-:app            Android application; namespace dev.patrickgold.florisboard (≈223 Kotlin files)
+:app            Android application; namespace com.victorious.keyboard (≈223 Kotlin files)
 :lib:android    Android helpers (version checks, content resolver, system settings, …)
 :lib:color      Color model
 :lib:compose    Shared Compose UI pieces
@@ -26,12 +26,12 @@ Instead, **new functionality is added as packages in `:app` with a pure-Kotlin c
 so it is unit-testable on the JVM (the only test surface available in the sandbox):
 
 ```
-dev.patrickgold.florisboard.ime.clipboard.history   (P3) history policy, search, categorisation   [pure Kotlin]
-dev.patrickgold.florisboard.ime.clipboard.backup    (P3) manifest, JSON/ZIP codecs, crypto, import planner [pure Kotlin + JCE]
-dev.patrickgold.florisboard.ime.terminal            (P4) key-sequence mapping, modifier state machine [pure Kotlin]
-dev.patrickgold.florisboard.ime.developer           (P4) extra-key rows, profiles
-dev.patrickgold.florisboard.ime.snippets            (P5) templates, expansion engine
-dev.patrickgold.florisboard.ime.ai                  (P7) prompt library, local transforms, provider adapters
+com.victorious.keyboard.ime.clipboard.history   (P3) history policy, search, categorisation   [pure Kotlin]
+com.victorious.keyboard.ime.clipboard.backup    (P3) manifest, JSON/ZIP codecs, crypto, import planner [pure Kotlin + JCE]
+com.victorious.keyboard.ime.terminal            (P4) key-sequence mapping, modifier state machine [pure Kotlin]
+com.victorious.keyboard.ime.developer           (P4) extra-key rows, profiles
+com.victorious.keyboard.ime.snippets            (P5) templates, expansion engine
+com.victorious.keyboard.ime.ai                  (P7) prompt library, local transforms, provider adapters
 ```
 
 A package is promoted to a Gradle module only when (a) it has no dependency on `:app` internals and (b) the build-time
@@ -83,7 +83,7 @@ provably isolated from key handling.
 | # | Decision | Reason |
 |---|---|---|
 | D1 | Base = FlorisBoard `v0.6.0-alpha02`, merged with history | `AUDIT.md` §2 |
-| D2 | Keep Kotlin namespace `dev.patrickgold.florisboard`; change `applicationId` and user-visible branding only | Avoid ~250-file churn; applicationId ≠ namespace is supported by AGP |
+| D2 | Kotlin namespace is `com.victorious.keyboard`. `applicationId` stays `com.victorious.keyboard` (debug `.debug`, bench `.bench`) | Don approved the rename after pull request #55. Preference keys, the dictionary file, extension ids, and fleet action strings stay. The IME, spell checker, screenshot helper, and launcher alias keep their previous component names |
 | D3 | Remove `:lib:native` | `AUDIT.md` R5 |
 | D4 | No new Gradle modules yet | §1 |
 | D5 | Crypto for backups: JCE only — `AES-256-GCM` with a key from `PBKDF2WithHmacSHA256`, per-file random salt and nonce | No new dependency; widely reviewed primitives; available on API 26. (Argon2 is stronger against GPUs but needs a native/3rd-party lib; revisit in P9) |

@@ -41,9 +41,9 @@ gate again. Watch for `NewApi` when adding Java/Android API calls.
 Long builds: run in the background with `--no-parallel --max-workers=2`, log to a file, wait for it.
 
 ## Architecture boundaries
-* Single `:app` module + `:lib:*`. New features = packages under `dev.patrickgold.florisboard.ime.*` with a
+* Single `:app` module + `:lib:*`. New features = packages under `com.victorious.keyboard.ime.*` with a
   **pure-Kotlin core** (no `android.*` imports) and a thin Android shell. See `ARCHITECTURE.md` §1, §3.
-* Kotlin namespace stays `dev.patrickgold.florisboard`; product identity is `applicationId` + resources.
+* Kotlin namespace stays `com.victorious.keyboard`; product identity is `applicationId` + resources.
 * Optional features must never crash the IME and never block the main thread.
 
 ## Security invariants (do not weaken)

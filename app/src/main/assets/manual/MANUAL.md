@@ -14,7 +14,7 @@ It belongs to the Droidcommand fleet as the phone's keyboard. The fleet is the s
 
 The look you get at first is a squared black keyboard: a near-black background, dark keys, light letters, and only slightly rounded corners.
 
-The version number is inherited from FlorisBoard. That is an allowed fork exception: the numbers were not started over. Until the approved package rename lands, the code inside the app still uses the name dev.patrickgold.florisboard. The app you install is still Victorious Keyboard. Android's keyboard list is not renamed by that inner name.
+The version number is inherited from FlorisBoard. That is an allowed fork exception: the numbers were not started over. The code inside the app uses the name com.victorious.keyboard. The app you install is still Victorious Keyboard. If you already turned this keyboard on, you do not turn it on again: Android still knows it as dev.patrickgold.florisboard.FlorisImeService. The spell checker and the screenshot helper keep their previous names for the same reason.
 
 ## Install and first run
 

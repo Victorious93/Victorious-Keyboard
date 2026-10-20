@@ -55,7 +55,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.patrickgold.florisboard"
+    namespace = "com.victorious.keyboard"
     compileSdk = projectCompileSdk.toInt()
     buildToolsVersion = tools.versions.buildTools.get()
     ndkVersion = "27.2.12479018"

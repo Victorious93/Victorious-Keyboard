@@ -55,7 +55,7 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
   or no input connection. The panel stays open in those cases. Titles, bodies, clipboard and selection are never logged.
 * Uses the clipboard panel's theme elements, so existing themes style it.
 
-## What exists (`dev.patrickgold.florisboard.ime.snippets`)
+## What exists (`com.victorious.keyboard.ime.snippets`)
 
 | Piece | Purpose |
 |---|---|

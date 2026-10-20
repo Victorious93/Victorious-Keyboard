@@ -27,13 +27,13 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
-import dev.patrickgold.florisboard.app.FlorisPreferenceStore
-import dev.patrickgold.florisboard.ime.fleet.ExternalInputPort
-import dev.patrickgold.florisboard.ime.fleet.RemoteControlPort
-import dev.patrickgold.florisboard.lib.fleet.BridgeInput
-import dev.patrickgold.florisboard.lib.fleet.BridgeProtocol
-import dev.patrickgold.florisboard.lib.fleet.CertDigest
-import dev.patrickgold.florisboard.lib.fleet.RemoteEnvelope
+import com.victorious.keyboard.app.FlorisPreferenceStore
+import com.victorious.keyboard.ime.fleet.ExternalInputPort
+import com.victorious.keyboard.ime.fleet.RemoteControlPort
+import com.victorious.keyboard.lib.fleet.BridgeInput
+import com.victorious.keyboard.lib.fleet.BridgeProtocol
+import com.victorious.keyboard.lib.fleet.CertDigest
+import com.victorious.keyboard.lib.fleet.RemoteEnvelope
 
 /**
  * Bridge for the Droidcommand hub. External control is off until the user turns it on. The old operations may type

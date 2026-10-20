@@ -20,7 +20,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.patrickgold.florisboard.benchmark"
+    namespace = "com.victorious.keyboard.benchmark"
     compileSdk = 34
 
     compileOptions {

@@ -24,9 +24,9 @@ Apache-2.0 §4 obligations and how they are met:
 
 ## 3. Names, logos, trademarks
 
-* Application id: `com.victorious.keyboard` (Phase 1). The Kotlin source namespace remains
-  `dev.patrickgold.florisboard`; it is an internal code identifier, not a product name, and renaming it would touch
-  ~250 files for no user benefit.
+* Application id: `com.victorious.keyboard` (debug `.debug`, bench `.bench`). The Kotlin source namespace is
+  `com.victorious.keyboard`. It is an internal code identifier, not a product name. Copyright notices still name
+  FlorisBoard. The input-method component name stays `dev.patrickgold.florisboard.FlorisImeService`.
 * The FlorisBoard name and icon belong to upstream. Apache-2.0 §6 grants no trademark rights. User-visible names and
   the launcher icon are replaced in Phase 1; the README states the derivation factually ("based on FlorisBoard").
 * This project is not affiliated with or endorsed by the FlorisBoard project or by Google.

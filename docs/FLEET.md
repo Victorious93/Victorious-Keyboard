@@ -89,3 +89,47 @@ Each send and each reply is capped at 8,000 characters. Calls run on a daemon th
 ## Hub status bridge
 
 The keyboard also hosts a separate status service for the Droidcommand hub. That service is off until the user turns on Hub status. It answers `keyboard.capabilities.get` and `keyboard.status` only to `ai.droidcommand.app` and `ai.droidcommand.app.debug`. It does not forward typed text. See [BRIDGE.md](BRIDGE.md).
+
+## Remote-control envelope v1
+
+`BRIDGE_PROTOCOL_MAJOR` is 1 and `BRIDGE_PROTOCOL_MINOR` is 1. The service and the action are the same as the hub bridge: `KeyboardBridgeService`, `com.victorious.keyboard.action.BRIDGE`, Messenger `what = 1` / `what = 2`. External control is off until Hub status is on.
+
+The caller is authorized only by UID, then package, then certificate. The allowlist is still `ai.droidcommand.app` and `ai.droidcommand.app.debug`. Fields inside the JSON are never an identity. A missing UID is `unauthorized`. The switch off is `external_control_disabled`.
+
+Top-level fields are flat: `op`, `requestId`, `targetNodeRef`, `actionRef`, `params`, `nonce`, `timestampMs`, `ttlMs`, `destructive`, `trigger`. Optional `protocol_major` and `protocol_minor` must be 1 when they are present. `targetNodeRef` and `trigger` are informational. `ttlMs` defaults to 120000 and cannot be above 300000.
+
+`op` is one of `capabilities.get`, `remote.command`, `macro.step`, `macro.run`.
+
+`macro.step` adds `macroId`, `stepIndex`, and `onError` (`abort` or `continue`). `macro.run` adds `macroId`, `steps`, and `dryRun`. A step object is `actionRef`, `params`, and optional `destructive` and `onError`. `dryRun` checks the steps and does not perform them and does not show a prompt.
+
+The nonce is 128 bits, 32 hex digits, dashes allowed. A request is expired when `now > timestampMs + ttlMs`, or when the timestamp is more than 120000 ms away from now. A nonce is remembered for the authenticated package for 10 minutes. A repeat in that window is `replay_detected`, including a repeat of an expired request. Two packages do not share a nonce.
+
+`capabilities.get` returns, for each action, `name`, `kind` (`read`, `action`, or `destructive`), `remoteAllowed`, and `requiresConfirm`.
+
+`remote.command` may use:
+
+| actionRef | Effect |
+|---|---|
+| `keyboard.status` | read: whether the keyboard is up, the mode name, the day theme id |
+| `keyboard.mode` | `params.mode` of `standard`, `developer`, or `termux` |
+| `keyboard.theme` | `params.theme` of `org.florisboard.themes:` plus a component id |
+| `media.play`, `media.pause`, `media.toggle` | media key play/pause, down then up |
+| `media.next`, `media.prev`, `media.rewind`, `media.fast_forward` | the matching media key, down then up |
+| `media.volume` with `direction` `up` or `down` | music-stream volume, system UI |
+| `media.seek`, `media.seekBy`, `media.state`, `media.volume` with `level` | `not_paired` in this build. Exact seek is the File Manager bridge, which is a separate change |
+
+`keyboard.input.text` and `keyboard.input.key` as an `actionRef` are `unsupported_op`. The new envelope never calls the input port. Those two names still work as the old operations, with their old replies.
+
+`destructive: true`, or a capability whose kind is `destructive`, returns `confirmation_required`. The keyboard shows an on-device notice and does not run the action. Nothing in this catalog is auto-approved. A dry run reports the same error and does not show the notice.
+
+Other errors: `invalid_parameters`, `not_found`, `internal`, `capability_off`.
+
+```json
+{"op":"remote.command","requestId":"r1","actionRef":"media.next","params":{},
+ "nonce":"00112233445566778899aabbccddeeff","timestampMs":1700000000000,"ttlMs":120000}
+```
+
+```json
+{"op":"macro.run","requestId":"r2","macroId":"m1","dryRun":true,"nonce":"aabbccddeeff00112233445566778899",
+ "timestampMs":1700000000000,"steps":[{"actionRef":"keyboard.mode","params":{"mode":"developer"},"onError":"abort"}]}
+```

@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.DataObject
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.EmojiEmotions
@@ -126,6 +127,7 @@ object ToolsPanelItems {
         ToolbarActionId.CTRL_R to t("^R", R.string.tools__action__ctrl_r),
         ToolbarActionId.DEVROW to v(Icons.Outlined.Keyboard, R.string.tools__action__devrow),
 
+        ToolbarActionId.TEXT_TOOLS to v(Icons.Outlined.Build, R.string.tools__action__text_tools),
         ToolbarActionId.CAMEL to t("aB", R.string.tools__action__camel),
         ToolbarActionId.SNAKE to t("a_b", R.string.tools__action__snake),
         ToolbarActionId.KEBAB to t("a-b", R.string.tools__action__kebab),

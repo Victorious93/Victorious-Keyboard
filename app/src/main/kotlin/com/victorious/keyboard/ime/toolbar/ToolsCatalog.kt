@@ -83,6 +83,7 @@ object ToolsCatalog {
             ToolbarActionId.DEVROW,
         ),
         ToolsTab.CODE to listOf(
+            ToolbarActionId.TEXT_TOOLS,
             ToolbarActionId.CAMEL,
             ToolbarActionId.SNAKE,
             ToolbarActionId.KEBAB,

@@ -19,9 +19,16 @@ package com.victorious.keyboard.ime.toolbar
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Base64
+import java.util.Locale
 import java.util.UUID
 import kotlin.random.Random
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -42,13 +49,33 @@ enum class TextTransform {
     UUID, TIMESTAMP, RANDOM_HEX,
     MD5, SHA1, SHA256,
     CODE_FENCE,
+    JSON_MINIFY,
+    UPPER, LOWER, TITLE,
+    TRIM_LINES, SORT_LINES, DEDUPE_LINES,
+    ROT13,
+    EXTRACT_URL, EXTRACT_EMAIL, EXTRACT_IP,
+    JWT_DECODE,
+    UNIX_TO_DATE, DATE_TO_UNIX,
+    SHELL_ESCAPE, JSON_ESCAPE,
 }
 
 data class TextCounts(val characters: Int, val words: Int, val tokens: Int)
 
 object TextTransforms {
     private val prettyJson = Json { prettyPrint = true }
+    private val compactJson = Json { prettyPrint = false }
     private const val BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    private const val BASE64URL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+    private val isoSeconds: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
+    private val URL_PATTERN = Regex("""https?://[^\s<>"']+""", RegexOption.IGNORE_CASE)
+    private val EMAIL_PATTERN = Regex("""[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}""")
+    private val IPV4_PATTERN = Regex(
+        """\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b""",
+    )
+    private val IPV6_PATTERN = Regex(
+        """(?i)(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{1,4}:){2,7}[0-9A-Fa-f]{0,4}(?![0-9A-Fa-f:])""",
+    )
 
     fun apply(
         op: TextTransform,
@@ -74,6 +101,22 @@ object TextTransforms {
             TextTransform.HEX_ENCODE -> TransformResult.Ok(input.toByteArray(Charsets.UTF_8).toHex())
             TextTransform.HEX_DECODE -> decodeHex(input)
             TextTransform.JSON_PRETTY -> pretty(input)
+            TextTransform.JSON_MINIFY -> minify(input)
+            TextTransform.UPPER -> TransformResult.Ok(input.uppercase(Locale.ROOT))
+            TextTransform.LOWER -> TransformResult.Ok(input.lowercase(Locale.ROOT))
+            TextTransform.TITLE -> TransformResult.Ok(titleCase(input))
+            TextTransform.TRIM_LINES -> TransformResult.Ok(input.split('\n').joinToString("\n") { it.trim() })
+            TextTransform.SORT_LINES -> TransformResult.Ok(input.split('\n').sorted().joinToString("\n"))
+            TextTransform.DEDUPE_LINES -> TransformResult.Ok(input.split('\n').distinct().joinToString("\n"))
+            TextTransform.ROT13 -> TransformResult.Ok(rot13(input))
+            TextTransform.EXTRACT_URL -> extract(input, ExtractKind.URL)
+            TextTransform.EXTRACT_EMAIL -> extract(input, ExtractKind.EMAIL)
+            TextTransform.EXTRACT_IP -> extract(input, ExtractKind.IP)
+            TextTransform.JWT_DECODE -> jwtDecode(input)
+            TextTransform.UNIX_TO_DATE -> unixToDate(input)
+            TextTransform.DATE_TO_UNIX -> dateToUnix(input)
+            TextTransform.SHELL_ESCAPE -> TransformResult.Ok(shellEscape(input))
+            TextTransform.JSON_ESCAPE -> TransformResult.Ok(Json.encodeToString(String.serializer(), input))
             TextTransform.UUID -> TransformResult.Ok(UUID.randomUUID().toString())
             TextTransform.TIMESTAMP -> TransformResult.Ok(nowMillis.toString())
             TextTransform.RANDOM_HEX -> TransformResult.Ok(random.nextBytes(8).toHex())
@@ -233,6 +276,122 @@ object TextTransforms {
     }
 
     private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
+    private fun minify(input: String): TransformResult {
+        val trimmed = input.trim()
+        if (trimmed.isEmpty() || !jsonDelimitersBalanced(trimmed)) return TransformResult.Failed("invalid json")
+        val element = try {
+            Json.parseToJsonElement(trimmed)
+        } catch (_: Exception) {
+            return TransformResult.Failed("invalid json")
+        }
+        val text = compactJson.encodeToString(JsonElement.serializer(), element)
+        if (text.isEmpty()) return TransformResult.Failed("invalid json")
+        return TransformResult.Ok(text)
+    }
+
+    private fun titleCase(input: String): String {
+        val parts = words(input)
+        if (parts.isEmpty()) return ""
+        return parts.joinToString(" ") { capitalize(it) }
+    }
+
+    private fun rot13(input: String): String = buildString(input.length) {
+        for (ch in input) {
+            append(
+                when (ch) {
+                    in 'a'..'z' -> 'a' + (ch - 'a' + 13) % 26
+                    in 'A'..'Z' -> 'A' + (ch - 'A' + 13) % 26
+                    else -> ch
+                },
+            )
+        }
+    }
+
+    private enum class ExtractKind { URL, EMAIL, IP }
+
+    private fun extract(input: String, kind: ExtractKind): TransformResult {
+        val hits = when (kind) {
+            ExtractKind.URL -> URL_PATTERN.findAll(input).map { match ->
+                match.value.trimEnd('.', ',', ';', ')', ']')
+            }.toList()
+            ExtractKind.EMAIL -> EMAIL_PATTERN.findAll(input).map { it.value }.toList()
+            ExtractKind.IP -> {
+                val v4 = IPV4_PATTERN.findAll(input).map { it.value }
+                val v6 = IPV6_PATTERN.findAll(input).map { it.value }.filter { candidate ->
+                    candidate.count { it == ':' } >= 2
+                }
+                (v4 + v6).toList()
+            }
+        }.distinct()
+        if (hits.isEmpty()) return TransformResult.Failed("none")
+        return TransformResult.Ok(hits.joinToString("\n"))
+    }
+
+    /** Header and payload only. The signature is not decoded and is not checked. */
+    private fun jwtDecode(input: String): TransformResult {
+        val parts = input.trim().split('.')
+        if (parts.size !in 2..3) return TransformResult.Failed("bad jwt")
+        val header = decodeJwtPart(parts[0]) ?: return TransformResult.Failed("bad jwt")
+        val payload = decodeJwtPart(parts[1]) ?: return TransformResult.Failed("bad jwt")
+        return TransformResult.Ok("header\n${presentJson(header)}\n\npayload\n${presentJson(payload)}")
+    }
+
+    private fun presentJson(text: String): String {
+        val parsed = pretty(text)
+        return if (parsed is TransformResult.Ok) parsed.text else text
+    }
+
+    private fun decodeJwtPart(part: String): String? {
+        val cleaned = part.trim()
+        if (cleaned.isEmpty() || cleaned.any { it !in BASE64URL_ALPHABET }) return null
+        var padded = cleaned.replace('-', '+').replace('_', '/')
+        padded += when (padded.length % 4) {
+            0 -> ""
+            2 -> "=="
+            3 -> "="
+            else -> return null
+        }
+        return try {
+            String(Base64.getDecoder().decode(padded), Charsets.UTF_8)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
+    private fun unixToDate(input: String): TransformResult {
+        val value = input.trim().toLongOrNull() ?: return TransformResult.Failed("bad time")
+        val millis = if (kotlin.math.abs(value) >= 100_000_000_000L) value else value * 1000
+        return try {
+            TransformResult.Ok(isoSeconds.format(Instant.ofEpochMilli(millis)))
+        } catch (_: Exception) {
+            TransformResult.Failed("bad time")
+        }
+    }
+
+    private fun dateToUnix(input: String): TransformResult {
+        val raw = input.trim()
+        if (raw.isEmpty()) return TransformResult.Failed("bad time")
+        val instant = parseInstant(raw) ?: return TransformResult.Failed("bad time")
+        return TransformResult.Ok(instant.epochSecond.toString())
+    }
+
+    private fun parseInstant(raw: String): Instant? {
+        runCatching { Instant.parse(raw) }.getOrNull()?.let { return it }
+        val formats = listOf(
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+        )
+        for (format in formats) {
+            runCatching { LocalDateTime.parse(raw, format).toInstant(ZoneOffset.UTC) }.getOrNull()?.let { return it }
+        }
+        return runCatching {
+            LocalDate.parse(raw, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay().toInstant(ZoneOffset.UTC)
+        }.getOrNull()
+    }
+
+    private fun shellEscape(input: String): String = "'" + input.replace("'", "'\\''") + "'"
 
     private fun regexEscape(input: String): String {
         val special = "\\.^$|?*+()[]{}"

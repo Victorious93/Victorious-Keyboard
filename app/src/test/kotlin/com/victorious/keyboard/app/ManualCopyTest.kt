@@ -33,6 +33,7 @@ class ManualCopyTest : FunSpec({
         manual shouldContain "Media tile"
         manual shouldContain "external control"
         manual shouldContain "Pin up to four tools"
+        manual shouldContain "Text Tools"
         manual shouldContain "toolbar.json"
     }
 })

@@ -62,10 +62,11 @@ The row above the keys shows word suggestions while you type.
 2. The first suggestion is underlined. Tap a suggestion to use it.
 3. Word prediction can offer the word you are typing, a guess for the next word, and a close spelling. A word that is already in the dictionary, in your own dictionary, or in words the keyboard has learned is left as you typed it.
 4. Settings → Typing → Word prediction turns this on or off. It starts on. Autocorrect can be Off, Mild, or Normal. Backspace right after a replacement puts your typing back.
-5. Learn from my typing starts off. While it is off, new words are not saved. While it is on, new words stay on this phone only. Passwords, Incognito, and boxes that ask for no personalised learning are skipped.
-6. Settings → Typing → My suggestions stores your own phrases. Long-press a suggestion, or text you have selected, to add it. An optional shortcut shows the phrase when you type that shortcut. Long-press a saved phrase to delete it.
-7. When you are not in the middle of a word, a recent clipboard chip can still show in the strip. Tap it to paste that clip.
-8. The button on the left of the strip opens the tools panel.
+5. A period typed between letters, with no space, stays inside the word. `word.word`, a file name, a domain, an email, a URL, a version such as `1.2.3`, and code are not given an automatic space, a capital letter, or a spelling replacement. A period followed by a space still starts a new sentence, and the next word can be capitalized.
+6. Learn from my typing starts off. While it is off, new words are not saved. While it is on, new words stay on this phone only. Passwords, Incognito, and boxes that ask for no personalised learning are skipped.
+7. Settings → Typing → My suggestions stores your own phrases. Long-press a suggestion, or text you have selected, to add it. An optional shortcut shows the phrase when you type that shortcut. Long-press a saved phrase to delete it.
+8. When you are not in the middle of a word, a recent clipboard chip can still show in the strip. Tap it to paste that clip.
+9. The button on the left of the strip opens the tools panel.
 
 Suggestions stay off in password boxes and in boxes that ask for no suggestions.
 
@@ -287,6 +288,7 @@ TODO: photograph the default squared black keyboard. `docs/manual/img/theme.txt`
 3. Settings → Look → Keyboard colors recolors Victorious Black, Victorious Neon, and Neon Light: background, key, key text, accent, highlight, and suggestion pills. Presets include Neon, Cyber blue, Matrix, Purple, Red, and Mono. Reset to default restores the preset colors. Another theme is left alone.
 4. The Quick tab tile Next colors steps through those presets.
 5. Settings → Look → Keyboard → Bottom gap lifts the keyboard above the navigation bar. It starts with a small gap. The slider adds more, up to 48 dp.
+6. Settings → Keyboard extensions, Language pack extensions, and Theme extensions list the built-in packs under Victorious names. Their ids start with `com.victorious.keyboard.` (for example `com.victorious.keyboard.themes`). A theme, layout, or language saved under the older `org.florisboard.` id still loads. The Chinese shape pack points at https://github.com/Victorious93/Victorious-Keyboard for more input methods. Settings → About still credits FlorisBoard under the Apache 2.0 licence.
 
 ### Local AI
 

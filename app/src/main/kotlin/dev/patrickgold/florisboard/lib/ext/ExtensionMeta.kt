@@ -101,6 +101,12 @@ data class ExtensionMeta(
      * Use an SPDX license expression if this extension has multiple licenses.
      */
     val license: String,
+
+    /**
+     * Older ids that must still resolve to this extension. Built-in packages list the
+     * FlorisBoard id here so saved themes, layouts, and subtypes keep working.
+     */
+    val aliases: List<String> = emptyList(),
 ) {
     fun getUpdateJsonPair(): String {
         return "\"${id}\":\"${version}\""

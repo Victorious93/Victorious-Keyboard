@@ -38,15 +38,21 @@ it can and should do is carry its own name and not present upstream's identity a
 | Item | State |
 |---|---|
 | App label, IME name, settings title, About screen | "Victorious Keyboard" (was already; a stray Albanian override "TastieraFloris" removed) |
-| Theme names | "Victorious Neon" and "Victorious Neon Light" are the defaults. Older entries stay selectable as "Victorious Day / Night / Pure Night …". Theme *ids* `org.florisboard.themes` and `floris_day` are unchanged |
+| Theme names | "Victorious Neon" and "Victorious Neon Light" are the defaults. Older entries stay selectable as "Victorious Day / Night / Pure Night …". The theme extension id is `com.victorious.keyboard.themes`. Theme component ids such as `floris_day` and `victorious_black` are unchanged. A saved `org.florisboard.themes:…` id still loads |
 | "FlorisBoard App Assets" label, extension-store sentence, crash titles in 20+ locales | English text rebranded; the translated copies that said FlorisBoard were deleted so those locales fall back to English until retranslated |
 | "Visit Addons Store" button (opened upstream's `beta.addons.florisboard.org`) | **removed**; Extensions screen now only offers import |
 | Typing-screen feedback link (upstream discussion thread) | now points to this repository's issue tracker |
 | Spell-checker and theme-editor help links | Open the in-app manual (`ui://florisboard/settings/manual`), which is also Settings → Help |
-| Identifiers: Kotlin package `dev.patrickgold.florisboard`, extension ids `org.florisboard.*`, preference keys, `floris_user_dictionary` file, `florisboard://` URI scheme, MIME types | **kept on purpose**: renaming would corrupt stored settings/extensions and make upstream merges unmanageable (`CLAUDE.md`). Not user-visible |
+| Identifiers: Kotlin package `dev.patrickgold.florisboard`, preference keys, `floris_user_dictionary` file, `florisboard://` URI scheme, MIME types | **kept on purpose**: renaming would corrupt stored settings and make upstream merges unmanageable (`CLAUDE.md`). Not user-visible |
+| Built-in extension ids | Settings shows `com.victorious.keyboard.*`. Each pack lists its old `org.florisboard.*` id as an alias, so saved themes, layouts, and subtypes still resolve. Asset folders keep the old names |
 | Copyright headers, `LICENSE`, About → licences | **kept, required** by Apache-2.0 §4 |
 
-Credit: Settings → About now has a "Based on FlorisBoard" entry (names The FlorisBoard Contributors, Apache 2.0,
-baseline `v0.6.0-alpha02`, opens upstream's repository). English only for now.
+Credit: Settings → About still has a "Based on FlorisBoard" entry (names The FlorisBoard Contributors, Apache 2.0,
+baseline `v0.6.0-alpha02`). It opens the in-app licence screen. English only for now.
+
+Settings → Keyboard extensions, Language pack extensions, and Theme extensions list the eight built-in packs
+as Victorious packs, maintained by Victorious93, with homepage and issue links to
+https://github.com/Victorious93/Victorious-Keyboard. The Chinese shape pack tells readers, in Chinese and English,
+to get more input methods from that repository.
 
 Not yet done: retranslating the removed strings and a pass over inherited screenshots/docs in `docs/upstream/`.

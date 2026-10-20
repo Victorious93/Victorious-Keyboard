@@ -64,13 +64,18 @@ class TextTransformsTest : FunSpec({
     }
 
     test("shell history stays off for incognito, passwords, vault text, and the editor") {
-        val open = ShellHistoryPolicy.shouldRecord(true, false, false, false, false)
+        val open = ShellHistoryPolicy.shouldRecord(true, false, false, false, false, true)
         open shouldBe true
-        ShellHistoryPolicy.shouldRecord(false, false, false, false, false) shouldBe false
-        ShellHistoryPolicy.shouldRecord(true, true, false, false, false) shouldBe false
-        ShellHistoryPolicy.shouldRecord(true, false, true, false, false) shouldBe false
-        ShellHistoryPolicy.shouldRecord(true, false, false, true, false) shouldBe false
-        ShellHistoryPolicy.shouldRecord(true, false, false, false, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(false, false, false, false, false, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(true, true, false, false, false, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(true, false, true, false, false, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(true, false, false, true, false, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(true, false, false, false, true, true) shouldBe false
+        ShellHistoryPolicy.shouldRecord(true, false, false, false, false, false) shouldBe false
+        ShellHistoryPolicy.move(listOf("pwd", "ls"), null, older = true) shouldBe HistoryMove(0, "pwd")
+        ShellHistoryPolicy.move(listOf("pwd", "ls"), 0, older = true) shouldBe HistoryMove(1, "ls")
+        ShellHistoryPolicy.move(listOf("pwd", "ls"), 0, older = false).restoreDraft shouldBe true
+        ShellHistoryPolicy.move(emptyList(), null, older = true).text shouldBe null
         ShellHistoryPolicy.commandFrom("ls\npwd") shouldBe "pwd"
         ShellHistoryPolicy.commandFrom("   ") shouldBe null
         ShellHistoryPolicy.remember(listOf("pwd", "ls"), "pwd") shouldBe listOf("pwd", "ls")

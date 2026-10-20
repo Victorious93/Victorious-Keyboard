@@ -56,11 +56,13 @@ fun rememberTerminalRowPlan(): TerminalRowPlan {
     val custom = remember(customText) { CustomSymbols.parse(customText).keys }
     val keyOrder by prefs.devrow.keyOrder.observeAsState()
     val macros by prefs.devrow.macros.observeAsState()
+    val overlay by com.victorious.keyboard.ime.profile.AppProfileRuntime.effect.collectAsState()
     val packageName = info.packageName
     val typeNull = info.inputAttributes.type == InputAttributes.Type.NULL
-    return remember(policy, mode, profile, terminalKeys, navigationKeys, symbols, custom, customMode, packageName, typeNull, keyOrder, macros) {
+    val rowPolicy = overlay.terminalRow ?: policy
+    return remember(rowPolicy, mode, profile, terminalKeys, navigationKeys, symbols, custom, customMode, packageName, typeNull, keyOrder, macros) {
         TerminalRowPolicy.plan(
-            policy = policy,
+            policy = rowPolicy,
             mode = mode,
             prefs = DeveloperRowPrefs(true, profile, terminalKeys, navigationKeys, symbols),
             custom = custom,

@@ -120,6 +120,14 @@ import com.victorious.keyboard.ime.snippets.SnippetLimits
 import com.victorious.keyboard.ime.snippets.LibraryResult
 import com.victorious.keyboard.ime.snippets.SnippetTemplate
 import com.victorious.keyboard.ime.mode.OperatingMode
+import com.victorious.keyboard.ime.mode.TerminalRowPolicy
+import com.victorious.keyboard.ime.profile.AppProfileRuntime
+import com.victorious.keyboard.ime.profile.AppProfileStore
+import com.victorious.keyboard.ime.profile.AppProfiles
+import com.victorious.keyboard.ime.profile.ProfileHold
+import com.victorious.keyboard.ime.profile.ProfileHoldMachine
+import com.victorious.keyboard.ime.profile.ProfileShift
+import com.victorious.keyboard.ime.theme.extCoreTheme
 import com.victorious.keyboard.ime.developer.DevStep
 import com.victorious.keyboard.ime.developer.DeveloperKeyResolver
 import com.victorious.keyboard.ime.terminal.ModifierSnapshot
@@ -218,11 +226,19 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     /** Text Tools preview. Null while the tile is closed. The text is not logged. */
     val textTools = MutableStateFlow<TextToolPreview?>(null)
 
+    /** Command-history panel. Null while it is closed. The lines are not logged. */
+    val commandHistory = MutableStateFlow<List<String>?>(null)
+    private var historyIndex: Int? = null
+    private var historyDraft: String? = null
+    private var profileHold = ProfileHold()
+    private var profilePackage: String? = null
+
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
         if (open) {
             mediaOpen.value = false
             textTools.value = null
+            commandHistory.value = null
             fleet.refresh()
         }
     }
@@ -232,6 +248,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         if (open) {
             toolsOpen.value = false
             textTools.value = null
+            commandHistory.value = null
         }
     }
 
@@ -455,6 +472,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 toolsOpen.value = false
                 mediaOpen.value = false
                 textTools.value = null
+                commandHistory.value = null
+                historyIndex = null
+                historyDraft = null
+                applyAppProfile(info.packageName)
                 fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
@@ -1573,6 +1594,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 is DevStep.CursorLeft ->
                     editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), step.count)
                 is DevStep.Media -> performMedia(step.command)
+                is DevStep.History -> recallHistory(step.older)
             }
         }
         if (resolution.consumesModifiers) terminalModifiers.consume()
@@ -1870,6 +1892,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
             ToolbarActionId.MEDIA -> setMediaOpen(true)
             ToolbarActionId.TEXT_TOOLS -> openTextTools()
+            ToolbarActionId.HISTORY -> openCommandHistory()
+            ToolbarActionId.HIST_UP -> recallHistory(older = true)
+            ToolbarActionId.HIST_DN -> recallHistory(older = false)
             ToolbarActionId.SCREENSHOT -> scope.launch {
                 if (!prefs.tools.screenshotTile.get()) return@launch
                 withContext(Dispatchers.Main) { ScreenshotCapture.onTile(appContext) }
@@ -2143,6 +2168,136 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         return true
     }
 
+    private fun applyAppProfile(packageName: String?) {
+        if (packageName == profilePackage) return
+        profilePackage = packageName
+        val stored = AppProfileStore.ensure(appContext)
+        val effect = AppProfiles.effect(packageName, stored)
+        AppProfileRuntime.set(effect)
+        val (next, shift) = ProfileHoldMachine.step(
+            profileHold,
+            effect,
+            subtypeManager.activeSubtype.id,
+            prefs.theme.dayThemeId.get().toString(),
+            prefs.theme.nightThemeId.get().toString(),
+        )
+        profileHold = next
+        when (shift) {
+            ProfileShift.Stay -> Unit
+            is ProfileShift.Apply -> {
+                shift.layout?.let { subtypeManager.switchToSubtypeById(it) }
+                val theme = shift.theme
+                if (!theme.isNullOrBlank()) {
+                    val name = themeName(theme) ?: return
+                    scope.launch {
+                        prefs.theme.dayThemeId.set(name)
+                        prefs.theme.nightThemeId.set(name)
+                    }
+                }
+            }
+            is ProfileShift.Restore -> {
+                shift.layout?.let { subtypeManager.switchToSubtypeById(it) }
+                val day = shift.day
+                val night = shift.night
+                if (day != null && night != null) {
+                    val dayName = themeName(day)
+                    val nightName = themeName(night)
+                    if (dayName != null && nightName != null) {
+                        scope.launch {
+                            prefs.theme.dayThemeId.set(dayName)
+                            prefs.theme.nightThemeId.set(nightName)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun themeName(raw: String): ExtensionComponentName? = try {
+        if (':' in raw) ExtensionComponentName.from(raw) else extCoreTheme(raw)
+    } catch (_: Exception) {
+        null
+    }
+
+    fun closeCommandHistory() {
+        commandHistory.value = null
+    }
+
+    fun openCommandHistory() {
+        if (!historyAllowed()) {
+            appContext.showShortToastSync(R.string.history__unavailable)
+            return
+        }
+        ToolbarRuntime.ensure(appContext)
+        toolsOpen.value = false
+        mediaOpen.value = false
+        textTools.value = null
+        commandHistory.value = ToolbarRuntime.config.value.recentCommands
+    }
+
+    fun clearCommandHistory() {
+        ToolbarRuntime.clearHistory(appContext)
+        historyIndex = null
+        historyDraft = null
+        commandHistory.value = emptyList()
+    }
+
+    fun applyHistoryCommand(text: String) {
+        if (!historyAllowed()) return
+        if (text.isEmpty()) return
+        historyDraft = historyDraft ?: currentCommandLine()
+        historyIndex = ToolbarRuntime.config.value.recentCommands.indexOf(text).takeIf { it >= 0 }
+        replaceCommandLine(text)
+        commandHistory.value = null
+    }
+
+    fun recallHistory(older: Boolean) {
+        if (!historyAllowed()) {
+            appContext.showShortToastSync(R.string.history__unavailable)
+            return
+        }
+        ToolbarRuntime.ensure(appContext)
+        val history = ToolbarRuntime.config.value.recentCommands
+        if (historyDraft == null) historyDraft = currentCommandLine()
+        val moved = ShellHistoryPolicy.move(history, historyIndex, older)
+        historyIndex = moved.index
+        val text = if (moved.restoreDraft) {
+            val draft = historyDraft.orEmpty()
+            historyDraft = null
+            draft
+        } else {
+            moved.text ?: return
+        }
+        replaceCommandLine(text)
+    }
+
+    private fun historyAllowed(): Boolean {
+        ToolbarRuntime.ensure(appContext)
+        return ShellHistoryPolicy.shouldRecord(
+            enabled = ToolbarRuntime.config.value.shellHistoryEnabled,
+            incognito = activeState.isIncognitoMode,
+            passwordLike = editorInstance.activeInfo.inputAttributes.isPasswordLike(),
+            vaultHold = vaultLearningHold,
+            editorOpen = clipEditor.value != null,
+            terminalApp = TerminalRowPolicy.isTerminalPackage(editorInstance.activeInfo.packageName),
+        )
+    }
+
+    private fun currentCommandLine(): String {
+        val before = editorInstance.activeContent.textBeforeSelection
+        return before.substringAfterLast('\n')
+    }
+
+    private fun replaceCommandLine(text: String) {
+        val content = editorInstance.activeContent
+        val line = content.textBeforeSelection.substringAfterLast('\n')
+        val end = content.selection.end
+        if (line.isNotEmpty()) {
+            editorInstance.setSelection((end - line.length).coerceAtLeast(0), end)
+        }
+        editorInstance.commitText(text)
+    }
+
     private fun rememberShellLine() {
         ToolbarRuntime.ensure(appContext)
         val record = ShellHistoryPolicy.shouldRecord(
@@ -2151,9 +2306,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             passwordLike = editorInstance.activeInfo.inputAttributes.isPasswordLike(),
             vaultHold = vaultLearningHold,
             editorOpen = clipEditor.value != null,
+            terminalApp = TerminalRowPolicy.isTerminalPackage(editorInstance.activeInfo.packageName),
         )
         if (!record) return
         val line = ShellHistoryPolicy.commandFrom(editorInstance.activeContent.textBeforeSelection) ?: return
+        historyIndex = null
+        historyDraft = null
         ToolbarRuntime.remember(appContext, line)
     }
 

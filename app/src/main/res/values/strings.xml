@@ -1798,6 +1798,17 @@
     <string name="history__clear">Clear</string>
     <string name="history__close">Close</string>
     <string name="history__unavailable">Command history is off, or this app is not a terminal. It stays off in password fields and incognito.</string>
+    <string name="selection__word">Word</string>
+    <string name="selection__line">Line</string>
+    <string name="selection__all">All</string>
+    <string name="selection__cut">Cut</string>
+    <string name="selection__copy">Copy</string>
+    <string name="selection__paste">Paste</string>
+    <string name="selection__home">Home</string>
+    <string name="selection__end">End</string>
+    <string name="selection__word_back">Word back</string>
+    <string name="selection__word_forward">Word forward</string>
+    <string name="selection__close">Close</string>
     <string name="tools__action__json">Format JSON</string>
     <string name="tools__action__b64e">Base64 encode</string>
     <string name="tools__action__b64d">Base64 decode</string>

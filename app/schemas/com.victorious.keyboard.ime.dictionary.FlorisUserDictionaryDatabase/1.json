@@ -29,21 +29,19 @@
           {
             "fieldPath": "locale",
             "columnName": "locale",
-            "affinity": "TEXT",
-            "notNull": false
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "shortcut",
             "columnName": "shortcut",
-            "affinity": "TEXT",
-            "notNull": false
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
+          "autoGenerate": true,
           "columnNames": [
             "_id"
-          ],
-          "autoGenerate": true
+          ]
         },
         "indices": [
           {
@@ -55,11 +53,9 @@
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_words__id` ON `${TABLE_NAME}` (`_id`)"
           }
-        ],
-        "foreignKeys": []
+        ]
       }
     ],
-    "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
       "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '787af4a2df15bf9d2c0597519d3fb273')"

@@ -123,7 +123,8 @@ class LocalAiTest : FunSpec({
         val generated = AiPrompt.plan(sample(task = AiTask.GENERATE_COMMAND, source = AiSource.SELECTION, selection = "list the files here")).shouldBeInstanceOf<AiPlan.Ready>()
         generated.user shouldContain "one short shell command"
         generated.user shouldContain "list the files here"
-        generated.user shouldNotContain "exploit steps"
+        generated.user shouldContain "Do not include exploit steps"
+        generated.user shouldNotContain "msfvenom"
         AiPrompt.plan(sample(task = AiTask.SHORTER, source = AiSource.SELECTION, selection = "")).shouldBeInstanceOf<AiPlan.Refuse>().reason shouldBe AiRefusal.EMPTY
         val ai = ToolsCatalog.actions(ToolsTab.AI)
         (ToolbarActionId.AI_SHORTER in ai) shouldBe true

@@ -35,6 +35,7 @@ class ManualCopyTest : FunSpec({
         manual shouldContain "Pin up to four tools"
         manual shouldContain "Text Tools"
         manual shouldContain "Command history"
+        manual shouldContain "selection toolbar"
         manual shouldContain "NetHunter Terminal"
         manual shouldContain "toolbar.json"
     }

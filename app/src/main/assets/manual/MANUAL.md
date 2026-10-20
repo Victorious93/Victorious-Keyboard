@@ -113,6 +113,8 @@ Per-app profiles switch the keyboard for the app you are typing in. Termux, NetH
 
 Command history is off until you turn on Shell history in Settings → Smartbar → Tools panel. In a terminal app it keeps the last 30 lines you committed with Enter. It does not keep lines from a password field, incognito mode, or an ordinary app. The History tile on the Terminal tab shows them. Older and Newer, or the H+ and H- keys if you add those to the terminal row, step through the list and put the line at the caret. Clear removes the list. The lines are not written to a log and are not part of Android backup.
 
+Drag on the space bar to move the caret. Each character gives a small haptic tick. Hold the space bar, then drag, to select from where the caret was. A selection toolbar appears: Word, Line, All, Cut, Copy, Paste, Home, End, and a word jump in each direction. Close hides the toolbar. A hold that does not drag still does whatever long-press you set for the space bar, which is the input-method picker unless you changed it. Nothing is sent off the phone, and the selected text is not written to a log.
+
 Quick tab: Incognito, Learn words, Emoji, Voice input, One-handed, Bottom gap, Next colors, Settings, Screenshot, and Media.
 
 - Voice input switches to a voice keyboard Android already has, if one is installed. This app does not record the microphone itself.

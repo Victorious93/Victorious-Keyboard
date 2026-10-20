@@ -69,6 +69,8 @@ import com.victorious.keyboard.ime.nlp.prediction.WordPredictor
 import com.victorious.keyboard.ime.popup.PopupMappingComponent
 import com.victorious.keyboard.ime.screenshot.ScreenshotCapture
 import com.victorious.keyboard.ime.text.composing.Composer
+import com.victorious.keyboard.ime.text.PrecisionCursor
+import com.victorious.keyboard.ime.text.SelectionAction
 import com.victorious.keyboard.ime.text.gestures.SwipeAction
 import com.victorious.keyboard.ime.text.key.KeyCode
 import com.victorious.keyboard.ime.text.key.KeyType
@@ -228,6 +230,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     /** Command-history panel. Null while it is closed. The lines are not logged. */
     val commandHistory = MutableStateFlow<List<String>?>(null)
+
+    /** Space-bar selection toolbar. The selected text is not logged. */
+    val selectionBar = MutableStateFlow(false)
     private var historyIndex: Int? = null
     private var historyDraft: String? = null
     private var profileHold = ProfileHold()
@@ -473,6 +478,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 mediaOpen.value = false
                 textTools.value = null
                 commandHistory.value = null
+                selectionBar.value = false
                 historyIndex = null
                 historyDraft = null
                 applyAppProfile(info.packageName)
@@ -1980,6 +1986,87 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     private fun hostSelection(): String = editorInstance.activeContent.selectedText
+
+    /** Selection from a space-bar long-press drag. [anchor] is an absolute caret. [units] is signed. */
+    fun applyPrecisionSelection(anchor: Int, units: Int) {
+        if (editorInstance.activeInfo.isRawInputEditor) return
+        val session = clipEditor.value
+        if (session != null && anchor in 0..session.body.text.length) {
+            val place = PrecisionCursor.select(0, session.body.text.length, anchor, units)
+            clipEditor.value = session.copy(
+                body = session.body.copy(start = place.start, end = place.end),
+                focus = EditorField.BODY,
+                revision = session.revision + 1,
+            )
+            selectionBar.value = !place.collapsed
+            return
+        }
+        val content = editorInstance.activeContent
+        val origin = content.offset.coerceAtLeast(0)
+        val place = PrecisionCursor.select(origin, content.text.length, anchor, units)
+        editorInstance.setSelection(place.start, place.end)
+        selectionBar.value = !place.collapsed
+    }
+
+    fun performSelection(action: SelectionAction) {
+        if (action == SelectionAction.CLOSE) {
+            selectionBar.value = false
+            return
+        }
+        selectionBar.value = true
+        when (action) {
+            SelectionAction.WORD -> {
+                selectTarget("word")
+                tickSelection()
+            }
+            SelectionAction.LINE -> {
+                selectTarget("line")
+                tickSelection()
+            }
+            SelectionAction.ALL -> {
+                selectTarget("all")
+                tickSelection()
+            }
+            SelectionAction.CUT -> inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_CUT)
+            SelectionAction.COPY -> inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_COPY)
+            SelectionAction.PASTE -> inputEventDispatcher.sendDownUp(TextKeyData.CLIPBOARD_PASTE)
+            SelectionAction.HOME -> {
+                sendSpecial(SpecialKey.HOME)
+                tickSelection()
+            }
+            SelectionAction.END -> {
+                sendSpecial(SpecialKey.END)
+                tickSelection()
+            }
+            SelectionAction.WORD_BACK -> {
+                jumpSelectionWord(forward = false)
+                tickSelection()
+            }
+            SelectionAction.WORD_FORWARD -> {
+                jumpSelectionWord(forward = true)
+                tickSelection()
+            }
+            SelectionAction.CLOSE -> selectionBar.value = false
+        }
+    }
+
+    private fun jumpSelectionWord(forward: Boolean) {
+        val session = clipEditor.value
+        if (session != null) {
+            val body = session.body.moveHorizontal(if (forward) 1 else -1, words = true, extend = false)
+            clipEditor.value = session.copy(body = body, focus = EditorField.BODY, revision = session.revision + 1)
+            return
+        }
+        val content = editorInstance.activeContent
+        val cursor = content.localSelection.end.coerceIn(0, content.text.length)
+        val next = PrecisionCursor.jump(content.text, cursor, forward)
+        val base = content.offset.coerceAtLeast(0)
+        editorInstance.setSelection(base + next, base + next)
+    }
+
+    private fun tickSelection() {
+        FlorisImeService.inputFeedbackController()?.gestureMovingSwipe(TextKeyData.SPACE)
+    }
 
     private fun selectTarget(which: String) {
         val session = clipEditor.value

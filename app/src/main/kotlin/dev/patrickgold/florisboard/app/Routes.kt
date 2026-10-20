@@ -77,6 +77,7 @@ import dev.patrickgold.florisboard.app.settings.localization.LanguagePackManager
 import dev.patrickgold.florisboard.app.settings.localization.LocalizationScreen
 import dev.patrickgold.florisboard.app.settings.localization.SelectLocaleScreen
 import dev.patrickgold.florisboard.app.settings.localization.SubtypeEditorScreen
+import dev.patrickgold.florisboard.app.settings.manual.ManualScreen
 import dev.patrickgold.florisboard.app.settings.media.MediaScreen
 import dev.patrickgold.florisboard.app.settings.smartbar.SmartbarScreen
 import dev.patrickgold.florisboard.app.settings.smartbar.ToolbarSettingsScreen
@@ -248,6 +249,10 @@ object Routes {
         object Restore
 
         @Serializable
+        @Deeplink("settings/manual")
+        object Manual
+
+        @Serializable
         @Deeplink("settings/about")
         object About
 
@@ -409,6 +414,7 @@ object Routes {
             composableWithDeepLink(Settings.Backup::class) { BackupScreen() }
             composableWithDeepLink(Settings.Restore::class) { RestoreScreen() }
 
+            composableWithDeepLink(Settings.Manual::class) { ManualScreen() }
             composableWithDeepLink(Settings.About::class) { AboutScreen() }
             composableWithDeepLink(Settings.ProjectLicense::class) { ProjectLicenseScreen() }
             composableWithDeepLink(Settings.ThirdPartyLicenses::class) { ThirdPartyLicensesScreen() }

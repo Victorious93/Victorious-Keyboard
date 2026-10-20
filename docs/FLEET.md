@@ -112,6 +112,7 @@ Exact seek is optional. It is off until the user turns on File Manager seek, and
 |---|---|
 | Packages | `ai.victorious.filemanager`, and `ai.victorious.filemanager.debug` |
 | Action | `ai.victorious.filemanager.action.BRIDGE` |
+| Visibility | `<queries>` names that action, not the package |
 | Request | `what = 1`, Bundle key `request` |
 | Reply | `what = 2`, Bundle key `response` |
 | Body | `protocol_major` 1, `op`, `id` |

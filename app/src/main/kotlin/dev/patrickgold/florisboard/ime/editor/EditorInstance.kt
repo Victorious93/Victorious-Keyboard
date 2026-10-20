@@ -34,6 +34,7 @@ import dev.patrickgold.florisboard.ime.input.InputShiftState
 import dev.patrickgold.florisboard.ime.keyboard.IncognitoMode
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardMode
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.prediction.PeriodTyping
 import dev.patrickgold.florisboard.ime.text.composing.Appender
 import dev.patrickgold.florisboard.ime.text.composing.Composer
 import dev.patrickgold.florisboard.ime.text.key.KeyVariation
@@ -182,6 +183,7 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         if (activeInfo.isRawInputEditor) return false
         if (activeState.keyVariation != KeyVariation.NORMAL) return false
 
+        if (PeriodTyping.blocksAutoSpace(activeContent.textBeforeSelection, text)) return false
         val punctuationRule = nlpManager.getActivePunctuationRule()
         val content = activeContent
         val textBefore = content.getTextBeforeCursor(3).let { textBefore ->
@@ -205,7 +207,8 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         } else {
             autoSpace.setInactive()
         }
-        val isPhantomSpaceActive = phantomSpace.determine(char)
+        val isPhantomSpaceActive = !PeriodTyping.blocksPhantomSpace(activeContent.textBeforeSelection, char) &&
+            phantomSpace.determine(char)
         phantomSpace.setInactive()
         return super.commitChar(
             char = char,

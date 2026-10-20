@@ -63,6 +63,8 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWords
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertPrivacy
+import dev.patrickgold.florisboard.ime.nlp.prediction.PeriodTyping
+import dev.patrickgold.florisboard.ime.nlp.prediction.SuggestionCommit
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.ime.popup.PopupMappingComponent
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotCapture
@@ -384,6 +386,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             val shift = prefs.correction.autoCapitalization.get()
                 && subtypeManager.activeSubtype.primaryLocale.supportsCapitalization
                 && editorInstance.activeCursorCapsMode != InputAttributes.CapsMode.NONE
+                && !PeriodTyping.suppressAutoCapitalization(editorInstance.activeContent.textBeforeSelection)
             activeState.inputShiftState = when {
                 shift -> InputShiftState.SHIFTED_AUTOMATIC
                 else -> InputShiftState.UNSHIFTED
@@ -1072,8 +1075,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * but skips handling changing to characters keyboard and double space periods.
      */
     fun handleHardwareKeyboardSpace() {
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -1270,8 +1274,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             pendingAutocorrect = null
             return
         }
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -2103,8 +2108,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.VIEW_SYMBOLS2 -> activeState.keyboardMode = KeyboardMode.SYMBOLS2
             else -> {
                 if (activeState.imeUiMode == ImeUiMode.MEDIA) {
-                    nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
-                    editorInstance.commitText(data.asString(isForDisplay = false))
+                    val text = data.asString(isForDisplay = false)
+                    if (SuggestionCommit.allows(editorInstance.activeContent.textBeforeSelection, text)) {
+                        nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                    }
+                    editorInstance.commitText(text)
                     return@batchEdit
                 }
                 when (activeState.keyboardMode) {
@@ -2131,7 +2139,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                             // With Ctrl/Alt active the character is sent as a key event instead of text.
                             if (!(terminalModifiers.anyActive && sendTerminalChar(text))) {
                                 if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
-                                    val candidate = nlpManager.getAutoCommitCandidate()
+                                    val before = editorInstance.activeContent.textBeforeSelection
+                                    val candidate = if (SuggestionCommit.allows(before, text)) {
+                                        nlpManager.getAutoCommitCandidate()
+                                    } else {
+                                        null
+                                    }
                                     if (candidate == null) nlpManager.noteTypedOrCommitted(null)
                                     candidate?.let { commitCandidate(it) }
                                 }

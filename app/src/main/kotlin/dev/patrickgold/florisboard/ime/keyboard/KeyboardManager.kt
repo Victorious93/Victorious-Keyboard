@@ -76,6 +76,7 @@ import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardCache
 import dev.patrickgold.florisboard.lib.devtools.LogTopic
 import dev.patrickgold.florisboard.lib.devtools.flogError
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
@@ -2252,22 +2253,25 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 localLayouts[layoutType] = mutableMapOf()
             }
             for (keyboardExtension in keyboardExtensions) {
+                val metaId = keyboardExtension.meta.id
+                val aliases = keyboardExtension.meta.aliases
                 keyboardExtension.composers.forEach { composer ->
-                    localComposers[ExtensionComponentName(keyboardExtension.meta.id, composer.id)] = composer
+                    ExtensionIds.indexComponent(localComposers, metaId, aliases, composer.id, composer)
                 }
                 keyboardExtension.currencySets.forEach { currencySet ->
-                    localCurrencySets[ExtensionComponentName(keyboardExtension.meta.id, currencySet.id)] = currencySet
+                    ExtensionIds.indexComponent(localCurrencySets, metaId, aliases, currencySet.id, currencySet)
                 }
                 keyboardExtension.layouts.forEach { (type, layoutComponents) ->
+                    val bucket = localLayouts[LayoutType.entries.first { it.id == type }]!!
                     for (layoutComponent in layoutComponents) {
-                        localLayouts[LayoutType.entries.first { it.id == type }]!![ExtensionComponentName(keyboardExtension.meta.id, layoutComponent.id)] = layoutComponent
+                        ExtensionIds.indexComponent(bucket, metaId, aliases, layoutComponent.id, layoutComponent)
                     }
                 }
                 keyboardExtension.popupMappings.forEach { popupMapping ->
-                    localPopupMappings[ExtensionComponentName(keyboardExtension.meta.id, popupMapping.id)] = popupMapping
+                    ExtensionIds.indexComponent(localPopupMappings, metaId, aliases, popupMapping.id, popupMapping)
                 }
                 keyboardExtension.punctuationRules.forEach { punctuationRule ->
-                    localPunctuationRules[ExtensionComponentName(keyboardExtension.meta.id, punctuationRule.id)] = punctuationRule
+                    ExtensionIds.indexComponent(localPunctuationRules, metaId, aliases, punctuationRule.id, punctuationRule)
                 }
                 localSubtypePresets.addAll(keyboardExtension.subtypePresets)
             }

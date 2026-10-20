@@ -250,7 +250,7 @@ The system spell-checker service is the Android one FlorisBoard exposes. Turn it
 
 ## Theme editor
 
-Settings → Theme → the extension list opens the theme editor shipped with the keyboard. Styles are Snygg stylesheets (`app/src/main/assets/ime/theme`). The default themes are Victorious Neon and Victorious Neon Light; older themes stay in the list.
+Settings → Theme → the extension list opens the theme editor shipped with the keyboard. Styles are Snygg stylesheets (`app/src/main/assets/ime/theme`). The default themes are Victorious Neon and Victorious Neon Light; older themes stay in the list. Built-in extension packs are named for Victorious Keyboard (`com.victorious.keyboard.*`). A theme or layout saved as `org.florisboard.*` still opens. Settings → About keeps the FlorisBoard Apache-2.0 credit.
 
 ## Documentation
 

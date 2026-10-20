@@ -23,6 +23,8 @@ import android.content.Context
 import android.media.AudioManager
 import android.view.KeyEvent
 import dev.patrickgold.florisboard.FlorisImeService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.mode.OperatingMode
@@ -50,7 +52,7 @@ class RemoteControlPort(context: Context) : RemoteEnvelope.Port {
         val selected = OperatingMode.entries.firstOrNull { it.name.equals(mode, ignoreCase = true) }
         if (selected == null || !selected.isSelectable) return RemoteEnvelope.Effect.NOT_FOUND
         return try {
-            prefs.modes.defaultMode.set(selected)
+            runBlocking(Dispatchers.IO) { prefs.modes.defaultMode.set(selected) }
             RemoteEnvelope.Effect.DONE
         } catch (_: Exception) {
             RemoteEnvelope.Effect.INTERNAL
@@ -66,8 +68,10 @@ class RemoteControlPort(context: Context) : RemoteEnvelope.Port {
         if (name.extensionId != extCoreTheme("day").extensionId) return RemoteEnvelope.Effect.NOT_FOUND
         if (!name.componentId.matches(Regex("[a-z0-9_]+"))) return RemoteEnvelope.Effect.NOT_FOUND
         return try {
-            prefs.theme.dayThemeId.set(name)
-            prefs.theme.nightThemeId.set(name)
+            runBlocking(Dispatchers.IO) {
+                prefs.theme.dayThemeId.set(name)
+                prefs.theme.nightThemeId.set(name)
+            }
             RemoteEnvelope.Effect.DONE
         } catch (_: Exception) {
             RemoteEnvelope.Effect.INTERNAL

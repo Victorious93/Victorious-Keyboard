@@ -86,6 +86,7 @@ class TextToolsTest : FunSpec({
         TextTools.write(broken, TextToolPlace.INSERT) shouldBe TextToolWrite.Blocked
         selected.toString() shouldNotContain "hi"
         selected.toString() shouldNotContain "aGk="
+        ToolsCatalog.actions(ToolsTab.CODE).first() shouldBe ToolbarActionId.TEXT_TOOLS
     }
 })
 

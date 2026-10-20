@@ -87,6 +87,7 @@ import dev.patrickgold.florisboard.subtypeManager
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import dev.patrickgold.florisboard.ime.developer.DevKeyAction
+import dev.patrickgold.florisboard.ime.clipboard.ClipboardTileQuery
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
 import dev.patrickgold.florisboard.ime.ai.AiFieldSnapshot
 import dev.patrickgold.florisboard.ime.ai.AiPanel
@@ -191,6 +192,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     /** In-keyboard clipboard/snippet editor. Null when typing still goes to the host field. */
     val clipEditor = MutableStateFlow<ClipEditorSession?>(null)
+
+    /**
+     * Clipboard-tile search. Null when keys still go to the host field. The string is the query and
+     * is not logged.
+     */
+    val clipboardSearch = MutableStateFlow<String?>(null)
 
     /** Which clipboard tab to show the next time the clipboard panel opens. */
     val clipLaneRequest = MutableStateFlow<ClipLane?>(null)
@@ -1900,6 +1907,23 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         appContext.showShortToastSync(R.string.local_ai__copied)
     }
 
+    private fun applyClipboardSearchKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean {
+        val query = clipboardSearch.value ?: return false
+        if (activeState.imeUiMode != ImeUiMode.CLIPBOARD || clipEditor.value != null) {
+            clipboardSearch.value = null
+            return false
+        }
+        if (!ClipboardTileQuery.consumes(data.code, isCharacterKey(data))) return false
+        val text = if (isCharacterKey(data) || data.code == KeyCode.SPACE) {
+            runCatching { data.asString(isForDisplay = false) }.getOrDefault("")
+        } else {
+            ""
+        }
+        val typed = ClipboardTileQuery.type(query, data.code, isCharacterKey(data), text)
+        clipboardSearch.value = if (typed.stop) null else typed.query
+        return true
+    }
+
     private fun applyClipEditorKey(data: dev.patrickgold.florisboard.ime.keyboard.KeyData): Boolean {
         val session = clipEditor.value ?: return false
         if (!EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return false
@@ -1941,6 +1965,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     override fun onInputKeyDown(data: KeyData) {
         if (localAi.askConsumes(data.code, isCharacterKey(data))) return
+        if (clipboardSearch.value != null && ClipboardTileQuery.consumes(data.code, isCharacterKey(data))) return
         if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         val windowController = FlorisImeService.windowControllerOrNull()
         windowController?.editor?.disableIfNoGestureInProgress()
@@ -1963,6 +1988,13 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     override fun onInputKeyUp(data: KeyData) = activeState.batchEdit {
         if (applyAskKey(data)) {
+            pendingAutocorrect = null
+            if (activeState.inputShiftState != InputShiftState.CAPS_LOCK && !inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
+                activeState.inputShiftState = InputShiftState.UNSHIFTED
+            }
+            return@batchEdit
+        }
+        if (applyClipboardSearchKey(data)) {
             pendingAutocorrect = null
             if (activeState.inputShiftState != InputShiftState.CAPS_LOCK && !inputEventDispatcher.isPressed(KeyCode.SHIFT)) {
                 activeState.inputShiftState = InputShiftState.UNSHIFTED
@@ -2120,6 +2152,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     override fun onInputKeyCancel(data: KeyData) {
         if (localAi.askConsumes(data.code, isCharacterKey(data))) return
+        if (clipboardSearch.value != null && ClipboardTileQuery.consumes(data.code, isCharacterKey(data))) return
         if (clipEditor.value != null && EditorKeyRouter.consumes(data.code, isCharacterKey(data))) return
         when (data.code) {
             KeyCode.ARROW_DOWN,
@@ -2139,7 +2172,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     override fun onInputKeyRepeat(data: KeyData) {
-        if (applyClipEditorKey(data)) {
+        if (applyClipboardSearchKey(data) || applyClipEditorKey(data)) {
             FlorisImeService.inputFeedbackController()?.keyRepeatedAction(data)
             return
         }

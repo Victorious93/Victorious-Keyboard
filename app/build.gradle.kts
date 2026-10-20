@@ -55,9 +55,10 @@ kotlin {
 }
 
 android {
-    namespace = "dev.patrickgold.florisboard"
+    namespace = "com.victorious.keyboard"
     compileSdk = projectCompileSdk.toInt()
     buildToolsVersion = tools.versions.buildTools.get()
+    ndkVersion = "27.2.12479018"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -80,8 +81,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "BUILD_COMMIT_HASH", "\"${getGitCommitHash().get()}\"")
-        buildConfigField("String", "FLADDONS_API_VERSION", "\"v~draft2\"")
-        buildConfigField("String", "FLADDONS_STORE_URL", "\"beta.addons.florisboard.org\"")
+
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+        externalNativeBuild {
+            cmake {
+                arguments += listOf(
+                    "-DGGML_NATIVE=OFF",
+                    "-DGGML_OPENMP=OFF",
+                    "-DGGML_LLAMAFILE=OFF",
+                    "-DLLAMA_BUILD_TESTS=OFF",
+                    "-DLLAMA_BUILD_EXAMPLES=OFF",
+                    "-DLLAMA_BUILD_SERVER=OFF",
+                    "-DLLAMA_OPENSSL=OFF",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                )
+                cppFlags += "-fexceptions"
+            }
+        }
 
         sourceSets {
             maybeCreate("main").apply {
@@ -109,8 +127,19 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Public debug key only. Release signing is unchanged and stays out of Git.
+            storeFile = rootProject.file("signing/debug.keystore")
+            storePassword = "android"
+            keyAlias = "victorious-debug"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         named("debug") {
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug+${getGitCommitHash(short = true).get()}"
 
@@ -145,6 +174,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
 
+            // initWith copies release's name. Drop that entry first: resValue() warns when a key
+            // already exists ("BuildType(benchmark): resValue 'string/floris_app_name' value is being replaced").
+            (this as com.android.build.gradle.internal.dsl.BuildType)
+                .resValues
+                .remove("string/floris_app_name")
             resValue("string", "floris_app_name", "Victorious Keyboard Bench")
         }
     }
@@ -155,9 +189,9 @@ android {
         }
     }
 
-    lint {
-        baseline = file("lint.xml")
-    }
+    // app/lint.xml is the lint config (severity overrides). It is not a baseline: pointing
+    // `baseline` at it made lint treat ExtraTranslation as an already-recorded finding.
+
 
     testOptions {
         unitTests {
@@ -165,6 +199,13 @@ android {
         }
         unitTests.all {
             it.useJUnitPlatform()
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.6"
         }
     }
 }
@@ -218,6 +259,7 @@ dependencies {
     implementation(projects.lib.compose)
     implementation(projects.lib.kotlin)
     implementation(projects.lib.snygg)
+    implementation(projects.lib.fleet)
 
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.property)

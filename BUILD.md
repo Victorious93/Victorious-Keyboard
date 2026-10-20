@@ -10,14 +10,14 @@ Everything in this file was executed in the project's reference environment (Lin
 | JDK | 21.0.12 (upstream CI uses 17) | Gradle toolchains are not forced; any JDK ≥ 17 should work, only 21 verified |
 | Gradle | wrapper (`gradle/wrapper/gradle-wrapper.properties`): 9.2.0 | Use `./gradlew`; downloads itself |
 | Android SDK cmdline-tools | `14742923` (sha256 `04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7` verified before use) | Upstream's `tools.versions.toml` at this baseline pins the older `13114758`; the older pin was not tested here |
-| SDK packages | `platforms;android-36`, `build-tools;35.0.0` | |
+| SDK packages | `platforms;android-36`, `build-tools;35.0.0`, `ndk;27.2.12479018`, `cmake;3.31.6` | NDK and CMake are required for the on-device llama.cpp library. They are not required to read the project. |
 
 Install SDK packages:
 
 ```sh
 export ANDROID_HOME=/opt/android-sdk          # any directory
 sdkmanager --licenses
-sdkmanager "platforms;android-36" "build-tools;35.0.0"
+sdkmanager "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.31.6"
 echo "sdk.dir=$ANDROID_HOME" > local.properties   # git-ignored
 ```
 
@@ -49,8 +49,10 @@ Portal's checksum and list Central's as `also-trust`. The remaining six markers 
 debug build and the unit tests on a GitHub runner with direct downloads** (`BUILD SUCCESSFUL in 10m 10s`, 178 tasks).
 The run was still red because the following artifact-upload step failed with "Artifact storage quota has been hit"
 (GitHub account storage; it recalculates every 6-12 hours, and old artifacts in any repository of the account count).
-The test-report upload is now non-fatal; the APK upload still fails loudly, so no debug APK artifact exists from CI
-until the quota is freed.
+Both uploads are now non-fatal. The job stays red only when the debug build or the unit tests fail. While the quota
+is exhausted, CI still produces the APK and still does not store it: the "Upload debug APK" step warns and continues.
+PR #10 and its merge to `main` (runs `38353170157` and `38357539442`, 2026-10-13) were red for that reason only;
+`assembleDebug` and `testDebugUnitTest` succeeded on the runner.
 
 Regenerate after adding/updating a dependency (one task at a time if memory is tight; a combined run was OOM-killed in a
 16 GB sandbox). **Do not use `docs/build-env-mirror.gradle.kts` for this** (see its warning), or compare the result
@@ -68,6 +70,12 @@ Some shared networks get `429 Too Many Requests` from `repo.maven.apache.org`. T
 `~/.gradle/init.d/central-mirror.gradle.kts` that prepends a mirror to `pluginManagement` and rewrites the Central URL
 (see the script text in `docs/build-env-mirror.gradle.kts`). Do not commit mirror URLs into `settings.gradle.kts`.
 Dependency verification (Phase 1) protects against a mirror serving different bytes.
+
+## Debug signing
+
+Debug and benchmark builds sign with the committed keystore `signing/debug.keystore` (alias `victorious-debug`, store and key password `android`). That password is public. It is not a release key and it is not a fleet trust key. Release signing is unchanged and stays out of Git.
+
+Every CI run and local debug build uses this same certificate, so a newer debug APK installs over an older one that was signed with it. A phone that already has a debug build signed with a different key (the old per-machine debug key) must be uninstalled once before this APK will install. See `signing/README.md`.
 
 ## Not verified
 

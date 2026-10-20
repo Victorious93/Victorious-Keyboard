@@ -23,10 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import org.florisboard.lib.snygg.SnyggQueryAttributes
 import org.florisboard.lib.snygg.SnyggSelector
@@ -43,6 +47,11 @@ import org.florisboard.lib.snygg.SnyggStylesheet
  * @param selector A specific SnyggSelector to query the style for.
  * @param modifier The modifier to be applied to the Text.
  * @param text The text of the element.
+ * @param fontSize When specified, replaces the stylesheet size. Used by suggestion chips so the
+ *  glyphs stay inside a fixed-height row at every system font scale.
+ * @param maxLines When set, replaces the stylesheet line cap.
+ * @param overflow When set, replaces the stylesheet overflow.
+ * @param softWrap `false` keeps a single line so a long word ellipsizes instead of wrapping.
  *
  * @since 0.5.0-alpha01
  *
@@ -55,8 +64,13 @@ fun SnyggText(
     selector: SnyggSelector? = null,
     modifier: Modifier = Modifier,
     text: String,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    maxLines: Int? = null,
+    overflow: TextOverflow? = null,
+    softWrap: Boolean = true,
 ) {
     ProvideSnyggStyle(elementName, attributes, selector) { style ->
+        val resolvedSize = if (fontSize.isSpecified) fontSize else style.fontSize()
         Text(
             modifier = modifier
                 .snyggMargin(style)
@@ -66,7 +80,7 @@ fun SnyggText(
                 .snyggPadding(style),
             text = text,
             color = style.foreground(),
-            fontSize = style.fontSize(),
+            fontSize = resolvedSize,
             fontStyle = style.fontStyle(),
             fontWeight = style.fontWeight(),
             fontFamily = style.fontFamily(LocalSnyggPreloadedCustomFontFamilies.current),
@@ -74,8 +88,14 @@ fun SnyggText(
             lineHeight = style.lineHeight(),
             textAlign = style.textAlign(),
             textDecoration = style.textDecorationLine(),
-            maxLines = style.textMaxLines(),
-            overflow = style.textOverflow(),
+            maxLines = maxLines ?: style.textMaxLines(),
+            overflow = overflow ?: style.textOverflow(),
+            softWrap = softWrap,
+            style = if (fontSize.isSpecified) {
+                TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+            } else {
+                TextStyle.Default
+            },
         )
     }
 }

@@ -20,15 +20,19 @@ for a mode that is not available falls back to Standard.
 ## How it is built
 
 * `ime.mode.OperatingMode`: the enum, its availability, and `ModePresets` that turn a mode plus the user's
-  developer-row preferences into the effective row (visible, profile, terminal keys). Pure Kotlin.
+  developer-row preferences into the row's content (profile, terminal keys, navigation keys, symbols). Pure Kotlin.
+* `ime.mode.TerminalRowPolicy.plan`: whether the terminal key row shows (Auto / Always / Never; Auto includes terminal
+  apps, `TYPE_NULL` fields, and Developer or Termux mode) and exactly which keys it draws. The row and the height that
+  full-height panels reserve both use it. Pure Kotlin, JVM-tested (`TerminalRowPlanTest`).
 * `ime.mode.ModeSuggester` / `ActiveMode`: pick the mode for the current app. Pure Kotlin.
 * `KeyboardManager.activeMode` (a `StateFlow`) combines the default-mode preference, the auto-detect preference and the
   current editor's package name. Switching is a state change: the keyboard is not restarted and typed text is untouched.
 * One IME, one set of preferences: `modes__default`, `modes__auto_detect` (new) next to the existing `devrow__*` keys.
   The enum names are persisted, so they must never be renamed (a test guards this).
 
-Settings: Settings → Keyboard → **Developer mode**: *Keyboard mode*, *Switch mode in terminal apps*, *Developer row*,
-*Symbols for*, *Terminal keys*.
+Settings: Settings → **Developer & terminal** (a Home entry since the UI pass): *Keyboard mode*, *Switch mode in
+terminal apps*, *Show terminal key row*, *Terminal keys*, *Symbols for*, and the link to the advanced settings. The old
+*Developer row* switch is gone; *Show terminal key row* replaced it.
 
 ## Automatic mode for terminal apps (off by default)
 
@@ -40,13 +44,13 @@ have no UI yet.
 
 ## Advanced settings
 
-Settings → Keyboard → Developer mode → **Advanced developer settings** (compiled, never run or rendered on a device):
+Settings → Developer & terminal → **Advanced developer settings** (compiled, never run or rendered on a device):
 
 | Group | Options |
 |---|---|
 | Developer row | Row size (Compact 80 % / Normal / Large 125 % of the Smartbar height); navigation keys on/off (arrows, Home, End, PgUp, PgDn) separately from Esc/Tab/Ctrl/Alt; language symbols on/off; **your own symbol keys**; whether they are added to or replace the language symbols |
 | Timing and feedback | Hold delay before repeating (150-800 ms, default 350); repeat interval (20-200 ms, default 60); double-tap time to lock Ctrl/Alt (200-800 ms, default 400); vibration on developer keys |
-| Snippets | Date format for `{{date}}` (ISO, DD/MM/YYYY, MM/DD/YYYY, DD.MM.YYYY); time format for `{{time}}` (24 h, 24 h with seconds, 12 h); keep the typed space after expanding; expand in Termux mode (off by default) |
+| Snippets | Date format for `{{date}}` (ISO, DD/MM/YYYY, MM/DD/YYYY, DD.MM.YYYY); time format for `{{time}}` (24 h, 24 h with seconds, 12 h); keep the typed space, Enter and Tab after expanding; a link to the per-mode expansion rules (Snippets → Expansion → Per keyboard mode; Termux is off by default) |
 | Keyboard modes | **Your own app-to-mode mappings** used by automatic mode switching |
 | Reset | Puts everything on this screen back to its default; the basic Developer mode settings are untouched |
 
@@ -63,6 +67,7 @@ Free-text settings are validated live with the same pure parsers the keyboard us
 ## Not done
 
 * Quick switching between modes from the keyboard itself (today the default mode is changed in Settings).
-* Per-mode autocorrect/prediction off, per-mode snippet-expansion defaults, bracket auto-pairing, indentation helpers.
+* Per-mode autocorrect/prediction off, bracket auto-pairing, indentation helpers. (Per-mode snippet expansion exists:
+  `SNIPPETS.md`.)
 * The three planned modes and everything they need.
 * Device validation of all of it.

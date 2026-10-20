@@ -47,9 +47,18 @@ data class SnyggStylesheet internal constructor(
     }
 
     companion object {
-        const val SCHEMA_V2 = "https://schemas.florisboard.org/snygg/v2/stylesheet"
+        const val SCHEMA_V2 = "https://victorious93.github.io/Victorious-Keyboard/schemas/snygg/v2/stylesheet"
 
-        private val SCHEMA_PATTERN = """^https://schemas.florisboard.org/snygg/v[0-9]+/stylesheet$""".toRegex()
+        /**
+         * Schema URL written by FlorisBoard and by earlier builds. Stylesheets that name it (bundled, exported or
+         * imported from the community) are still read and are normalised to [SCHEMA_V2]. The URL is only an
+         * identifier; it is never fetched.
+         */
+        const val LEGACY_SCHEMA_V2 = "https://schemas.florisboard.org/snygg/v2/stylesheet"
+
+        private val SCHEMA_PATTERN =
+            """^https://(?:schemas\.florisboard\.org|victorious93\.github\.io/Victorious-Keyboard/schemas)/snygg/v[0-9]+/stylesheet$"""
+                .toRegex()
 
         fun v2(stylesheetBlock: SnyggStylesheetEditor.() -> Unit): SnyggStylesheet {
             val builder = SnyggStylesheetEditor(SCHEMA_V2)
@@ -79,6 +88,9 @@ data class SnyggStylesheet internal constructor(
                     } else {
                         throw SnyggInvalidSchemaException(schema)
                     }
+                }
+                if (schema == LEGACY_SCHEMA_V2) {
+                    schema = SCHEMA_V2
                 }
                 if (schema != SCHEMA_V2 && !config.ignoreUnsupportedSchema) {
                     throw SnyggUnsupportedSchemaException(schema)

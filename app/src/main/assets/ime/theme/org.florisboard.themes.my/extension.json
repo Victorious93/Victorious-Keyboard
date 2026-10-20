@@ -1,12 +1,19 @@
 {
   "$": "ime.extension.theme",
   "meta": {
-    "id": "org.florisboard.themes.my",
+    "id": "com.victorious.keyboard.themes.my",
     "version": "0.2.0",
-    "title": "Victorious Keyboard default themes (Material You)",
-    "description": "Default Material You themes (both day and night) for the keyboard UI",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>", "lm41 <lm41@lm41.xyz>" ],
-    "license": "apache-2.0"
+    "title": "Victorious Material You themes",
+    "description": "Built-in Material You themes for Victorious Keyboard.",
+    "maintainers": [
+      "Victorious93 (https://github.com/Victorious93/Victorious-Keyboard)"
+    ],
+    "homepage": "https://github.com/Victorious93/Victorious-Keyboard",
+    "issueTracker": "https://github.com/Victorious93/Victorious-Keyboard/issues",
+    "license": "apache-2.0",
+    "aliases": [
+      "org.florisboard.themes.my"
+    ]
   },
   "themes": [
     {

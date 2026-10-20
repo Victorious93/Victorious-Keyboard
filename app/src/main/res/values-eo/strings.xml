@@ -735,27 +735,27 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} horo</item>
-        <item quantity="other">{v} horoj</item>
+        <item quantity="one">%d horo</item>
+        <item quantity="other">%d horoj</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} minuto</item>
-        <item quantity="other">{v} minutoj</item>
+        <item quantity="one">%d minuto</item>
+        <item quantity="other">%d minutoj</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} sekundo</item>
-        <item quantity="other">{v} sekundoj</item>
+        <item quantity="one">%d sekundo</item>
+        <item quantity="other">%d sekundoj</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} ero</item>
-        <item quantity="other">{v} eroj</item>
+        <item quantity="one">%d ero</item>
+        <item quantity="other">%d eroj</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="one">{v} signo</item>
-        <item quantity="other">{v} signoj</item>
+        <item quantity="one">%d signo</item>
+        <item quantity="other">%d signoj</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="one">{v} sugesto</item>
-        <item quantity="other">{v} sugestoj</item>
+        <item quantity="one">%d sugesto</item>
+        <item quantity="other">%d sugestoj</item>
     </plurals>
 </resources>

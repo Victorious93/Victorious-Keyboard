@@ -27,3 +27,11 @@
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+-keep class com.victorious.fleet.IFleetKeyboardProvider { *; }
+-keep class com.victorious.fleet.IFleetKeyboardProvider$Stub { *; }
+-keep class com.victorious.keyboard.ime.ai.LlamaNative { *; }
+-keep interface com.victorious.keyboard.ime.ai.TokenSink { *; }
+-keepclassmembers class * implements com.victorious.keyboard.ime.ai.TokenSink {
+    boolean onToken(java.lang.String);
+}

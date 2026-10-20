@@ -1,12 +1,19 @@
 {
   "$": "ime.extension.keyboard",
   "meta": {
-    "id": "org.florisboard.currencysets",
+    "id": "com.victorious.keyboard.currencysets",
     "version": "0.1.0",
-    "title": "Default currency sets",
-    "description": "Default currency sets which are always available.",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>" ],
-    "license": "apache-2.0"
+    "title": "Victorious currency sets",
+    "description": "Built-in currency keys for Victorious Keyboard.",
+    "maintainers": [
+      "Victorious93 (https://github.com/Victorious93/Victorious-Keyboard)"
+    ],
+    "homepage": "https://github.com/Victorious93/Victorious-Keyboard",
+    "issueTracker": "https://github.com/Victorious93/Victorious-Keyboard/issues",
+    "license": "apache-2.0",
+    "aliases": [
+      "org.florisboard.currencysets"
+    ]
   },
   "currencySets": [
     {

@@ -24,9 +24,9 @@ Apache-2.0 §4 obligations and how they are met:
 
 ## 3. Names, logos, trademarks
 
-* Application id: `com.victorious.keyboard` (Phase 1). The Kotlin source namespace remains
-  `dev.patrickgold.florisboard`; it is an internal code identifier, not a product name, and renaming it would touch
-  ~250 files for no user benefit.
+* Application id: `com.victorious.keyboard` (debug `.debug`, bench `.bench`). The Kotlin source namespace is
+  `com.victorious.keyboard`. It is an internal code identifier, not a product name. Copyright notices still name
+  FlorisBoard. The input-method component name stays `dev.patrickgold.florisboard.FlorisImeService`.
 * The FlorisBoard name and icon belong to upstream. Apache-2.0 §6 grants no trademark rights. User-visible names and
   the launcher icon are replaced in Phase 1; the README states the derivation factually ("based on FlorisBoard").
 * This project is not affiliated with or endorsed by the FlorisBoard project or by Google.
@@ -56,6 +56,7 @@ Runtime libraries are declared in `gradle/libs.versions.toml`; the app generates
 | Emoji data (`assets/ime/media/emoji/*.txt`), emoticons | upstream assets | Not individually verified in this audit | **Open item:** confirm provenance/licence of each emoji annotation file before a public release |
 | Han shape-based pack (`han.sqlite3`) | `assets/ime/languagepack/…` | Not individually verified | **Open item:** confirm licence before a public release |
 | Keyboard layouts / localisation | `assets/ime/keyboard/…` | Upstream (Apache-2.0) | |
+| llama.cpp `b11624` and ggml | fetched at build time into the native library; notice in `assets/licenses/llama.cpp.MIT` | MIT | CPU-only JNI. No model weights are included. nlohmann json notice is `assets/licenses/nlohmann-json.MIT` in case that header is linked. |
 
 New runtime dependencies added by this project will be listed here when they are added, with their licences.
 Candidates under consideration for Phase 6 must be permissively licensed (Apache-2.0/MIT/BSD); GPL/AGPL/LGPL

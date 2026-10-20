@@ -1,12 +1,19 @@
 {
   "$": "ime.extension.keyboard",
   "meta": {
-    "id": "org.florisboard.layouts",
+    "id": "com.victorious.keyboard.layouts",
     "version": "0.1.0",
-    "title": "Default layouts",
-    "description": "Default layouts which are always available.",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>" ],
-    "license": "apache-2.0"
+    "title": "Victorious layouts",
+    "description": "Built-in keyboard layouts for Victorious Keyboard.",
+    "maintainers": [
+      "Victorious93 (https://github.com/Victorious93/Victorious-Keyboard)"
+    ],
+    "homepage": "https://github.com/Victorious93/Victorious-Keyboard",
+    "issueTracker": "https://github.com/Victorious93/Victorious-Keyboard/issues",
+    "license": "apache-2.0",
+    "aliases": [
+      "org.florisboard.layouts"
+    ]
   },
   "layouts": {
     "characters": [

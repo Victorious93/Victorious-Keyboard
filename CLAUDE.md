@@ -5,12 +5,17 @@ Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
 ## Current phase
-**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, in-keyboard picker) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run.**
+**Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, in-keyboard picker) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run. UI pass (tabbed tools panel,
+one terminal-row decision, theme-following panels, regrouped Settings Home) merged (PR #29), JVM-tested where pure,
+compiled, never rendered. Queue item 2 (per-mode snippet expansion, `ModeExpansionPolicy`, and the fix for typed expansion never matching)
+merged (PR #30, CI green); never run on a device. Queue item 3 (encrypted snippet export, `SnippetEncryptedBackup`) merged (PR #34, CI green on its head); its dialogs are compiled, never run. The toolbar row and the suggestion-chip gap fix merged (PR #40, CI green on its head); compiled, never rendered. Next: item 6 (AI control through the Hub bridge), then item 7 (music buttons), then the packs program, items 8–14, then the password manager and email aliases, items 15–20, all in `ROADMAP.md` (own redirects, packs, opt-in update check; the owner approved relaxing invariant 3 for item 10 only, on 2026-10-19, and the invariant text changes in that PR). Items 4 and 5 wait for the owner.**
 Status table: `ROADMAP.md`. Update it with every phase. Phase 4 details/limits: `TERMINAL.md`.
 
 ## Verified environment
-JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0 (NDK/CMake/Rust are no longer needed:
-`:lib:native` was removed). Details and the Maven-Central 429 workaround: `BUILD.md`.
+JDK 21, Gradle wrapper 9.2.0, Android SDK platform 36 / build-tools 35.0.0. Rust is no longer needed (`:lib:native`
+was removed), but **NDK `27.2.12479018` and CMake `3.31.6` are needed again** since PR #25 (on-device GGUF inference):
+`app/src/main/cpp/CMakeLists.txt` fetches llama.cpp `b11624` at build time (needs network), ABIs `arm64-v8a`, `x86_64`.
+(Read from `app/build.gradle.kts` 2026-10-15; a local native build was not run.) Details and the Maven-Central 429 workaround: `BUILD.md`.
 **No Android device or emulator is available** (no KVM): only compile + JVM tests can be run. Never claim install or
 runtime verification.
 
@@ -18,13 +23,27 @@ runtime verification.
 ```sh
 ./gradlew assembleDebug            # APK: app/build/outputs/apk/debug/app-debug.apk
 ./gradlew testDebugUnitTest        # JVM tests (kotest + JUnit platform)
+./gradlew :lib:kotlin:test         # plain JVM module, not covered by testDebugUnitTest
+./gradlew lintDebug                # lint is a CI gate
 ```
+Modules: `:app`, `:lib:android`, `:lib:color`, `:lib:compose`, `:lib:kotlin`, `:lib:snygg` (`:benchmark` is commented out).
+Version: `gradle.properties` (`projectVersionCode=135`, `0.1.0-alpha01`, minSdk 26, target/compile 36). Debug builds sign with `signing/debug.keystore`.
+`applicationId` `com.victorious.keyboard`.
+
+## CI
+`.github/workflows/android.yml` ("CI"): on push to `main`, PRs targeting `main`, and manual dispatch. Validates the
+Gradle wrapper, then runs `./gradlew --no-daemon assembleDebug testDebugUnitTest :lib:kotlin:test lintDebug` on JDK 21.
+Dependency checksums are enforced by `gradle/verification-metadata.xml` (update it when adding dependencies). Test
+reports and the debug APK are uploaded best-effort (artifact quota must not fail the job).
+**Lint was red on `main` after PRs #23/#25/#26** (3 `NewApi` errors: API 33 calls with minSdk 26 in `ime/ai/AiFiles.kt`
+and `ime/toolbar/TextTransforms.kt`). PR #29 replaced them with API-26 calls and was merged on 2026-10-15; lint is a CI
+gate again. Watch for `NewApi` when adding Java/Android API calls.
 Long builds: run in the background with `--no-parallel --max-workers=2`, log to a file, wait for it.
 
 ## Architecture boundaries
-* Single `:app` module + `:lib:*`. New features = packages under `dev.patrickgold.florisboard.ime.*` with a
+* Single `:app` module + `:lib:*`. New features = packages under `com.victorious.keyboard.ime.*` with a
   **pure-Kotlin core** (no `android.*` imports) and a thin Android shell. See `ARCHITECTURE.md` §1, §3.
-* Kotlin namespace stays `dev.patrickgold.florisboard`; product identity is `applicationId` + resources.
+* Kotlin namespace stays `com.victorious.keyboard`; product identity is `applicationId` + resources.
 * Optional features must never crash the IME and never block the main thread.
 
 ## Security invariants (do not weaken)
@@ -87,3 +106,9 @@ Gotcha: the `{name}` formatter used to loop forever on values containing their o
 ## Upstream
 `upstream` remote = `https://github.com/florisboard/florisboard.git`; baseline `0ea0481c40616b0fd6eb4cd09c57521181b9a4b6`
 (tag `v0.6.0-alpha02`). Upstream's AI policy forbids AI-written contributions *to upstream*; do not prepare patches for it.
+
+## Don's standing rules (apply to every change)
+- Work on a branch and open a PR. Never push to `main`.
+- Never merge a PR, and never ask to merge one, until every test/check on the PR passes.
+- Never commit secrets (API keys, tokens, keystore passwords, `.env` files, credentials).
+- Don't claim something works unless it was actually tested; say what was and wasn't run.

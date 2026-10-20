@@ -1,12 +1,19 @@
 {
   "$": "ime.extension.keyboard",
   "meta": {
-    "id": "org.florisboard.composers",
+    "id": "com.victorious.keyboard.composers",
     "version": "0.1.1",
-    "title": "Default composers",
-    "description": "Default composers which are always available.",
-    "maintainers": [ "patrickgold <patrick@patrickgold.dev>", "thanhhocse96 <thanh.hoquang@pm.me>" ],
-    "license": "apache-2.0"
+    "title": "Victorious composers",
+    "description": "Built-in composers for Victorious Keyboard.",
+    "maintainers": [
+      "Victorious93 (https://github.com/Victorious93/Victorious-Keyboard)"
+    ],
+    "homepage": "https://github.com/Victorious93/Victorious-Keyboard",
+    "issueTracker": "https://github.com/Victorious93/Victorious-Keyboard/issues",
+    "license": "apache-2.0",
+    "aliases": [
+      "org.florisboard.composers"
+    ]
   },
   "composers": [
     { "$": "appender" },

@@ -4,7 +4,8 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    # main, plus the command-protocol branch so the stacked hub-status PR is checked.
+    branches: [ main, cursor/fleet-command-protocol-877b ]
   workflow_dispatch:
 
 permissions:
@@ -32,7 +33,9 @@ jobs:
 
       - name: Build debug APK and run unit tests
         # Dependency checksums are enforced via gradle/verification-metadata.xml.
-        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest
+        # lintDebug is a gate now that the inherited errors are fixed. :lib:kotlin:test is not
+        # part of testDebugUnitTest (plain JVM module) and is the home of curlyFormat.
+        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest :lib:kotlin:test lintDebug
 
       - name: Upload unit test reports
         # Diagnostic only: a GitHub artifact-storage quota problem must not turn a good build red.
@@ -45,11 +48,16 @@ jobs:
             app/build/reports/tests/
             app/build/test-results/
           if-no-files-found: ignore
+          retention-days: 7
 
       # DEBUG build for testing only. It is signed with the debug key and must never be published as a release.
+      # Upload is best-effort. assembleDebug above is what fails the job when the APK was not produced.
+      # GitHub's artifact storage quota ("Artifact storage quota has been hit") must not turn that good build red.
       - name: Upload debug APK
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: victorious-keyboard-debug-${{ github.sha }}
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 7

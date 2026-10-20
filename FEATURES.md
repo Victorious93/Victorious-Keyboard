@@ -15,7 +15,11 @@ possible as specified (reason given).
 | Physical keyboard support | 🔹 | upstream lists it as incomplete |
 | Floating keyboard | ⬜ | not in upstream at this version |
 | Split keyboard / tablet layouts | ⬜ | |
-| Required theme presets (Victorious Dark, AMOLED, Terminal Green, …) | ⬜ | Phase 8 |
+| Tools panel: five tabs (Clipboard, AI, Terminal, Code, Quick), icon tiles with translatable labels and On/Off state, theme elements only, keeps the window height, per-tab hide/reorder and own commands in Settings → Smartbar → Tools panel | ✅ catalog, order and reset JVM-tested · 🟦 panel and settings compiled, **never rendered or run** |
+| AI panel and clip editor colors follow the keyboard theme (window, key, pressed-key colors; unreadable text replaced) | ✅ palette JVM-tested · 🟦 panels compiled, **never rendered** |
+| Settings Home: Look, Typing, Tools (Clipboard, Snippets, Slash commands, Local AI, Emoji), Developer, Data (back up, restore), About; one-line summaries; Developer & terminal and Snippets → Expansion screens | 🟦 compiled, **never rendered** |
+| Victorious Neon keyboard theme (dark default) and Neon Light, older Floris themes still selectable | 🟦 stylesheet + settings scheme compiled, **not rendered on a device** | Navy `#010619`, amber `#FFC107`, hot pink. Settings app uses the same brand (dark default, light variant). AMOLED and Terminal Green are not separate presets |
+| Keyboard colors: background, key, key text, accent, highlight, suggestion pills, presets, reset | 🟡 mapping and persistence JVM-tested · 🟦 screen compiled, **never run** | Overlay on Victorious Neon / Neon Light only. Text contrast is corrected when it would be hard to read |
 
 ## Clipboard (Phase 3) — see `CLIPBOARD.md`
 
@@ -26,7 +30,9 @@ possible as specified (reason given).
 | Search (in the Clipboard manager screen), filters, tags, favourites, categories, editing, multi-select, share | ✅ logic · 🟦 UI |
 | Search typed inside the keyboard panel | ⬜ (see CLIPBOARD.md) |
 | Credential detection (not saved by default) | ✅ |
-| Password-field guard on Copy/Cut | ✅ detection · 🟦 call site |
+| Password-field copies and Android sensitive clips route to the vault | ✅ routing · 🟦 call site |
+| Sensitive vault: own Keystore key and file, masked list, biometric/device-credential lock (default on), timeout, expiry (default 24h, Never allowed), pins kept | ✅ rules and file codec · 🟦 screen, Keystore, and credential prompt **never run** |
+| Vault excluded from backups and exports unless an encrypted export is explicitly opted into | ✅ |
 | Export JSON / ZIP / encrypted / Markdown / text; import with preview, merge/replace/skip, consent, atomic apply | ✅ logic · 🟦 SAF screens |
 | Backup library (user-chosen files, minimal metadata, availability check, delete) | ✅ model · 🟦 UI |
 | Images / URI clips in backups | ⛔ not safely restorable; skipped and counted |
@@ -34,8 +40,9 @@ possible as specified (reason given).
 
 ## Developer / terminal / productivity (Phases 4–5)
 
-Details, mapping table and limits: `TERMINAL.md`. The developer row is **off by default** (Settings → Keyboard →
-Developer mode); with it off the keyboard behaves like upstream. The UI has not been seen on a screen.
+Details, mapping table and limits: `TERMINAL.md`. The terminal key row follows Settings → Developer & terminal →
+*Show terminal key row* (default Auto: terminal apps, `TYPE_NULL` fields, Developer or Termux mode); in other apps the
+keyboard behaves like upstream. The UI has not been seen on a screen.
 
 | Feature | Status |
 |---|---|
@@ -43,7 +50,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Sticky / double-tap-locked / held Ctrl and Alt state machine | ✅ pure core, JVM-tested |
 | Developer symbol rows for 7 language profiles, terminal row model | ✅ models, JVM-tested · ⬜ no UI |
 | `KeyboardManager` handles `CTRL/ALT/CTRL_LOCK/ALT_LOCK/ESCAPE/TAB` and sends typed characters as key events while a modifier is active | 🟦 compiled, **not run** |
-| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; off by default |
+| Developer row UI (Esc/Tab/Ctrl/Alt/arrows/Home/End/PgUp/PgDn + profile symbols), armed/locked indicator, settings toggle + profile picker | 🟦 compiled, **never rendered or run**; Auto by default |
+| One decision for showing the row and reserving its height (`TerminalRowPolicy.plan`); *Terminal keys* and *Navigation keys* switches honoured; old *Developer row* switch retired | ✅ pure, JVM-tested · 🟦 wiring compiled, **never run** |
 | Advanced developer settings: row size, navigation/symbol toggles, own symbol keys, key repeat and Ctrl/Alt lock timing, vibration, snippet date/time formats, own app-to-mode mappings, reset | ✅ parsers/rows JVM-tested · 🟦 screen and wiring compiled, **never run or rendered** |
 | Per-app automatic profile (language symbols per app) | ⬜ |
 | Ctrl/Alt applied to the keyboard's arrow and line-start/end keys | 🟦 compiled, not run (Delete/Backspace not covered) |
@@ -52,11 +60,13 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Operating modes: Standard / Developer / Termux (preset of the developer row), default-mode setting, opt-in auto-detect of Termux and ConnectBot from `EditorInfo.packageName` | ✅ core, JVM-tested · 🟦 settings and wiring compiled, **never run** (`docs/DEVELOPER_KEYBOARD.md`) |
 | Claude Code, Kali and NetHunter AI modes | ⬜ planned, deliberately not selectable until their features exist |
 | Snippet template language, opt-in expansion rules, library, JSON import/export, safe file store | ✅ pure core, JVM-tested (`SNIPPETS.md`) |
-| Snippets settings screen (add/edit/delete/search/import/export), expansion on the space key (opt-in), store in `noBackupFilesDir` | 🟦 compiled, **never run or rendered** |
+| Snippets settings screen (add/edit/delete/search/import/export), expansion on the space key (opt-in), store in `noBackupFilesDir` | 🟦 compiled, **never run or rendered**. Typed expansion could not match anything from 2026-10-13 (`f514726`) until PR #30: the keyboard passed no snippet library. Found by code review, not on a device |
 | Expansion on Enter and Tab, each opt-in and off by default; a non-match still sends the real key; never in password fields | ✅ rules JVM-tested · 🟦 wiring compiled, **never run** |
+| Per-mode expansion (Standard / Developer / Termux: Follow, Space only, or Off; Termux Off by default; master switch wins; old Termux switch migrated) | ✅ rules JVM-tested; the migration is JVM-tested end to end (a stored preference file loaded through jetpref and `AppPrefs.migrate`), not on an installed upgrade · 🟦 settings and wiring compiled, **never run** |
 | In-keyboard snippet picker (smartbar quick action, panel with tag chips, insert at the caret, `{{selection}}`, `{{cursor}}`) | ✅ pure parts JVM-tested (insertion rules, caret placement, list model, preview, migration of the quick action) · 🟦 panel and wiring compiled, **never run or rendered** |
-| Typed search in the picker, encrypted export | ⬜ |
-| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; words only reach the system spell checker today (no suggestions exist yet) |
+| Encrypted snippet export/import (password container shared with the clipboard backup) | ✅ core + tests · 🟦 dialogs |
+| Typed search in the picker | ⬜ |
+| Dictionary packs: 5 bundled word lists (Kali tools, NetHunter, AI terms, slash commands, Termux), strict zip reader, non-destructive install/remove, install screen (`DICTIONARY_PACKS.md`) | ✅ pure parts JVM-tested · 🟦 screen and database wiring compiled, **never run**; lists written from memory, **not verified online**; prediction reads the bundled zips, and installing a pack still only feeds the system spell checker |
 | Command library | ⬜
 
 ## Prediction and voice (Phase 6)
@@ -64,7 +74,8 @@ Developer mode); with it off the keyboard behaves like upstream. The UI has not 
 | Feature | Status |
 |---|---|
 | Glide typing | 🔹 upstream classifier exists; needs a dictionary; unverified |
-| Word suggestions, autocorrect, next-word prediction, personal dictionary | ⬜ upstream `suggest()` returns nothing and `spell()` is a test stub |
+| Word suggestions, autocorrect, next-word prediction | 🟡 pure predictor JVM-tested; suggestion-bar wiring and Typing settings compiled, **never run**. `spell()` is still a test stub. Next-word without learning is a frequency ranking (`DICTIONARY_PACKS.md`) |
+| Learn from my typing (off by default) and Clear learned words | 🟡 store and gate JVM-tested; file under `noBackupFilesDir/prediction/`; **never run** on a device |
 | Voice typing | ⬜ |
 | GIF integration | ⬜ |
 
@@ -77,9 +88,9 @@ Prompt library, templates, local transformations, optional provider adapters: �
 
 | Item | Status |
 |---|---|
-| Debug APK builds; 714 JVM unit tests pass | ✅ (`TESTING.md`) |
-| CI workflow (build + unit tests + debug APK artifact) | ✅ build + unit tests passed on GitHub Actions (run 5, 2026-10-12); ⚠ artifact upload failed with "storage quota has been hit" (account-level, not code) |
+| Debug APK builds; 730 JVM unit tests pass | ✅ (`TESTING.md`) |
+| CI workflow (build + unit tests + lint + debug APK artifact) | ✅ build, unit tests, `:lib:kotlin:test`, and `lintDebug` are the gate. Artifact upload is non-fatal: a full GitHub storage quota no longer fails the job |
 | Dependency checksum verification | ✅ |
-| Lint | ⬜ fails on 52 inherited errors (`AUDIT.md` §8) |
+| Lint | ✅ the errors in `AUDIT.md` §8 are fixed and `lintDebug` is a CI gate. Warnings do not fail the build |
 | Instrumented / device tests, performance numbers | ⬜ |
 | Signed release, release notes, store listing | ⬜ (no signing material exists; none is committed) |

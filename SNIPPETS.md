@@ -5,10 +5,22 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
 
 ## Using it (as built, unverified on a device)
 
-* Settings → Keyboard → Developer mode → **Snippets**: add, edit, delete, search, import and export. Snippets live in
-  `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at app start.
-* Same group: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\` `;;` `::`),
-  **Case-sensitive abbreviations**.
+* Settings → Tools → **Snippets** (a Home entry since the UI pass): add, edit, delete, search, import and export.
+  Snippets live in `noBackupFilesDir/snippets/snippets.json` (not in Android auto-backup) and load off the main thread at
+  app start. The tools panel's Clipboard tab also opens the in-keyboard picker.
+* Snippets → **Expansion**: **Expand snippets while typing** (off by default), **Expansion prefix** (`;` `:` `/` `\`
+  `;;` `::`), **Case-sensitive abbreviations**, the Enter and Tab switches below, and **Per keyboard mode**.
+* **Per keyboard mode** (Standard, Developer, Termux), each one of: *Space, plus Enter and Tab if on* (follow the
+  switches), *Space only*, or *Off*. Defaults: Standard and Developer follow the switches, Termux is Off. A mode rule
+  can narrow expansion but never turn it on while the master switch is off. Planned modes use Standard's rule. The
+  decision is one pure function, `ModeExpansionPolicy.triggers` (JVM-tested); the keyboard calls it before it reads the
+  field. In a terminal, Enter runs the line, so *Space only* is the safe way to turn expansion on in Termux mode: with
+  *Follow* and Enter expansion on, the expanded text is sent as soon as you press Enter. The group stays visible but
+  greyed out while expansion is off, so the link from Advanced developer settings always lands on it.
+* Scope of the Termux rule (code reading, not run on a device): a `TYPE_NULL` field gives the keyboard no text before
+  the caret (`EditorContent.Unspecified`), so no abbreviation can match there whatever the rule says. Termux's terminal
+  view is believed to declare `TYPE_NULL` (not re-checked against Termux's source), so the rule mainly matters while
+  Termux mode is active in an ordinary text field, for example when it was chosen by hand.
 * With expansion on, typing `;sig` and then **space** replaces `;sig` with the rendered snippet and keeps the space,
   unless the snippet contains `{{cursor}}`: then the space is consumed and the caret is placed at `{{cursor}}`.
 * **Enter** and **Tab** do the same only if you turn on "Also expand on Enter" / "Also expand on Tab" (both off by
@@ -43,7 +55,7 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
   or no input connection. The panel stays open in those cases. Titles, bodies, clipboard and selection are never logged.
 * Uses the clipboard panel's theme elements, so existing themes style it.
 
-## What exists (`dev.patrickgold.florisboard.ime.snippets`)
+## What exists (`com.victorious.keyboard.ime.snippets`)
 
 | Piece | Purpose |
 |---|---|
@@ -54,6 +66,7 @@ import/export, in-keyboard picker) compiled but never run or rendered on a devic
 | `ExpansionSettings`, `ExpansionMatcher` | Opt-in text expansion: decides whether a typed boundary character completes `<prefix><abbreviation>` |
 | `ExpansionTrigger`, `ExpansionTriggers`, `ExpansionAction` | Per-key opt-in for space, Enter and Tab, and the rule that a non-match (or a render that cannot be inserted) leaves the key alone |
 | `SnippetLibrary` | Immutable collection: add/update/remove, unique abbreviations (case-insensitive), search. Never drops anything silently |
+| `SnippetEncryptedBackup` | Password-encrypted export/import: the clipboard `BackupCrypto` container around `SnippetBackup`'s JSON; size-bounded before key derivation, typed errors (`WRONG_PASSWORD`, `WEAK_PASSWORD`, `ENCRYPTED`) |
 | `SnippetBackup`, `SnippetImporter` | Versioned JSON export/import (`format: "victorious-snippets"`, `version: 1`) and a non-destructive merge |
 | `SnippetFileStore` | One JSON file with atomic save and automatic `.bak` / `.corrupt` safety copies |
 
@@ -69,8 +82,10 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 | `{{clipboard}}` | current clipboard text (empty if none) |
 | `{{selection}}` | selected text (empty if none) |
 | `{{cursor}}` | where the caret ends up (first wins, the rest are removed) |
+| `{date}`, `{time}`, `{clipboard}`, `{cursor}` | the same results, as exact tokens with no pattern |
 
-* `\{{` writes a literal `{{`. There is no other escape.
+* `\{{` writes a literal `{{`. A backslash before a single-brace token (`\{date}`) writes that token unchanged.
+* `{date:PATTERN}`, `{datetime}`, `{selection}`, and any other braces (`{ return; }`) stay literal. Only the four exact single-brace tokens above expand.
 * Unknown, malformed, unterminated or over-long placeholders (including `{{exec:…}}`, `{{shell:…}}`, `{{env:…}}`) stay
   **literal text**; the validator reports them as warnings.
 * Substituted clipboard/selection text is **never re-scanned**, so clipboard content cannot inject placeholders.
@@ -94,8 +109,14 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 
 * The store directory **must** be under `noBackupFilesDir` (CLAUDE.md invariant 7); snippets are personal text.
 * Nothing in the core logs or reports snippet content. The shell must not either.
-* Exports are **plain, unencrypted JSON** (they contain whatever the user wrote). Encryption can reuse the clipboard
-  backup container later; it is not done.
+* Exports are JSON that contains whatever the user wrote. **Export** asks whether to protect the file with a password
+  (the switch is on by default; switching it off writes plain JSON). The encrypted file is the clipboard backup
+  container (`BackupCrypto`, see `BACKUP_FORMAT.md`: PBKDF2-HMAC-SHA256 600 000 iterations, AES-256-GCM, random salt and
+  nonce per file, authenticated header) around the same JSON, saved as `snippets.vkbk`. Minimum password length 8; a lost
+  password cannot be recovered. Import detects an encrypted file by its magic bytes and asks for the password; a wrong
+  password and a modified file give the same message. A clipboard `.vkbk` opened here is refused after decryption
+  (not a snippets file). The container does not say what is inside it, so the two kinds of file look alike until opened.
+  Limitation: the password is held as a `String` by the text field and cannot be wiped from memory.
 * `{{clipboard}}` and `{{selection}}` must be passed as `null` in sensitive fields (`SnippetInsertion.plan` enforces it for
   both callers; a test per path).
 * Before the first unlock after a reboot (Direct Boot) the credential-encrypted storage is unavailable: `SnippetManager`
@@ -115,10 +136,9 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 * Typed search inside the picker; folders; recently used ordering.
 * A password-like field with selected text and a snippet that uses `{{selection}}`: the selection is replaced like any
   commit would, but its text is (deliberately) not read.
-* Expansion is **off in Termux mode by default** (Advanced developer settings → Expand snippets in Termux mode). When it
-  is on, Enter and Tab follow the same opt-in switches as other modes.
-* Further per-mode defaults, snippet variables beyond the six above, folders.
-* Encrypted export. Translations.
+* Per-mode settings beyond expansion (for example a different prefix or Enter/Tab keep-switches per mode), snippet
+  variables beyond the six above, folders.
+* Translations. Password strength beyond the 8-character minimum. A separate file extension that tells snippet and clipboard containers apart.
 * Device validation of any of it (expansion timing against the IME's own composing text is the main unknown; for the
   picker: panel height and look, the left-arrow caret placement in real editors and in Termux, and `{{selection}}` in
   editors that report no selection). See the checklist in `TESTING.md`.

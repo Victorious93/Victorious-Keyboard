@@ -97,7 +97,7 @@ Environment problems and handling (none are project defects):
 | APK | `app-debug.apk`, 37 368 386 bytes, sha256 `51094ae4491567757c9af1c65f83f7e2bf870de8100998cbccc2d67c14b6f78a`, package `dev.patrickgold.florisboard.debug`, minSdk 26, target/compile 36, ABIs arm64-v8a/armeabi-v7a/x86/x86_64 (inspected with `aapt2 dump badging`) |
 | `./gradlew testDebugUnitTest` | **Success**: 176 passed, 0 failed (the "SKIPPED" lines in Gradle output are task statuses, not tests) |
 | Install / run on device | **Not run** (no device or emulator) |
-| `lintDebug` | **Fails with 52 errors on upstream code** (see §8) |
+| `lintDebug` | **Failed at the baseline with 52 errors on upstream code.** Those errors, plus one later Compose finding in the snippets screen, are fixed (see §8). Warnings remain |
 | Instrumented tests, benchmarks | **Not run** |
 
 ## 7. Risks register
@@ -115,25 +115,27 @@ Environment problems and handling (none are project defects):
 
 ## 8. Lint findings in the inherited code (Phase 1, `lintDebug`)
 
-`./gradlew lintDebug` fails: **52 errors, 215 warnings**. None are in files this project wrote; all existed at the
-baseline (the lint baseline file `app/lint.xml` is not a baseline of these). Breakdown of the errors:
+At the Phase 1 baseline, `./gradlew lintDebug` failed: **52 errors, 215 warnings**. `app/lint.xml` is a severity
+config (it downgrades `ExtraTranslation`), not a baseline of those errors. A later snippets screen added one more
+error (`LocalContextGetResourceValueCall`). Those errors are fixed:
 
-| Count | Id | Where | Assessment |
-|---|---|---|---|
-| 42 | `ImpliedQuantity` | community translations (`values-*/strings.xml`) | cosmetic/grammar; singular plural form without `%d` |
-| 8 | `StringFormatInvalid` | `values-pt`, `pt-rBR`, `ca`, `es` (`ext__validation__hint_value_above_50_percent`) | a `% s`-style sequence in the translation is an invalid format string. Only a runtime problem if the string is passed through `String.format`; **not verified** how it is consumed |
-| 1 | `RestrictedApi` | `FlorisEmojiCompat.kt:115` calls `EmojiCompat.reset(config)` (restricted to the emoji2 library) | works today, may break with an emoji2 update — **R9** |
-| 1 | `LocalContextConfigurationRead` | `PhysicalKeyboardScreen.kt:41` | stale configuration read in Compose; low impact |
+| Count | Id | Fix |
+|---|---|---|
+| 42 | `ImpliedQuantity` | Plural wording uses `%d`. In French, Portuguese, Russian, Ukrainian and Latvian, "one" (and Latvian "zero") matches more than one number, and lint does not treat `{v}` as a quantity. `pluralsRes` passes the quantity to `getQuantityString`, so the number still shows. Simplified Chinese had dropped the number entirely on two strings (`字符`, `候选`); those now include `%d` |
+| 8 | `StringFormatInvalid` | `ext__validation__hint_value_above_50_percent` in `values-pt`, `pt-rBR`, `ca`, `es` (and the same string in every other locale) escaped literal percents as `%%`. A space after `%` was being read as a printf flag (`% s`, `%, c`) |
+| 1 | `RestrictedApi` | The second `EmojiCompat.reset` (building the replaceAll instance) is suppressed, same as `getAsFlow`. See R9 |
+| 1 | `LocalContextConfigurationRead` | Physical keyboard screen reads `LocalConfiguration.current` |
+| 1 | `LocalContextGetResourceValueCall` | Snippet editor stores the error string resource id and resolves it during composition |
 
-CI therefore does not run lint yet. Phase 9 will triage these (fix R9, repair translations) and then gate on a lint
-baseline so *new* issues fail the build. New code added by this project is checked against the lint report for new
-findings.
+`lintDebug` is part of CI. A local run after these fixes reported **0 errors, 212 warnings, 2 hints**.
+Warnings (including `MissingQuantity`, `DefaultLocale`, and newer-dependency notices) are not errors and do not
+fail the build. Phase 9 still owns the security review; it does not have to re-triage these errors.
 
 ## 9. Additional risks found in Phase 1
 
 | # | Risk | Mitigation |
 |---|---|---|
-| R9 | `EmojiCompat.reset` restricted-API use | P9 |
+| R9 | `EmojiCompat.reset` is still a restricted API (both call sites suppressed so lint can pass). Public `init` cannot build the second instance. An emoji2 release can still remove it | Keep the suppressions next to the calls; revisit if emoji2 drops `reset` |
 | R10 | Restore code hard-coded the upstream package name, which would have rejected this app's own backups after the application-id change | **Fixed** in Phase 1 (`RestoreScreen.kt`: accepts `com.victorious.keyboard*` and `dev.patrickgold.florisboard*`) |
 | R11 | `MIN_VERSION_CODE = 64` in restore: version codes below 64 are treated as invalid | Version codes continue from upstream's 119 (this project starts at 120) |
 | R12 | New persistent stores (clipboard vault, snippets, prompts, credentials) must not enter Android auto-backup; Keystore-wrapped keys cannot be restored on another device | Keep them in `noBackupFilesDir` and/or add explicit exclusions to `res/xml/backup_rules.xml` (rule added to `CLAUDE.md`) |

@@ -9,8 +9,9 @@ Status: **implemented and unit-tested at the logic level; compiled but not run o
   history*). That switch is also the pause control. Disabling it stops recording immediately; existing entries stay
   until deleted.
 * **Sources.** Text copied anywhere (via the system clipboard listener, subject to Android's clipboard rules), and the
-  keyboard's own Copy/Cut keys. The keyboard never reads typed text into history, and its Copy/Cut keys **refuse in
-  password fields** (text, visible, web and numeric passwords).
+  keyboard's own Copy/Cut keys. The keyboard never reads typed text into history. Copy/Cut in a password field
+  (text, visible, web and numeric passwords) is stored in the **sensitive vault** when clipboard history is on, and
+  is refused when history is off. It is not written to the regular history or the system clipboard.
 * **Android limits (honest list).** Apps cannot read the clipboard in the background; the keyboard sees clips while it
   is the active input method. The source app of a clip is not provided by Android to keyboards, so none is stored.
   Android 13+ marks sensitive clips; those are masked and can be auto-removed after a delay. No root, no Accessibility
@@ -33,16 +34,31 @@ Status: **implemented and unit-tested at the logic level; compiled but not run o
 
 Text, UUID, timestamps (created, edited), pinned, favourite, tags (≤ 16, normalised), category, sensitive flag.
 Character count is derived. Images and videos (upstream feature) remain in history and count toward the cap, but are
-**not** exported: backup format v1 is text-only, and URI-backed clips can't be restored faithfully.
+**not** exported: backups are text-only (format version 2; version 1 files still import as the regular clipboard), and URI-backed clips can't be restored faithfully.
 
 ## Local categorisation
 
 `ClipClassifier` guesses URL / JSON / shell command / Markdown / code / AI prompt / general with simple rules. It runs
 on the device, sends nothing anywhere, is a convenience (the user can change it), and is not a security control.
 
+## Two clipboards
+
+The keyboard panel has **Clipboard** (regular) and **Vault** (sensitive) tabs. They do not share a store.
+
+* Password-field Copy/Cut, and any clip whose `ClipDescription` has `EXTRA_IS_SENSITIVE`, go to the vault when history is enabled.
+* *Detect secrets into the vault* is off by default. When on, card numbers (Luhn), IBANs (mod-97), API keys and tokens, private-key headers, and one-time codes that sit next to words such as "otp" or "verification code" go to the vault. A bare number is not treated as an OTP. Detection is pattern matching.
+* With that switch off, the older rule remains: detected secrets are not saved to the regular clipboard unless *Save passwords and keys* is on.
+* An item can be moved from one list to the other. A move does not run detection again.
+* Vault rows live in `noBackupFilesDir/sensitive-clipboard.vault`, encrypted with AES-256-GCM under a **different** Keystore key from the regular history (`sensitive_clipboard.key`). The file is not part of Android auto-backup.
+* Vault items are never suggestion-bar candidates. The list shows bullets until Reveal. Unlock uses the device credential (default on) and locks again after a timeout (default 5 minutes). Unpinned items expire (default 24 hours; Never is a setting). Pins are not expired and are not evicted to make room.
+* The older backup screen omits the vault unless the user opts in, and then only the password-encrypted export accepts those rows. **Export to ZIP** / **Import from ZIP** (Settings → Tools → Clipboard) can save Regular, Vault, or both. A ZIP that includes the vault must have a password; the item text sits in `content.vkbk` inside the ZIP. Import merges or replaces, and a vault row is not written into regular history. A locked vault is not exported or imported. Images are still skipped. See `BACKUP_FORMAT.md`.
+* The regular history cap, pins, and search are unchanged.
+
+The tabs, the credential prompt, and Keystore wrapping of the vault key have been compiled and **not run on a device**.
+
 ## Sensitive data
 
-* Clips Android flags as sensitive are masked in the UI and excluded from exports by default.
+* Clips Android flags as sensitive are masked in the UI and excluded from exports by default. They are stored in the vault, not the regular history.
 * `SensitiveDetector` recognises private-key headers, AWS key ids, JWTs, common API-token formats, password/secret
   assignments with secret-looking values, and Luhn-valid card numbers. Matching text is **not saved** unless
   *Save passwords and keys* is switched on. It is pattern matching: it misses secrets that look like ordinary text and

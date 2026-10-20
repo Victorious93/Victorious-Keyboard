@@ -726,27 +726,27 @@
     <!-- Unit strings (symbols) -->
     <!-- Unit strings (written words) -->
     <plurals name="unit__hours__written">
-        <item quantity="one">{v} کاتژمێر</item>
-        <item quantity="other">{v} کاتژمێر</item>
+        <item quantity="one">%d کاتژمێر</item>
+        <item quantity="other">%d کاتژمێر</item>
     </plurals>
     <plurals name="unit__minutes__written">
-        <item quantity="one">{v} خولەک</item>
-        <item quantity="other">{v} خولەک</item>
+        <item quantity="one">%d خولەک</item>
+        <item quantity="other">%d خولەک</item>
     </plurals>
     <plurals name="unit__seconds__written">
-        <item quantity="one">{v} چرکە</item>
-        <item quantity="other">{v} چرکە</item>
+        <item quantity="one">%d چرکە</item>
+        <item quantity="other">%d چرکە</item>
     </plurals>
     <plurals name="unit__items__written">
-        <item quantity="one">{v} دانە</item>
-        <item quantity="other">{v} دانە</item>
+        <item quantity="one">%d دانە</item>
+        <item quantity="other">%d دانە</item>
     </plurals>
     <plurals name="unit__characters__written">
-        <item quantity="one">{v} پیت</item>
-        <item quantity="other">{v} پیت</item>
+        <item quantity="one">%d پیت</item>
+        <item quantity="other">%d پیت</item>
     </plurals>
     <plurals name="unit__candidates__written">
-        <item quantity="one">{v} دانە</item>
-        <item quantity="other">{v} دانە</item>
+        <item quantity="one">%d دانە</item>
+        <item quantity="other">%d دانە</item>
     </plurals>
 </resources>

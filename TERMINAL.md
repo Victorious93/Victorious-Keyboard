@@ -22,10 +22,17 @@ So there was no Ctrl+letter path at all; only the editor's own Ctrl+A/Z/Shift+Z 
 
 ## Developer row (UI)
 
-Settings → Keyboard → **Developer mode**: *Developer row* (off by default: with it off the keyboard is unchanged),
-*Symbols for* (Shell, Python, JS/TS, Kotlin/Java, JSON, YAML, Markdown), *Terminal keys* (on/off).
+Settings → **Developer & terminal**: *Show terminal key row* (Auto / Always / Never, default Auto), *Terminal keys*
+(on/off), *Symbols for* (Shell, Python, JS/TS, Kotlin/Java, JSON, YAML, Markdown). Auto shows the row in known terminal
+apps, in `TYPE_NULL` fields, and while Developer or Termux mode is active; in other apps the keyboard is unchanged. The
+old *Developer row* switch (`devrow__enabled`) is no longer read. `TerminalRowPolicy.plan` (pure, JVM-tested) is the
+single decision for whether the row shows and what it holds; the row and the height that full-height panels reserve for
+it both use it. Termux mode forces terminal keys, navigation keys and Shell symbols; other modes use your switches.
+The same screen can reorder the keys (Esc, Tab, Ctrl, Alt, arrows, `|`, `~`, `/`, and the rest of that list) and add
+macro keys. A macro sends a saved sequence: Ctrl plus a letter, or text followed by Enter. The text is inserted, not
+run, and it is not logged. A blank order keeps today's row. Not run on a device.
 
-When on, one horizontally scrollable row sits between the Smartbar and the keyboard:
+When shown, one horizontally scrollable row sits between the Smartbar and the keyboard:
 `Esc Tab Ctrl Alt ← ↓ ↑ → Home End PgUp PgDn` then the profile's symbols. It reuses the Smartbar action-key theme
 elements, so existing themes style it.
 
@@ -36,7 +43,8 @@ elements, so existing themes style it.
 * A symbol key under Ctrl/Alt is sent as a key event when it has one (Ctrl+`\` works from the row); pair keys
   (`()`, `{}`, `""`, …) insert both halves and move the cursor between them.
 * Ctrl/Alt now also apply to the keyboard's own arrow and line-start/line-end keys.
-* The row is hidden while the Smartbar's actions overflow panel is open.
+* The row is hidden while the Smartbar's actions overflow panel, the tools panel, the AI panel or the clip editor is
+  open. The tools panel takes over the row's height, so the window does not change size when it opens.
 * Advanced developer settings add: row size, separate navigation-key and symbol toggles, your own symbol keys, hold and
   repeat timing, the Ctrl/Alt lock window and vibration (`docs/DEVELOPER_KEYBOARD.md`).
 

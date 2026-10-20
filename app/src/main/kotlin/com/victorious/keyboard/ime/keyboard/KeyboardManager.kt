@@ -128,7 +128,6 @@ import com.victorious.keyboard.ime.profile.ProfileHold
 import com.victorious.keyboard.ime.profile.ProfileHoldMachine
 import com.victorious.keyboard.ime.profile.ProfileShift
 import com.victorious.keyboard.ime.theme.extCoreTheme
-import com.victorious.keyboard.lib.ext.ExtensionComponentName
 import com.victorious.keyboard.ime.developer.DevStep
 import com.victorious.keyboard.ime.developer.DeveloperKeyResolver
 import com.victorious.keyboard.ime.terminal.ModifierSnapshot

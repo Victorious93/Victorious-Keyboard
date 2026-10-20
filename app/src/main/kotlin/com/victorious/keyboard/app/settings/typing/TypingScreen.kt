@@ -1,0 +1,231 @@
+/*
+ * Copyright (C) 2021-2025 The FlorisBoard Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.victorious.keyboard.app.settings.typing
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
+import com.victorious.keyboard.R
+import com.victorious.keyboard.app.LocalNavController
+import com.victorious.keyboard.app.Routes
+import com.victorious.keyboard.nlpManager
+import com.victorious.keyboard.app.enumDisplayEntriesOf
+import com.victorious.keyboard.ime.keyboard.IncognitoMode
+import com.victorious.keyboard.ime.nlp.SpellingLanguageMode
+import com.victorious.keyboard.ime.nlp.prediction.AutocorrectLevel
+import com.victorious.keyboard.lib.compose.FlorisHyperlinkText
+import com.victorious.keyboard.lib.compose.FlorisScreen
+import dev.patrickgold.jetpref.datastore.model.observeAsState
+import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
+import dev.patrickgold.jetpref.datastore.ui.ListPreference
+import dev.patrickgold.jetpref.datastore.ui.Preference
+import dev.patrickgold.jetpref.datastore.ui.PreferenceGroup
+import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
+import org.florisboard.lib.android.AndroidVersion
+import org.florisboard.lib.compose.stringRes
+
+@OptIn(ExperimentalJetPrefDatastoreUi::class)
+@Composable
+fun TypingScreen() = FlorisScreen {
+    title = stringRes(R.string.settings__typing__title)
+    previewFieldVisible = true
+
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+    var confirmClearLearned by remember { mutableStateOf(false) }
+
+    content {
+        PreferenceGroup(title = stringRes(R.string.pref__suggestion__title)) {
+            Preference(
+                title = stringRes(R.string.settings__my_suggestions__title),
+                summary = stringRes(R.string.settings__my_suggestions__summary),
+                onClick = { navController.navigate(Routes.Settings.MySuggestions) },
+            )
+            SwitchPreference(
+                prefs.suggestion.predictionEnabled,
+                icon = Icons.Default.AutoAwesome,
+                title = stringRes(R.string.pref__suggestion__prediction_enabled__label),
+                summary = stringRes(R.string.pref__suggestion__prediction_enabled__summary),
+            )
+            ListPreference(
+                prefs.suggestion.autocorrectLevel,
+                title = stringRes(R.string.pref__suggestion__autocorrect__label),
+                entries = enumDisplayEntriesOf(AutocorrectLevel::class),
+                enabledIf = { prefs.suggestion.predictionEnabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.suggestion.learnFromTyping,
+                icon = Icons.Default.School,
+                title = stringRes(R.string.pref__suggestion__learn_from_typing__label),
+                summary = stringRes(R.string.pref__suggestion__learn_from_typing__summary),
+                enabledIf = { prefs.suggestion.predictionEnabled isEqualTo true },
+            )
+            Preference(
+                icon = Icons.Default.DeleteForever,
+                title = stringRes(R.string.pref__suggestion__clear_learned__label),
+                summary = stringRes(R.string.pref__suggestion__clear_learned__summary),
+                onClick = { confirmClearLearned = true },
+            )
+            SwitchPreference(
+                prefs.suggestion.enabled,
+                title = stringRes(R.string.pref__suggestion__enabled__label),
+                summary = stringRes(R.string.pref__suggestion__enabled__summary),
+            )
+            SwitchPreference(
+                prefs.suggestion.blockPossiblyOffensive,
+                title = stringRes(R.string.pref__suggestion__block_possibly_offensive__label),
+                summary = stringRes(R.string.pref__suggestion__block_possibly_offensive__summary),
+                enabledIf = { prefs.suggestion.enabled isEqualTo true },
+            )
+            SwitchPreference(
+                prefs.suggestion.api30InlineSuggestionsEnabled,
+                title = stringRes(R.string.pref__suggestion__api30_inline_suggestions_enabled__label),
+                summary = stringRes(R.string.pref__suggestion__api30_inline_suggestions_enabled__summary),
+                visibleIf = { AndroidVersion.ATLEAST_API30_R },
+            )
+            ListPreference(
+                prefs.suggestion.incognitoMode,
+                icon = ImageVector.vectorResource(id = R.drawable.ic_incognito),
+                title = stringRes(R.string.pref__suggestion__incognito_mode__label),
+                entries = enumDisplayEntriesOf(IncognitoMode::class),
+            )
+        }
+
+        PreferenceGroup(title = stringRes(R.string.pref__correction__title)) {
+            SwitchPreference(
+                prefs.correction.autoCapitalization,
+                title = stringRes(R.string.pref__correction__auto_capitalization__label),
+                summary = stringRes(R.string.pref__correction__auto_capitalization__summary),
+            )
+            val isAutoSpacePunctuationEnabled by prefs.correction.autoSpacePunctuation.observeAsState()
+            SwitchPreference(
+                prefs.correction.autoSpacePunctuation,
+                icon = Icons.Default.SpaceBar,
+                title = stringRes(R.string.pref__correction__auto_space_punctuation__label),
+                summary = stringRes(R.string.pref__correction__auto_space_punctuation__summary),
+            )
+            if (isAutoSpacePunctuationEnabled) {
+                Card(modifier = Modifier.padding(8.dp)) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = """
+                                Auto-space after punctuation is an experimental feature which may break or behave
+                                unexpectedly. If you want, please give feedback about it in below linked feedback
+                                thread. This helps a lot in improving this feature. Thanks!
+                            """.trimIndent().replace('\n', ' '),
+                        )
+                        FlorisHyperlinkText(
+                            text = "Give feedback (GitHub issues)",
+                            url = stringRes(R.string.florisboard__issue_tracker_url),
+                        )
+                    }
+                }
+            }
+            SwitchPreference(
+                prefs.correction.rememberCapsLockState,
+                title = stringRes(R.string.pref__correction__remember_caps_lock_state__label),
+                summary = stringRes(R.string.pref__correction__remember_caps_lock_state__summary),
+            )
+            SwitchPreference(
+                prefs.correction.doubleSpacePeriod,
+                title = stringRes(R.string.pref__correction__double_space_period__label),
+                summary = stringRes(R.string.pref__correction__double_space_period__summary),
+            )
+        }
+
+        PreferenceGroup(title = stringRes(R.string.pref__spelling__title)) {
+            val florisSpellCheckerEnabled = remember { mutableStateOf(false) }
+            SpellCheckerServiceSelector(florisSpellCheckerEnabled)
+            Preference(
+                title = stringRes(R.string.settings__help),
+                summary = stringRes(R.string.settings__manual__summary),
+                onClick = { navController.navigate(Routes.Settings.Manual) },
+            )
+            ListPreference(
+                prefs.spelling.languageMode,
+                icon = Icons.Default.Language,
+                title = stringRes(R.string.pref__spelling__language_mode__label),
+                entries = enumDisplayEntriesOf(SpellingLanguageMode::class),
+                enabledIf = { florisSpellCheckerEnabled.value },
+            )
+            SwitchPreference(
+                prefs.spelling.useContacts,
+                icon = Icons.Default.Contacts,
+                title = stringRes(R.string.pref__spelling__use_contacts__label),
+                summary = stringRes(R.string.pref__spelling__use_contacts__summary),
+                enabledIf = { florisSpellCheckerEnabled.value },
+                visibleIf = { false }, // For now
+            )
+            SwitchPreference(
+                prefs.spelling.useUdmEntries,
+                icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                title = stringRes(R.string.pref__spelling__use_udm_entries__label),
+                summary = stringRes(R.string.pref__spelling__use_udm_entries__summary),
+                enabledIf = { florisSpellCheckerEnabled.value },
+                visibleIf = { false }, // For now
+            )
+        }
+
+        PreferenceGroup(title = stringRes(R.string.settings__dictionary__title)) {
+            Preference(
+                icon = Icons.AutoMirrored.Filled.LibraryBooks,
+                title = stringRes(R.string.settings__dictionary__title),
+                onClick = { navController.navigate(Routes.Settings.Dictionary) },
+            )
+        }
+
+        if (confirmClearLearned) {
+            AlertDialog(
+                onDismissRequest = { confirmClearLearned = false },
+                title = { Text(stringRes(R.string.pref__suggestion__clear_learned__confirm_title)) },
+                text = { Text(stringRes(R.string.pref__suggestion__clear_learned__confirm_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        context.nlpManager().value.clearLearnedWords()
+                        confirmClearLearned = false
+                    }) { Text(stringRes(R.string.action__delete)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmClearLearned = false }) {
+                        Text(stringRes(R.string.action__cancel))
+                    }
+                },
+            )
+        }
+    }
+}

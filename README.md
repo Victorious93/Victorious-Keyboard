@@ -200,7 +200,7 @@ Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 | Data | On-device only; clipboard, snippets, and learned words stay out of Android auto-backup |
 | Distribution | Debug pre-release on GitHub Releases. Signed with the Android debug key, not a store build |
 
-Version numbering is inherited from FlorisBoard. That is an allowed fork exception: this project did not start a new version sequence. Until the approved namespace rename lands, the Kotlin packages and the Gradle namespace remain `dev.patrickgold.florisboard`. The application id is already `com.victorious.keyboard` (debug `.debug`, bench `.bench`).
+Version numbering is inherited from FlorisBoard. That is an allowed fork exception: this project did not start a new version sequence. The Kotlin packages and the Gradle namespace are `com.victorious.keyboard`. The application id stays `com.victorious.keyboard` (debug `.debug`, bench `.bench`). The input-method component name stays `dev.patrickgold.florisboard.FlorisImeService`, so a keyboard that is already enabled stays enabled.
 
 Privacy: [PRIVACY.md](PRIVACY.md).
 
@@ -233,7 +233,7 @@ Install with `adb install app/build/outputs/apk/debug/app-debug.apk`, then enabl
 
 ```text
 app/                         Android application
-  src/main/kotlin/dev/patrickgold/florisboard/
+  src/main/kotlin/com/victorious/keyboard/
     FlorisImeService.kt      Input method service
     ime/clipboard/           Clipboard history, vault, backup/restore
     ime/developer/, terminal/ Developer row, key mapping, modifiers
@@ -246,7 +246,7 @@ tools/, utils/               Pack builder and upstream utilities
 docs/                        Branding, developer-keyboard notes, upstream docs
 ```
 
-Kotlin package stays `dev.patrickgold.florisboard` to ease upstream merges; product identity is the application ID and resources. New features follow *pure-Kotlin core + thin Android shell* — see [ARCHITECTURE.md](ARCHITECTURE.md).
+Kotlin package is `com.victorious.keyboard`. Preference keys, the user-dictionary file, the `florisboard://` scheme, and extension MIME types stay as they were so saved data still loads. Product identity is the application ID and resources. New features follow *pure-Kotlin core + thin Android shell* — see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Spell checker
 

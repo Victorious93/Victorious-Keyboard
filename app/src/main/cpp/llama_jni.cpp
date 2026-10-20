@@ -124,17 +124,17 @@ bool emit_piece(JNIEnv * env, jobject callback, jmethodID method, const std::str
 } // namespace
 
 extern "C" JNIEXPORT void JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeCancel(JNIEnv *, jclass) {
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeCancel(JNIEnv *, jclass) {
     g_cancel.store(true);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeClearCancel(JNIEnv *, jclass) {
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeClearCancel(JNIEnv *, jclass) {
     g_cancel.store(false);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeLoad(
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeLoad(
         JNIEnv * env, jclass, jstring path, jint n_ctx, jint n_threads) {
     const char * c_path = env->GetStringUTFChars(path, nullptr);
     if (c_path == nullptr) return JNI_FALSE;
@@ -182,20 +182,20 @@ Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeLoad(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeUnload(JNIEnv *, jclass) {
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeUnload(JNIEnv *, jclass) {
     std::lock_guard<std::mutex> lock(g_mu);
     free_locked();
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeIsLoaded(JNIEnv *, jclass) {
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeIsLoaded(JNIEnv *, jclass) {
     std::lock_guard<std::mutex> lock(g_mu);
     return g_ctx != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
 // 0 finished, 1 cancelled, 3 prompt does not fit, 4 decode failed, 5 not loaded
 extern "C" JNIEXPORT jint JNICALL
-Java_dev_patrickgold_florisboard_ime_ai_LlamaNative_nativeGenerate(
+Java_com_victorious_keyboard_ime_ai_LlamaNative_nativeGenerate(
         JNIEnv * env, jclass, jstring system, jstring user, jfloat temperature, jint max_tokens, jobject callback) {
     const char * c_system = env->GetStringUTFChars(system, nullptr);
     const char * c_user = env->GetStringUTFChars(user, nullptr);

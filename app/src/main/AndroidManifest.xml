@@ -33,7 +33,7 @@
     </queries>
 
     <application
-        android:name="dev.patrickgold.florisboard.FlorisApplication"
+        android:name="com.victorious.keyboard.FlorisApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/backup_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -98,7 +98,7 @@
 
         <!-- Main App Activity -->
         <activity
-            android:name="dev.patrickgold.florisboard.app.FlorisAppActivity"
+            android:name="com.victorious.keyboard.app.FlorisAppActivity"
             android:icon="@mipmap/floris_app_icon"
             android:label="@string/settings__title"
             android:launchMode="singleTask"
@@ -134,7 +134,7 @@
             android:label="@string/floris_app_name"
             android:launchMode="singleTask"
             android:roundIcon="@mipmap/floris_app_icon_round"
-            android:targetActivity="dev.patrickgold.florisboard.app.FlorisAppActivity"
+            android:targetActivity="com.victorious.keyboard.app.FlorisAppActivity"
             android:theme="@style/FlorisAppTheme.Splash"
             android:exported="true">
             <intent-filter>
@@ -145,27 +145,27 @@
 
         <!-- Crash Dialog Activity -->
         <activity
-            android:name="dev.patrickgold.florisboard.lib.crashutility.CrashDialogActivity"
+            android:name="com.victorious.keyboard.lib.crashutility.CrashDialogActivity"
             android:icon="@mipmap/floris_app_icon"
             android:label="@string/crash_dialog__title"
             android:configChanges="orientation|screenSize"
             android:theme="@style/CrashDialogTheme"/>
 
         <activity
-            android:name="dev.patrickgold.florisboard.ime.screenshot.ScreenshotSavedActivity"
+            android:name="com.victorious.keyboard.ime.screenshot.ScreenshotSavedActivity"
             android:theme="@style/FlorisAppTheme.Transparent"
             android:exported="false"
             android:excludeFromRecents="true"/>
 
         <activity
-            android:name="dev.patrickgold.florisboard.ime.clipboard.VaultUnlockActivity"
+            android:name="com.victorious.keyboard.ime.clipboard.VaultUnlockActivity"
             android:theme="@style/FlorisAppTheme.Transparent"
             android:exported="false"
             android:excludeFromRecents="true"/>
 
         <!-- Copy to Clipboard Activity -->
         <activity
-            android:name="dev.patrickgold.florisboard.ime.clipboard.FlorisCopyToClipboardActivity"
+            android:name="com.victorious.keyboard.ime.clipboard.FlorisCopyToClipboardActivity"
             android:theme="@style/FlorisAppTheme.Transparent"
             android:exported="true">
             <intent-filter>
@@ -177,7 +177,7 @@
 
         <!-- Clipboard Media File Provider -->
         <provider
-            android:name="dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardMediaProvider"
+            android:name="com.victorious.keyboard.ime.clipboard.provider.ClipboardMediaProvider"
             android:authorities="${applicationId}.provider.clipboard"
             android:grantUriPermissions="true"
             android:exported="false">

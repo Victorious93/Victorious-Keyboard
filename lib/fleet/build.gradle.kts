@@ -32,7 +32,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.patrickgold.florisboard.lib.fleet"
+    namespace = "com.victorious.keyboard.lib.fleet"
     compileSdk = projectCompileSdk.toInt()
 
     defaultConfig {

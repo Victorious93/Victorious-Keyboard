@@ -55,14 +55,21 @@ sealed interface RenderResult {
  * | `{{selection}}` | the selected text (empty if none) |
  * | `{{cursor}}` | where the caret ends up (first one wins, others are removed) |
  *
- * `\{{` writes a literal `{{`. Anything unrecognised, malformed or unterminated stays literal text. Substituted values
- * (clipboard, selection) are **never** re-scanned, so their content cannot trigger further placeholders.
+ * The same four names also work as exact single-brace tokens: `{date}`, `{time}`, `{clipboard}`, `{cursor}`.
+ * `{selection}` and `{datetime}` stay double-brace only. A token with an argument (`{date:yyyy}`) or any other
+ * braces (`{ return; }`) stay literal, so a code snippet is not rewritten. `\{{` writes a literal `{{`, and a
+ * backslash before a single-brace token (`\{date}`) writes that token unchanged.
+ *
+ * Anything unrecognised, malformed or unterminated stays literal text. Substituted values (clipboard, selection)
+ * are **never** re-scanned, so their content cannot trigger further placeholders.
  */
 object SnippetTemplate {
     private const val MAX_PLACEHOLDER = 64
     private const val MAX_PATTERN = 32
     private val NO_ARG = setOf("clipboard", "selection", "cursor")
     private val WITH_ARG = setOf("date", "time", "datetime")
+    /** Exact `{name}` tokens. `{datetime}` and `{selection}` are not in this list. */
+    private val SINGLE_BRACE = listOf("date", "time", "clipboard", "cursor")
 
     private sealed interface Part {
         data class Literal(val text: String) : Part
@@ -93,11 +100,39 @@ object SnippetTemplate {
                         i = end + 2
                     }
                 }
-                else -> { lit.append(body[i]); i++ }
+                else -> {
+                    val single = singleBraceAt(body, i)
+                    if (single == null) {
+                        lit.append(body[i]); i++
+                    } else {
+                        val tokenLen = single.length + 2
+                        if (lit.isNotEmpty() && lit.last() == '\\') {
+                            lit.deleteCharAt(lit.lastIndex)
+                            lit.append(body, i, i + tokenLen)
+                        } else {
+                            flush()
+                            parts += Part.Value(single, null)
+                        }
+                        i += tokenLen
+                    }
+                }
             }
         }
         flush()
         return Parsed(parts, unknown)
+    }
+
+    /** `{date}` and the other exact tokens, or null. An extra `}` (as in `{date}}`) does not match. */
+    private fun singleBraceAt(body: String, i: Int): String? {
+        if (i >= body.length || body[i] != '{') return null
+        for (name in SINGLE_BRACE) {
+            val token = "{$name}"
+            if (!body.regionMatches(i, token, 0, token.length, ignoreCase = true)) continue
+            val after = i + token.length
+            if (after < body.length && body[after] == '}') continue
+            return name
+        }
+        return null
     }
 
     fun unknownPlaceholders(body: String): List<String> = parse(body).unknown.distinct()

@@ -82,8 +82,10 @@ Inert by design: **no placeholder can run a command, read a file, call a URL or 
 | `{{clipboard}}` | current clipboard text (empty if none) |
 | `{{selection}}` | selected text (empty if none) |
 | `{{cursor}}` | where the caret ends up (first wins, the rest are removed) |
+| `{date}`, `{time}`, `{clipboard}`, `{cursor}` | the same results, as exact tokens with no pattern |
 
-* `\{{` writes a literal `{{`. There is no other escape.
+* `\{{` writes a literal `{{`. A backslash before a single-brace token (`\{date}`) writes that token unchanged.
+* `{date:PATTERN}`, `{datetime}`, `{selection}`, and any other braces (`{ return; }`) stay literal. Only the four exact single-brace tokens above expand.
 * Unknown, malformed, unterminated or over-long placeholders (including `{{exec:…}}`, `{{shell:…}}`, `{{env:…}}`) stay
   **literal text**; the validator reports them as warnings.
 * Substituted clipboard/selection text is **never re-scanned**, so clipboard content cannot inject placeholders.

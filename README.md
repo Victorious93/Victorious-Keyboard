@@ -1,3 +1,29 @@
+<!-- victorious-fleet-readme-refresh:start -->
+<p align="center">
+  <img src="assets/logo.png" alt="Victorious-Keyboard logo" width="200">
+</p>
+
+# Victorious-Keyboard
+
+Custom Android keyboard with integrated media controls for the fleet.
+
+**Package id:** `com.victorious.keyboard`
+
+**Status:** CI green / merging *(from [fleet-manifest ROADMAP](https://github.com/Victorious93/fleet-manifest/blob/main/ROADMAP.md))*
+
+## Install / build
+
+Gradle Android app (`app/build.gradle.kts`). Typical: `./gradlew :app:assembleDebug`.
+
+_Steps above are taken from this repo’s build files / existing docs; anything not exercised in this refresh is unlabeled as verified on a device._
+
+## Victorious fleet
+
+- Monorepo: [https://github.com/Victorious93/victorious-fleet](https://github.com/Victorious93/victorious-fleet)
+- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
+
+<!-- victorious-fleet-readme-refresh:end -->
+
 <div align="center">
 
 <img src="docs/branding/logo.png" alt="Victorious Keyboard logo" width="128">

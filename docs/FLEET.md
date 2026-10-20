@@ -98,13 +98,38 @@ The caller is authorized only by UID, then package, then certificate. The allowl
 
 Top-level fields are flat: `op`, `requestId`, `targetNodeRef`, `actionRef`, `params`, `nonce`, `timestampMs`, `ttlMs`, `destructive`, `trigger`. Optional `protocol_major` and `protocol_minor` must be 1 when they are present. `targetNodeRef` and `trigger` are informational. `ttlMs` defaults to 120000 and cannot be above 300000.
 
-`op` is one of `capabilities.get`, `remote.command`, `macro.step`, `macro.run`.
+`op` is one of `capabilities.get`, `remote.command`, `macro.step`, `macro.run`, `node.status.get`.
 
 `macro.step` adds `macroId`, `stepIndex`, and `onError` (`abort` or `continue`). `macro.run` adds `macroId`, `steps`, and `dryRun`. A step object is `actionRef`, `params`, and optional `destructive` and `onError`. `dryRun` checks the steps and does not perform them and does not show a prompt.
 
 The nonce is 128 bits, 32 hex digits, dashes allowed. A request is expired when `now > timestampMs + ttlMs`, or when the timestamp is more than 120000 ms away from now. A nonce is remembered for the authenticated package for 10 minutes. A repeat in that window is `replay_detected`, including a repeat of an expired request. Two packages do not share a nonce.
 
-`capabilities.get` returns, for each action, `name`, `kind` (`read`, `action`, or `destructive`), `remoteAllowed`, and `requiresConfirm`.
+`capabilities.get` returns, for each action, `name`, `kind` (`read`, `action`, or `destructive`), `remoteAllowed`, and `requiresConfirm`. `node.status.get` is advertised as `kind` `read`, `remoteAllowed` true, `requiresConfirm` false.
+
+`node.status.get` is its own op. It is not an `actionRef` under `remote.command`. The same nonce, expiry, and caller checks apply. `destructive` on this op is ignored, so the read is never held for confirmation. `params` may be empty, which means this keyboard, or `params.nodeId` must equal this app's application id. Any other id is `not_found`. Other `params` keys are ignored and are not copied into the reply.
+
+The result is one snapshot. This keyboard reports the `node_health` domain only.
+
+| Field | Value |
+|---|---|
+| `nodeId` | This app's application id |
+| `packageName` | The same application id. Never a certificate |
+| `connectionClass` | `EXTERNAL_NODE` |
+| `updatedAtMs` | When this reply was built |
+| `domains` | One entry: `name` `node_health`, `state` `ok` when the keyboard service is running and `down` when it is not, `detail` `ime running` or `ime stopped` |
+
+The snapshot does not include typed text, clipboard contents, or Vault data. A detail that names a secret is refused as `invalid_parameters`. A keyboard that is not the current input method still answers `ok: true` with `state` `down`.
+
+```json
+{"op":"node.status.get","requestId":"r3","params":{},
+ "nonce":"ff00112233445566778899aabbccddee","timestampMs":1700000000000}
+```
+
+```json
+{"nodeId":"com.victorious.keyboard","packageName":"com.victorious.keyboard",
+ "connectionClass":"EXTERNAL_NODE","updatedAtMs":1700000000000,
+ "domains":[{"name":"node_health","state":"ok","detail":"ime running"}]}
+```
 
 `remote.command` may use:
 
@@ -120,7 +145,7 @@ The nonce is 128 bits, 32 hex digits, dashes allowed. A request is expired when 
 
 `keyboard.input.text` and `keyboard.input.key` as an `actionRef` are `unsupported_op`. The new envelope never calls the input port. Those two names still work as the old operations, with their old replies.
 
-`destructive: true`, or a capability whose kind is `destructive`, returns `confirmation_required`. The keyboard shows an on-device notice and does not run the action. Nothing in this catalog is auto-approved. A dry run reports the same error and does not show the notice.
+`destructive: true` on `remote.command` or a macro, or a capability whose kind is `destructive`, returns `confirmation_required`. The keyboard shows an on-device notice and does not run the action. Nothing in this catalog is auto-approved. A dry run reports the same error and does not show the notice. `node.status.get` does not use that gate.
 
 Other errors: `invalid_parameters`, `not_found`, `internal`, `capability_off`.
 

@@ -57,6 +57,108 @@ class RemoteEnvelopeTest : FunSpec({
         }
         (BridgeProtocol.OP_INPUT_TEXT in names) shouldBe false
         (BridgeProtocol.OP_INPUT_KEY in names) shouldBe false
+        val status = body["capabilities"]!!.jsonArray.map { it.jsonObject }
+            .first { it.str("name") == RemoteEnvelope.OP_NODE_STATUS }
+        status.str("kind") shouldBe "read"
+        status.bool("remoteAllowed") shouldBe true
+        status.bool("requiresConfirm") shouldBe false
+    }
+
+    test("node.status.get returns node health only and ignores a destructive flag") {
+        val port = RecordingPort()
+        val now = 1_700_000_000_000L
+        val body = call(
+            RemoteEnvelope.NonceCache(),
+            request(
+                "node.status.get",
+                now = now,
+                destructive = true,
+                params = mapOf("note" to "clipboard secret vault typed"),
+            ),
+            now = now,
+            port = port,
+        )
+        body.bool("ok") shouldBe true
+        body.str("error") shouldBe ""
+        port.prompts shouldBe 0
+        port.calls shouldBe listOf("node")
+        val result = body["result"]!!.jsonObject
+        result.str("nodeId") shouldBe "com.victorious.keyboard"
+        result.str("packageName") shouldBe "com.victorious.keyboard"
+        result.str("connectionClass") shouldBe "EXTERNAL_NODE"
+        result["updatedAtMs"]!!.jsonPrimitive.content.toLong() shouldBe now
+        val domain = result["domains"]!!.jsonArray.single().jsonObject
+        domain.str("name") shouldBe "node_health"
+        domain.str("state") shouldBe "ok"
+        domain.str("detail") shouldBe "ime running"
+        val raw = body.toString()
+        raw.contains("clipboard") shouldBe false
+        raw.contains("secret") shouldBe false
+        raw.contains("vault") shouldBe false
+        raw.contains("STANDARD") shouldBe false
+        raw.contains("victorious_black") shouldBe false
+    }
+
+    test("node.status.get uses the same auth, replay, expiry, and node id rules") {
+        val cache = RemoteEnvelope.NonceCache()
+        val nonce = "00112233445566778899aabbccddee11"
+        call(cache, request("node.status.get", nonce = nonce), authorized = false).str("error") shouldBe "unauthorized"
+        call(cache, request("node.status.get", nonce = nonce)).bool("ok") shouldBe true
+        call(cache, request("node.status.get", nonce = nonce)).str("error") shouldBe "replay_detected"
+        val now = 2_000_000L
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", nonce = "22".repeat(16), now = now - 180_000),
+            now = now,
+        ).str("error") shouldBe "expired"
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", enabled = false),
+            enabled = false,
+        ).str("error") shouldBe "external_control_disabled"
+
+        val stopped = RecordingPort(imeRunning = false)
+        val down = call(RemoteEnvelope.NonceCache(), request("node.status.get"), port = stopped)
+        down["result"]!!.jsonObject["domains"]!!.jsonArray.single().jsonObject.str("state") shouldBe "down"
+        down["result"]!!.jsonObject["domains"]!!.jsonArray.single().jsonObject.str("detail") shouldBe "ime stopped"
+
+        val match = call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", params = mapOf("nodeId" to "com.victorious.keyboard")),
+        )
+        match.bool("ok") shouldBe true
+        val missing = call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", params = mapOf("nodeId" to "clipboard-other-node")),
+        )
+        missing.str("error") shouldBe "not_found"
+        missing.toString().contains("clipboard") shouldBe false
+        ("result" in missing) shouldBe false
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", params = mapOf("nodeId" to "")),
+        ).str("error") shouldBe "invalid_parameters"
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("node.status.get", action = "node.status.get"),
+        ).str("error") shouldBe "invalid_parameters"
+
+        val command = RecordingPort()
+        call(
+            RemoteEnvelope.NonceCache(),
+            request("remote.command", action = "node.status.get"),
+            port = command,
+        ).str("error") shouldBe "unsupported_op"
+        command.calls.shouldBeEmpty()
+        command.prompts shouldBe 0
+
+        val blown = RecordingPort(blowUp = true)
+        call(RemoteEnvelope.NonceCache(), request("node.status.get"), port = blown).str("error") shouldBe "internal"
+
+        RemoteEnvelope.detailAllowed("ime running") shouldBe true
+        RemoteEnvelope.detailAllowed("clip board") shouldBe false
+        RemoteEnvelope.detailAllowed("x".repeat(201)) shouldBe false
+        RemoteEnvelope.peekOp("""{"op":"node.status.get"}""") shouldBe "node.status.get"
     }
 
     test("replay is keyed by the authenticated source and the nonce, not by an envelope field") {
@@ -359,6 +461,8 @@ private fun JsonObject.int(name: String) = this[name]!!.jsonPrimitive.content.to
 private class RecordingPort(
     private val effect: RemoteEnvelope.Effect = RemoteEnvelope.Effect.DONE,
     private val blowUp: Boolean = false,
+    private val imeRunning: Boolean = true,
+    private val packageName: String = "com.victorious.keyboard",
 ) : RemoteEnvelope.Port {
     val calls = mutableListOf<String>()
     var prompts = 0
@@ -389,6 +493,12 @@ private class RecordingPort(
     override fun volume(direction: Int): RemoteEnvelope.Effect {
         calls += "volume:$direction"
         return effect
+    }
+
+    override fun nodePulse(): RemoteEnvelope.NodePulse {
+        calls += "node"
+        if (blowUp) throw IllegalStateException("down")
+        return RemoteEnvelope.NodePulse(packageName, imeRunning)
     }
 
     override fun prompt() {

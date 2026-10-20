@@ -34,6 +34,7 @@ import dev.patrickgold.florisboard.lib.fleet.RemoteEnvelope
 
 /**
  * Android side of the remote-control envelope. It changes the mode and the theme, and it sends media keys.
+ * Node status reports the application id and whether the keyboard service is running.
  * It does not type into the focused app, and it does not read the field.
  */
 class RemoteControlPort(context: Context) : RemoteEnvelope.Port {
@@ -102,6 +103,13 @@ class RemoteControlPort(context: Context) : RemoteEnvelope.Port {
         } catch (_: Exception) {
             RemoteEnvelope.Effect.INTERNAL
         }
+    }
+
+    override fun nodePulse(): RemoteEnvelope.NodePulse {
+        return RemoteEnvelope.NodePulse(
+            packageName = app.packageName,
+            imeRunning = FlorisImeService.isRunning(),
+        )
     }
 
     override fun prompt() {

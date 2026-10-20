@@ -27,6 +27,8 @@ class ManualCopyTest : FunSpec({
         val manual = File("../docs/MANUAL.md").readText()
         File("src/main/assets/manual/MANUAL.md").readText() shouldBe manual
         manual shouldContain "Remote control uses that same Hub status switch"
+        manual shouldContain "allowed fork exception"
+        manual shouldContain "dev.patrickgold.florisboard"
         manual shouldContain "Pin up to four tools"
     }
 })

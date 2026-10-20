@@ -52,7 +52,8 @@ object RemoteEnvelope {
     const val OP_COMMAND = "remote.command"
     const val OP_MACRO_STEP = "macro.step"
     const val OP_MACRO_RUN = "macro.run"
-    val OPS = setOf(OP_CAPABILITIES, OP_COMMAND, OP_MACRO_STEP, OP_MACRO_RUN)
+    const val OP_NODE_STATUS = "node.status.get"
+    val OPS = setOf(OP_CAPABILITIES, OP_COMMAND, OP_MACRO_STEP, OP_MACRO_RUN, OP_NODE_STATUS)
 
     const val ERR_INVALID = "invalid_parameters"
     const val ERR_NOT_PAIRED = "not_paired"
@@ -91,12 +92,20 @@ object RemoteEnvelope {
         Capability("media.seek", "action", true, false),
         Capability("media.seekBy", "action", true, false),
         Capability("media.state", "read", true, false),
+        Capability(OP_NODE_STATUS, "read", true, false),
     )
 
     private val byName = CAPABILITIES.associateBy { it.name }
+    private val FORBIDDEN_DETAIL = listOf(
+        "password", "apikey", "apitoken", "token", "secret", "codeword", "whitelist",
+        "signingkey", "privatekey", "clipboard", "vault",
+    )
     private val sessionOnly = setOf("media.seek", "media.seekBy", "media.state")
 
     data class Status(val imeRunning: Boolean, val mode: String, val theme: String)
+
+    /** Whether this process is up. The package name is the application id, never a certificate or user text. */
+    data class NodePulse(val packageName: String, val imeRunning: Boolean)
 
     enum class Effect { DONE, NOT_PAIRED, NOT_FOUND, CAPABILITY_OFF, INTERNAL }
 
@@ -110,7 +119,18 @@ object RemoteEnvelope {
         fun setTheme(themeId: String): Effect
         fun mediaKey(keyCode: Int): Effect
         fun volume(direction: Int): Effect
+        fun nodePulse(): NodePulse
         fun prompt()
+    }
+
+    /**
+     * A status detail may be shown. It refuses names that would carry a secret, and it refuses a dump.
+     * The check is on the letters only, so spacing does not hide a banned word.
+     */
+    internal fun detailAllowed(detail: String): Boolean {
+        if (detail.length > 200) return false
+        val folded = detail.lowercase().filter { it.isLetter() }
+        return FORBIDDEN_DETAIL.none { it in folded }
     }
 
     /** Seen nonces, keyed by the authenticated source and the nonce. Entries live at least ten minutes. */
@@ -171,6 +191,7 @@ object RemoteEnvelope {
         return try {
             when (request.op) {
                 OP_CAPABILITIES -> capabilities(request)
+                OP_NODE_STATUS -> nodeStatus(request, now, port)
                 OP_COMMAND -> runAction(request, request.actionRef, request.params, request.destructive, port, dry = false)
                     .let { outcome -> reply(request.op, request.requestId, outcome.error.isEmpty(), outcome.error, result = outcome.result) }
                 OP_MACRO_STEP -> macroStep(request, port)
@@ -231,7 +252,7 @@ object RemoteEnvelope {
         port: Port,
         dry: Boolean,
     ): Outcome {
-        if (actionRef in INPUT_OPS || actionRef !in byName) return Outcome(ERR_UNSUPPORTED)
+        if (actionRef == OP_NODE_STATUS || actionRef in INPUT_OPS || actionRef !in byName) return Outcome(ERR_UNSUPPORTED)
         val capability = byName.getValue(actionRef)
         if (!capability.remoteAllowed) return Outcome(ERR_UNSUPPORTED)
         if (destructive || capability.requiresConfirm || capability.kind == "destructive") {
@@ -321,6 +342,46 @@ object RemoteEnvelope {
             "media.seekBy" -> if (only("deltaMs") && params["deltaMs"]?.longOrNull != null) ParamShape.SESSION else null
             else -> null
         }
+    }
+
+    /**
+     * `node.status.get` is its own op, not an actionRef. `destructive` is ignored, so this read is never
+     * confirmation-gated. The snapshot is node health only.
+     */
+    private fun nodeStatus(request: Request, now: Long, port: Port): String {
+        if (request.actionRef.isNotEmpty()) return reply(request.op, request.requestId, false, ERR_INVALID)
+        val asked = request.params["nodeId"]
+        if (asked != null && (!asked.isString || asked.content.isBlank() || asked.content.length > 200)) {
+            return reply(request.op, request.requestId, false, ERR_INVALID)
+        }
+        val pulse = try {
+            port.nodePulse()
+        } catch (_: Exception) {
+            return reply(request.op, request.requestId, false, ERR_INTERNAL)
+        }
+        val nodeId = pulse.packageName
+        if (nodeId.isBlank() || nodeId.length > 200 || nodeId.any { it.isISOControl() || it.isWhitespace() } || !detailAllowed(nodeId)) {
+            return reply(request.op, request.requestId, false, ERR_INVALID)
+        }
+        if (asked != null && asked.content != nodeId) {
+            return reply(request.op, request.requestId, false, ERR_NOT_FOUND)
+        }
+        val detail = if (pulse.imeRunning) "ime running" else "ime stopped"
+        if (!detailAllowed(detail)) return reply(request.op, request.requestId, false, ERR_INVALID)
+        val result = buildJsonObject {
+            put("nodeId", nodeId)
+            put("packageName", nodeId)
+            put("connectionClass", "EXTERNAL_NODE")
+            put("updatedAtMs", now)
+            put("domains", buildJsonArray {
+                add(buildJsonObject {
+                    put("name", "node_health")
+                    put("state", if (pulse.imeRunning) "ok" else "down")
+                    put("detail", detail)
+                })
+            })
+        }
+        return reply(request.op, request.requestId, true, "", result = result)
     }
 
     private fun expired(timestampMs: Long, ttlMs: Long, now: Long): Boolean {

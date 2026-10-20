@@ -106,6 +106,7 @@ object ToolsCatalog {
             ToolbarActionId.THEME,
             ToolbarActionId.SETTINGS,
             ToolbarActionId.SCREENSHOT,
+            ToolbarActionId.MEDIA,
         ),
     )
 

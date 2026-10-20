@@ -23,6 +23,11 @@
         <intent>
             <action android:name="com.victorious.keyboard.action.COMMAND_PROVIDER"/>
         </intent>
+        <package android:name="ai.victorious.filemanager"/>
+        <package android:name="ai.victorious.filemanager.debug"/>
+        <intent>
+            <action android:name="ai.victorious.filemanager.action.BRIDGE"/>
+        </intent>
     </queries>
 
     <application

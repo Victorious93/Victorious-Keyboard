@@ -31,6 +31,9 @@ sealed interface DevStep {
 
     /** Move the cursor [count] characters to the left (used to land between a pair such as `()`). */
     data class CursorLeft(val count: Int) : DevStep
+
+    /** A media button. The shell must not send this into the focused editor. */
+    data class Media(val command: dev.patrickgold.florisboard.ime.media.MediaCommand) : DevStep
 }
 
 /** [consumesModifiers]: one-shot Ctrl/Alt were used by a key event and must be spent. */
@@ -55,6 +58,7 @@ object DeveloperKeyResolver {
         }
         is DevKeyAction.Insert -> resolveInsert(action, mods)
         is DevKeyAction.Play -> resolvePlay(action)
+        is DevKeyAction.Media -> DevResolution(listOf(DevStep.Media(action.command)), false)
     }
 
     private fun resolvePlay(action: DevKeyAction.Play): DevResolution {

@@ -89,3 +89,53 @@ Each send and each reply is capped at 8,000 characters. Calls run on a daemon th
 ## Hub status bridge
 
 The keyboard also hosts a separate status service for the Droidcommand hub. That service is off until the user turns on Hub status. It answers `keyboard.capabilities.get` and `keyboard.status` only to `ai.droidcommand.app` and `ai.droidcommand.app.debug`. It does not forward typed text. See [BRIDGE.md](BRIDGE.md).
+
+## Media keys and File Manager seek
+
+Play, pause, previous, next, rewind, and fast-forward go out as media keys. Volume down and volume up adjust the music stream and show the system volume UI. That path needs no pairing and talks to whichever player is listening. The buttons do not type into the focused app, and they do not read the field, the clipboard, or the vault.
+
+| Call | Value |
+|---|---|
+| Transport | `AudioManager.dispatchMediaKeyEvent`, action down then action up |
+| Play/pause | `KEYCODE_MEDIA_PLAY_PAUSE` (85) |
+| Next | `KEYCODE_MEDIA_NEXT` (87) |
+| Previous | `KEYCODE_MEDIA_PREVIOUS` (88) |
+| Rewind | `KEYCODE_MEDIA_REWIND` (89) |
+| Fast-forward | `KEYCODE_MEDIA_FAST_FORWARD` (90) |
+| Volume | `AudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_LOWER or ADJUST_RAISE, FLAG_SHOW_UI)` |
+
+The Media tile is on the tools panel Quick tab. The same buttons can be added to the terminal key row. A blank key order leaves that row as it is.
+
+Exact seek is optional. It is off until the user turns on File Manager seek, and off until Victorious File Manager enables its own side. The keyboard then uses the same Messenger JSON style as the fleet clients.
+
+| Piece | Value |
+|---|---|
+| Packages | `ai.victorious.filemanager`, and `ai.victorious.filemanager.debug` |
+| Action | `ai.victorious.filemanager.action.BRIDGE` |
+| Request | `what = 1`, Bundle key `request` |
+| Reply | `what = 2`, Bundle key `response` |
+| Body | `protocol_major` 1, `op`, `id` |
+
+Commands: `media.play`, `media.pause`, `media.toggle`, `media.next`, `media.prev`, `media.seek` (`positionMs` ≥ 0), `media.seekBy` (`deltaMs`), `media.volume` (`level` 0 through 100), `media.state`.
+
+`media.state` returns `playing`, `positionMs`, `durationMs`, `title`, and `source`. The Media tile shows `title` while this bridge is connected. The title is not logged. `error: "NO_SESSION"` means nothing is playing.
+
+The keyboard does not auto-trust File Manager. `FleetReleaseCert.SHA256` is empty, so an empty release fingerprint never matches. Settings → Tools → Fleet link pins the certificate of the installed package. A different certificate needs a new approval. The bridge is used only when that pin is active and File Manager seek is on. Otherwise every button is a media key.
+
+Volume buttons stay on `adjustStreamVolume` even when the bridge is on, because `media.volume` is an absolute level. Rewind and fast-forward on the bridge are `media.seekBy` of −10 000 ms and +10 000 ms. `NO_SESSION`, or a reply the keyboard cannot read, falls back to the matching media key. A seek with no key to fall back to reports that nothing is playing.
+
+```json
+{"protocol_major":1,"op":"media.toggle","id":"m1"}
+```
+
+```json
+{"protocol_major":1,"op":"media.seekBy","id":"m2","deltaMs":-10000}
+```
+
+```json
+{"playing":true,"positionMs":12000,"durationMs":180000,"title":"Track","source":"file"}
+```
+
+```json
+{"ok":false,"error":"NO_SESSION"}
+```

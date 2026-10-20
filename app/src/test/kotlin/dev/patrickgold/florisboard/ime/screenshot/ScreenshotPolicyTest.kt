@@ -72,10 +72,12 @@ class ScreenshotPolicyTest : FunSpec({
         ScreenshotPolicy.HIDE_DELAY_MS shouldBe 400L
     }
 
-    test("Screenshot is the last Quick tile and has a panel icon") {
-        ToolsCatalog.actions(ToolsTab.QUICK).last() shouldBe ToolbarActionId.SCREENSHOT
-        ToolsPanelItems.item(ToolbarActionId.SCREENSHOT) shouldBe ToolsPanelItems.item(ToolbarActionId.SCREENSHOT)
+    test("Screenshot stays on the Quick tab and Media is the last tile") {
+        val quick = ToolsCatalog.actions(ToolsTab.QUICK)
+        quick.last() shouldBe ToolbarActionId.MEDIA
+        quick[quick.lastIndex - 1] shouldBe ToolbarActionId.SCREENSHOT
         (ToolsPanelItems.item(ToolbarActionId.SCREENSHOT) != null) shouldBe true
+        (ToolsPanelItems.item(ToolbarActionId.MEDIA) != null) shouldBe true
     }
 })
 

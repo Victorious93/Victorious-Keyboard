@@ -18,6 +18,7 @@ package dev.patrickgold.florisboard.ime.theme
 
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponent
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
@@ -27,7 +28,7 @@ import org.florisboard.lib.snygg.SnyggStylesheetEditor
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun extCoreTheme(id: String) = ExtensionComponentName(
-    extensionId = "org.florisboard.themes",
+    extensionId = ExtensionIds.THEMES,
     componentId = id,
 )
 

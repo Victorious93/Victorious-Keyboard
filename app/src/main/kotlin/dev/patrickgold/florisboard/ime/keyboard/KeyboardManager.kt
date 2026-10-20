@@ -63,6 +63,8 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWords
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertPrivacy
+import dev.patrickgold.florisboard.ime.nlp.prediction.PeriodTyping
+import dev.patrickgold.florisboard.ime.nlp.prediction.SuggestionCommit
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.ime.popup.PopupMappingComponent
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotCapture
@@ -76,6 +78,7 @@ import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardCache
 import dev.patrickgold.florisboard.lib.devtools.LogTopic
 import dev.patrickgold.florisboard.lib.devtools.flogError
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
@@ -384,6 +387,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             val shift = prefs.correction.autoCapitalization.get()
                 && subtypeManager.activeSubtype.primaryLocale.supportsCapitalization
                 && editorInstance.activeCursorCapsMode != InputAttributes.CapsMode.NONE
+                && !PeriodTyping.suppressAutoCapitalization(editorInstance.activeContent.textBeforeSelection)
             activeState.inputShiftState = when {
                 shift -> InputShiftState.SHIFTED_AUTOMATIC
                 else -> InputShiftState.UNSHIFTED
@@ -1072,8 +1076,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * but skips handling changing to characters keyboard and double space periods.
      */
     fun handleHardwareKeyboardSpace() {
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -1270,8 +1275,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             pendingAutocorrect = null
             return
         }
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -2154,8 +2160,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.VIEW_SYMBOLS2 -> activeState.keyboardMode = KeyboardMode.SYMBOLS2
             else -> {
                 if (activeState.imeUiMode == ImeUiMode.MEDIA) {
-                    nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
-                    editorInstance.commitText(data.asString(isForDisplay = false))
+                    val text = data.asString(isForDisplay = false)
+                    if (SuggestionCommit.allows(editorInstance.activeContent.textBeforeSelection, text)) {
+                        nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                    }
+                    editorInstance.commitText(text)
                     return@batchEdit
                 }
                 when (activeState.keyboardMode) {
@@ -2182,7 +2191,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                             // With Ctrl/Alt active the character is sent as a key event instead of text.
                             if (!(terminalModifiers.anyActive && sendTerminalChar(text))) {
                                 if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
-                                    val candidate = nlpManager.getAutoCommitCandidate()
+                                    val before = editorInstance.activeContent.textBeforeSelection
+                                    val candidate = if (SuggestionCommit.allows(before, text)) {
+                                        nlpManager.getAutoCommitCandidate()
+                                    } else {
+                                        null
+                                    }
                                     if (candidate == null) nlpManager.noteTypedOrCommitted(null)
                                     candidate?.let { commitCandidate(it) }
                                 }
@@ -2303,22 +2317,25 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 localLayouts[layoutType] = mutableMapOf()
             }
             for (keyboardExtension in keyboardExtensions) {
+                val metaId = keyboardExtension.meta.id
+                val aliases = keyboardExtension.meta.aliases
                 keyboardExtension.composers.forEach { composer ->
-                    localComposers[ExtensionComponentName(keyboardExtension.meta.id, composer.id)] = composer
+                    ExtensionIds.indexComponent(localComposers, metaId, aliases, composer.id, composer)
                 }
                 keyboardExtension.currencySets.forEach { currencySet ->
-                    localCurrencySets[ExtensionComponentName(keyboardExtension.meta.id, currencySet.id)] = currencySet
+                    ExtensionIds.indexComponent(localCurrencySets, metaId, aliases, currencySet.id, currencySet)
                 }
                 keyboardExtension.layouts.forEach { (type, layoutComponents) ->
+                    val bucket = localLayouts[LayoutType.entries.first { it.id == type }]!!
                     for (layoutComponent in layoutComponents) {
-                        localLayouts[LayoutType.entries.first { it.id == type }]!![ExtensionComponentName(keyboardExtension.meta.id, layoutComponent.id)] = layoutComponent
+                        ExtensionIds.indexComponent(bucket, metaId, aliases, layoutComponent.id, layoutComponent)
                     }
                 }
                 keyboardExtension.popupMappings.forEach { popupMapping ->
-                    localPopupMappings[ExtensionComponentName(keyboardExtension.meta.id, popupMapping.id)] = popupMapping
+                    ExtensionIds.indexComponent(localPopupMappings, metaId, aliases, popupMapping.id, popupMapping)
                 }
                 keyboardExtension.punctuationRules.forEach { punctuationRule ->
-                    localPunctuationRules[ExtensionComponentName(keyboardExtension.meta.id, punctuationRule.id)] = punctuationRule
+                    ExtensionIds.indexComponent(localPunctuationRules, metaId, aliases, punctuationRule.id, punctuationRule)
                 }
                 localSubtypePresets.addAll(keyboardExtension.subtypePresets)
             }

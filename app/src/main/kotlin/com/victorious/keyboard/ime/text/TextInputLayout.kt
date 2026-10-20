@@ -43,6 +43,7 @@ import com.victorious.keyboard.ime.smartbar.InlineSuggestionsStyleCache
 import com.victorious.keyboard.ime.clipedit.ui.ClipEditorPanel
 import com.victorious.keyboard.ime.ai.ui.LocalAiPanel
 import com.victorious.keyboard.ime.toolbar.ui.CommandHistoryPanel
+import com.victorious.keyboard.ime.toolbar.ui.SelectionToolbar
 import com.victorious.keyboard.ime.toolbar.ui.TextToolsPanel
 import com.victorious.keyboard.ime.smartbar.Smartbar
 import com.victorious.keyboard.ime.toolbar.ToolbarRuntime
@@ -80,6 +81,10 @@ fun TextInputLayout(
         val aiPanel by localAi.panel.collectAsState()
         val textTools by keyboardManager.textTools.collectAsState()
         val commandHistory by keyboardManager.commandHistory.collectAsState()
+        val selectionBar by keyboardManager.selectionBar.collectAsState()
+        if (selectionBar) {
+            SelectionToolbar()
+        }
         if (aiPanel != null) {
             LocalAiPanel()
         }

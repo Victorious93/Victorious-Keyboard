@@ -79,6 +79,8 @@ import com.victorious.keyboard.ime.popup.ExceptionsForKeyCodes
 import com.victorious.keyboard.ime.popup.PopupUiController
 import com.victorious.keyboard.ime.popup.rememberPopupUiController
 import com.victorious.keyboard.ime.text.gestures.GlideTypingGesture
+import com.victorious.keyboard.ime.text.PrecisionCursor
+import com.victorious.keyboard.ime.text.SpaceGesture
 import com.victorious.keyboard.ime.text.gestures.SwipeAction
 import com.victorious.keyboard.ime.text.gestures.SwipeGesture
 import com.victorious.keyboard.ime.text.key.KeyCode
@@ -650,14 +652,10 @@ private class TextKeyboardLayoutController(
                     pointer.hasTriggeredLongPress = true
                     when (key.computedData.code) {
                         KeyCode.SPACE, KeyCode.CJK_SPACE -> {
-                            when (prefs.gestures.spaceBarLongPress.get()) {
-                                SwipeAction.NO_ACTION,
-                                SwipeAction.INSERT_SPACE -> {
-                                }
-                                else -> {
-                                    keyboardManager.executeSwipeAction(prefs.gestures.spaceBarLongPress.get())
-                                }
-                            }
+                            // Arm selection. The configured long-press action runs on release
+                            // only when the finger did not drag.
+                            pointer.precisionEdge = null
+                            pointer.spaceSelectDragged = false
                             true
                         }
                         KeyCode.SHIFT -> {
@@ -737,6 +735,18 @@ private class TextKeyboardLayoutController(
         if (pointer.hasTriggeredMassSelection) {
             pointer.hasTriggeredMassSelection = false
             editorInstance.massSelection.end()
+        }
+
+        val initialCode = pointer.initialKey?.computedData?.code
+        if (PrecisionCursor.gesture(pointer.hasTriggeredLongPress, pointer.spaceSelectDragged) == SpaceGesture.LONG_PRESS &&
+            (initialCode == KeyCode.SPACE || initialCode == KeyCode.CJK_SPACE)
+        ) {
+            when (prefs.gestures.spaceBarLongPress.get()) {
+                SwipeAction.NO_ACTION,
+                SwipeAction.INSERT_SPACE -> {
+                }
+                else -> keyboardManager.executeSwipeAction(prefs.gestures.spaceBarLongPress.get())
+            }
         }
 
         val initialKey = pointer.initialKey
@@ -921,46 +931,62 @@ private class TextKeyboardLayoutController(
         return when (event.type) {
             SwipeGesture.Type.TOUCH_MOVE -> when (event.direction) {
                 SwipeGesture.Direction.LEFT -> {
-                    val action = prefs.gestures.spaceBarSwipeLeft.get()
-                    if (action == SwipeAction.MOVE_CURSOR_LEFT) {
-                        abs(event.relUnitCountX).let {
-                            val count = if (!pointer.hasTriggeredGestureMove) it - 1 else it
-                            if (count > 0) {
-                                inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
-                                if (!pointer.hasTriggeredMassSelection) {
-                                    pointer.hasTriggeredMassSelection = true
-                                    editorInstance.massSelection.begin()
-                                }
-                                keyboardManager.handleArrow(KeyCode.ARROW_LEFT, count)
-                            }
-                        }
+                    if (PrecisionCursor.gesture(pointer.hasTriggeredLongPress, moved = true) == SpaceGesture.SELECT) {
+                        dragPrecisionSelection(pointer, event.absUnitCountX)
                         true
                     } else {
-                        action != SwipeAction.NO_ACTION
+                        val action = prefs.gestures.spaceBarSwipeLeft.get()
+                        if (action == SwipeAction.MOVE_CURSOR_LEFT) {
+                            abs(event.relUnitCountX).let {
+                                val count = if (!pointer.hasTriggeredGestureMove) it - 1 else it
+                                if (count > 0) {
+                                    repeat(count) {
+                                        inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
+                                    }
+                                    if (!pointer.hasTriggeredMassSelection) {
+                                        pointer.hasTriggeredMassSelection = true
+                                        editorInstance.massSelection.begin()
+                                    }
+                                    keyboardManager.handleArrow(KeyCode.ARROW_LEFT, count)
+                                }
+                            }
+                            true
+                        } else {
+                            action != SwipeAction.NO_ACTION
+                        }
                     }
                 }
                 SwipeGesture.Direction.RIGHT -> {
-                    val action = prefs.gestures.spaceBarSwipeRight.get()
-                    if (action == SwipeAction.MOVE_CURSOR_RIGHT) {
-                        abs(event.relUnitCountX).let {
-                            val count = if (!pointer.hasTriggeredGestureMove) it - 1 else it
-                            if (count > 0) {
-                                inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
-                                if (!pointer.hasTriggeredMassSelection) {
-                                    pointer.hasTriggeredMassSelection = true
-                                    editorInstance.massSelection.begin()
-                                }
-                                keyboardManager.handleArrow(KeyCode.ARROW_RIGHT, count)
-                            }
-                        }
+                    if (PrecisionCursor.gesture(pointer.hasTriggeredLongPress, moved = true) == SpaceGesture.SELECT) {
+                        dragPrecisionSelection(pointer, event.absUnitCountX)
                         true
                     } else {
-                        action != SwipeAction.NO_ACTION
+                        val action = prefs.gestures.spaceBarSwipeRight.get()
+                        if (action == SwipeAction.MOVE_CURSOR_RIGHT) {
+                            abs(event.relUnitCountX).let {
+                                val count = if (!pointer.hasTriggeredGestureMove) it - 1 else it
+                                if (count > 0) {
+                                    repeat(count) {
+                                        inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
+                                    }
+                                    if (!pointer.hasTriggeredMassSelection) {
+                                        pointer.hasTriggeredMassSelection = true
+                                        editorInstance.massSelection.begin()
+                                    }
+                                    keyboardManager.handleArrow(KeyCode.ARROW_RIGHT, count)
+                                }
+                            }
+                            true
+                        } else {
+                            action != SwipeAction.NO_ACTION
+                        }
                     }
                 }
                 else -> false
             }
-            SwipeGesture.Type.TOUCH_UP -> when (event.direction) {
+            SwipeGesture.Type.TOUCH_UP -> when {
+                pointer.spaceSelectDragged -> true
+                else -> when (event.direction) {
                 SwipeGesture.Direction.LEFT -> {
                     prefs.gestures.spaceBarSwipeLeft.get().let {
                         when {
@@ -1002,7 +1028,25 @@ private class TextKeyboardLayoutController(
                     }
                 }
             }
+            }
         }
+    }
+
+    private fun dragPrecisionSelection(pointer: TouchPointer, absUnits: Int) {
+        val units = PrecisionCursor.units(absUnits)
+        val content = editorInstance.activeContent
+        val origin = content.offset.coerceAtLeast(0)
+        val place = PrecisionCursor.select(origin, content.text.length, initSelectionStart, units)
+        val edge = if (units < 0) place.start else place.end
+        val tickCount = PrecisionCursor.ticks(pointer.precisionEdge ?: initSelectionStart, edge)
+        pointer.precisionEdge = edge
+        if (tickCount > 0) {
+            pointer.spaceSelectDragged = true
+            repeat(tickCount) {
+                inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
+            }
+        }
+        keyboardManager.applyPrecisionSelection(initSelectionStart, units)
     }
 
     override fun onGlideAddPoint(point: GlideTypingGesture.Detector.Position) {
@@ -1075,6 +1119,8 @@ private class TextKeyboardLayoutController(
         var hasTriggeredGestureMove: Boolean = false
         var hasTriggeredLongPress: Boolean = false
         var hasTriggeredMassSelection: Boolean = false
+        var spaceSelectDragged: Boolean = false
+        var precisionEdge: Int? = null
         var pressedKeyInfo: InputEventDispatcher.PressedKeyInfo? = null
         var releasedIntoGestureStrip: Boolean = false
 
@@ -1085,6 +1131,8 @@ private class TextKeyboardLayoutController(
             hasTriggeredGestureMove = false
             hasTriggeredLongPress = false
             hasTriggeredMassSelection = false
+            spaceSelectDragged = false
+            precisionEdge = null
             pressedKeyInfo = null
             releasedIntoGestureStrip = false
         }

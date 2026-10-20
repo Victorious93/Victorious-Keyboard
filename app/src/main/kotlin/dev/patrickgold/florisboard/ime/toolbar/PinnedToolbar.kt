@@ -20,38 +20,60 @@ package dev.patrickgold.florisboard.ime.toolbar
  * The buttons the user pinned to the toolbar row above the suggestion strip. Pure; the Android shell draws them and
  * runs them through the same path as the tools panel, so a pinned button does exactly what its tile does.
  *
- * The stored list holds [ToolbarActionId] names. `null` means "never edited": the row shows [defaults]. Once the user
- * edits, the list is stored as it is, so an empty list means an empty row (and the row is not drawn). Unknown names,
- * names the tools panel does not offer, duplicates, and anything past [MAX] are dropped when the list is read.
+ * The stored list holds [ToolbarActionId] names and [ToolRef] extras (`slash:` and `fleet:`). `null` and an empty
+ * list both mean nothing is pinned, which leaves the suggestion strip as it is. Unknown names, duplicates, and
+ * anything past [MAX] are dropped when the list is read.
  */
 object PinnedToolbar {
-    const val MAX = 24
+    const val MAX = 4
 
-    val defaults: List<ToolbarActionId> = listOf(
-        ToolbarActionId.OPEN_CLIPBOARD,
-        ToolbarActionId.OPEN_SNIPPETS,
-        ToolbarActionId.SEL_ALL,
-        ToolbarActionId.COPY,
-        ToolbarActionId.PASTE,
-        ToolbarActionId.UNDO,
-        ToolbarActionId.REDO,
-        ToolbarActionId.EMOJI,
-    )
+    /** Nothing pinned. The strip stays suggestions plus the tools button. */
+    val defaults: List<ToolbarActionId> = emptyList()
 
     private val offered: Set<ToolbarActionId> by lazy { ToolsCatalog.actionIds().toSet() }
 
-    /** The stored names cleaned up, in order, without the screenshot rule (that is a display decision). */
-    fun sanitized(stored: List<String>?): List<ToolbarActionId> {
-        if (stored == null) return defaults
-        val byName = offered.associateBy { it.name }
-        return stored.mapNotNull { byName[it] }.distinct().take(MAX)
+    private fun acceptable(raw: String): Boolean {
+        if (offered.any { it.name == raw }) return true
+        return ToolRef.isExtra(raw)
     }
 
-    /** What the row draws. The Screenshot button is left out while its setting is off, without unpinning it. */
-    fun resolve(stored: List<String>?, screenshotShown: Boolean): List<ToolbarActionId> =
-        sanitized(stored).filter { screenshotShown || it != ToolbarActionId.SCREENSHOT }
+    /**
+     * Stored names cleaned up, in order. Built-in buttons and extra refs both count toward [MAX].
+     * `null` is the unsaved layout: no pins.
+     */
+    fun tokens(stored: List<String>?): List<String> {
+        if (stored == null) return emptyList()
+        val out = LinkedHashSet<String>()
+        for (raw in stored) {
+            if (!acceptable(raw) || raw in out) continue
+            out.add(raw)
+            if (out.size == MAX) break
+        }
+        return out.toList()
+    }
 
-    fun rowVisible(enabled: Boolean, resolved: List<ToolbarActionId>): Boolean = enabled && resolved.isNotEmpty()
+    /** Built-in buttons only, without the screenshot rule. */
+    fun sanitized(stored: List<String>?): List<ToolbarActionId> {
+        val byName = offered.associateBy { it.name }
+        return tokens(stored).mapNotNull { byName[it] }
+    }
+
+    /** What the strip draws. Screenshot is left out while its setting is off, without unpinning it. */
+    fun resolveTokens(stored: List<String>?, screenshotShown: Boolean): List<String> {
+        val byName = offered.associateBy { it.name }
+        return tokens(stored).filter { raw ->
+            val id = byName[raw]
+            screenshotShown || id != ToolbarActionId.SCREENSHOT
+        }
+    }
+
+    /** What the strip draws, built-in buttons only. */
+    fun resolve(stored: List<String>?, screenshotShown: Boolean): List<ToolbarActionId> {
+        val byName = offered.associateBy { it.name }
+        return resolveTokens(stored, screenshotShown).mapNotNull { byName[it] }
+    }
+
+    fun rowVisible(enabled: Boolean, resolved: List<*>): Boolean = enabled && resolved.isNotEmpty()
 
     /** Buttons that can still be pinned, grouped like the tools panel and in its order. */
     fun candidates(stored: List<String>?, screenshotShown: Boolean): List<ToolbarActionId> {
@@ -61,33 +83,41 @@ object PinnedToolbar {
         }
     }
 
-    /** [id] appended at the end. Unchanged when it is already pinned, is not offered, or the row is full. */
-    fun adding(stored: List<String>?, id: ToolbarActionId): List<String> {
-        val current = sanitized(stored)
-        if (id !in offered || id in current || current.size >= MAX) return current.map { it.name }
-        return (current + id).map { it.name }
+    /** [token] appended at the end. Unchanged when it is already pinned, is not acceptable, or the strip is full. */
+    fun addingToken(stored: List<String>?, token: String): List<String> {
+        val current = tokens(stored)
+        if (!acceptable(token) || token in current || current.size >= MAX) return current
+        return current + token
     }
 
-    fun removing(stored: List<String>?, id: ToolbarActionId): List<String> =
-        sanitized(stored).filter { it != id }.map { it.name }
+    fun adding(stored: List<String>?, id: ToolbarActionId): List<String> = addingToken(stored, id.name)
 
-    fun movingEarlier(stored: List<String>?, id: ToolbarActionId): List<String> {
-        val current = sanitized(stored).toMutableList()
-        val index = current.indexOf(id)
+    fun removingToken(stored: List<String>?, token: String): List<String> =
+        tokens(stored).filter { it != token }
+
+    fun removing(stored: List<String>?, id: ToolbarActionId): List<String> = removingToken(stored, id.name)
+
+    fun movingEarlierToken(stored: List<String>?, token: String): List<String> {
+        val current = tokens(stored).toMutableList()
+        val index = current.indexOf(token)
         if (index > 0) {
             current[index] = current[index - 1]
-            current[index - 1] = id
+            current[index - 1] = token
         }
-        return current.map { it.name }
+        return current
     }
 
-    fun movingLater(stored: List<String>?, id: ToolbarActionId): List<String> {
-        val current = sanitized(stored).toMutableList()
-        val index = current.indexOf(id)
+    fun movingLaterToken(stored: List<String>?, token: String): List<String> {
+        val current = tokens(stored).toMutableList()
+        val index = current.indexOf(token)
         if (index >= 0 && index < current.lastIndex) {
             current[index] = current[index + 1]
-            current[index + 1] = id
+            current[index + 1] = token
         }
-        return current.map { it.name }
+        return current
     }
+
+    fun movingEarlier(stored: List<String>?, id: ToolbarActionId): List<String> = movingEarlierToken(stored, id.name)
+
+    fun movingLater(stored: List<String>?, id: ToolbarActionId): List<String> = movingLaterToken(stored, id.name)
 }

@@ -83,8 +83,9 @@ fun TextInputLayout(
             ClipEditorPanel()
         }
         val toolsOpen by keyboardManager.toolsOpen.collectAsState()
+        val mediaOpen by keyboardManager.mediaOpen.collectAsState()
         val terminalRow = rememberTerminalRowPlan()
-        if (terminalRow.visible && !state.isActionsOverflowVisible && !toolsOpen && aiPanel == null && clipEditor == null) {
+        if (terminalRow.visible && !state.isActionsOverflowVisible && !toolsOpen && !mediaOpen && aiPanel == null && clipEditor == null) {
             val size by prefs.devrow.size.observeAsState()
             val holdMs by prefs.devrow.holdDelayMs.observeAsState()
             val repeatMs by prefs.devrow.repeatIntervalMs.observeAsState()
@@ -102,6 +103,10 @@ fun TextInputLayout(
         }
         if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()
+        } else if (mediaOpen && aiPanel == null && clipEditor == null) {
+            dev.patrickgold.florisboard.ime.media.ui.MediaPanel(
+                modifier = Modifier.height(FlorisImeSizing.keyboardUiHeight() + rememberDeveloperRowExtraHeight()),
+            )
         } else if (toolsOpen && aiPanel == null && clipEditor == null) {
             // The terminal row is hidden while the panel is open; its height goes to the panel so the window keeps
             // its size and the app behind the keyboard does not jump.

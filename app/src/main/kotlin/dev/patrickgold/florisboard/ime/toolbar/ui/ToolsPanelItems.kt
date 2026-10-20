@@ -148,5 +148,6 @@ object ToolsPanelItems {
         ToolbarActionId.THEME to v(Icons.Outlined.Palette, R.string.tools__action__theme),
         ToolbarActionId.SETTINGS to v(Icons.Outlined.Settings, R.string.tools__action__settings),
         ToolbarActionId.SCREENSHOT to v(Icons.Outlined.Screenshot, R.string.tools__action__screenshot),
+        ToolbarActionId.MEDIA to t("▶", R.string.tools__action__media),
     )
 }

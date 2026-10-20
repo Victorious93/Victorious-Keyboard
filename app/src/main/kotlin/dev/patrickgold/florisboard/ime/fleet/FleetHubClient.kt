@@ -162,6 +162,13 @@ class FleetHubClient(private val context: Context) {
         updateGrant { FleetGrants.approve(it, offer.packageName, offer.certSha256) }
     }
 
+    /** Pins a package that is not a command provider, such as Victorious File Manager. */
+    fun approvePinned(packageName: String, certSha256: String) {
+        updateGrant { current ->
+            dev.patrickgold.florisboard.ime.media.FileManagerProtocol.pin(current, packageName, certSha256) ?: current
+        }
+    }
+
     fun setEnabled(packageName: String, enabled: Boolean) {
         val offer = _offers.value.firstOrNull { it.packageName == packageName } ?: return
         if (offer.access == FleetAccess.NeedsApproval && enabled) return

@@ -70,6 +70,7 @@ import dev.patrickgold.florisboard.lib.ext.ExtensionComponent
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
 import dev.patrickgold.florisboard.lib.ext.ExtensionDefaults
 import dev.patrickgold.florisboard.lib.ext.ExtensionEditor
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.ext.ExtensionJsonConfig
 import dev.patrickgold.florisboard.lib.ext.ExtensionMaintainer
 import dev.patrickgold.florisboard.lib.ext.ExtensionManager
@@ -629,6 +630,9 @@ private fun <T : ExtensionComponent> CreateComponentScreen(
                     put(ExtensionComponentName(extId, theme.id), theme)
                 }
                 for ((componentName, theme) in themeManager.indexedThemeConfigs.value.first) {
+                    if (ExtensionIds.isLegacy(componentName.extensionId)) {
+                        continue
+                    }
                     if (componentName.extensionId != extId) {
                         put(componentName, theme)
                     }

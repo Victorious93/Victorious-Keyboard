@@ -33,8 +33,12 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.fleetHub
+import dev.patrickgold.florisboard.ime.media.FileManagerInstall
+import dev.patrickgold.florisboard.ime.media.FileManagerProtocol
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.florisboard.lib.fleet.FleetAccess
+import dev.patrickgold.florisboard.lib.fleet.FleetGrants
+import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
 import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.compose.FlorisInfoCard
@@ -62,6 +66,12 @@ fun FleetScreen() = FlorisScreen {
             title = stringRes(R.string.settings__fleet__external_control),
             summary = stringRes(R.string.settings__fleet__external_control_summary),
         )
+        SwitchPreference(
+            prefs.fleet.fileManagerSeek,
+            title = stringRes(R.string.settings__fleet__file_manager_seek),
+            summary = stringRes(R.string.settings__fleet__file_manager_seek_summary),
+        )
+        FileManagerApproval()
         FlorisInfoCard(text = stringRes(R.string.settings__fleet__info))
         if (offers.isEmpty()) {
             Text(
@@ -86,6 +96,46 @@ fun FleetScreen() = FlorisScreen {
                         checked = offer.access == FleetAccess.Active,
                         onCheckedChange = { hub.setEnabled(offer.packageName, it) },
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FileManagerApproval() {
+    val context = LocalContext.current
+    val prefs by FlorisPreferenceStore
+    val hub by context.fleetHub()
+    val grantsRaw by prefs.fleet.grants.observeAsState()
+    val installed = FileManagerInstall.certificates(context)
+    if (installed.isEmpty()) {
+        Text(
+            text = stringRes(R.string.settings__fleet__file_manager_missing),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        return
+    }
+    val grants = FleetGrants.parse(grantsRaw)
+    installed.forEach { (packageName, cert) ->
+        val approved = FileManagerProtocol.trusted(
+            packageName,
+            cert,
+            FleetGrants.find(grants, packageName),
+            seekEnabled = true,
+        )
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text(text = packageName, style = MaterialTheme.typography.titleMedium)
+            Text(text = cert, style = MaterialTheme.typography.bodySmall)
+            if (approved) {
+                Text(
+                    text = stringRes(R.string.settings__fleet__file_manager_approved),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                TextButton(onClick = { hub.approvePinned(packageName, cert) }) {
+                    Text(stringRes(R.string.settings__fleet__file_manager_approve))
                 }
             }
         }

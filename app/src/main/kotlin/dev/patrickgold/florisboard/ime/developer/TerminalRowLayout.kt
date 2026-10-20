@@ -52,6 +52,16 @@ object TerminalRowLayout {
         symbol("minus", "-")
         symbol("underscore", "_")
         symbol("tick", "`")
+        fun media(id: String, label: String, command: dev.patrickgold.florisboard.ime.media.MediaCommand) {
+            add(Slot(id, DevKey(label, DevKeyAction.Media(command), label)))
+        }
+        media("media_play", "Play", dev.patrickgold.florisboard.ime.media.MediaCommand.PLAY_PAUSE)
+        media("media_prev", "Prev", dev.patrickgold.florisboard.ime.media.MediaCommand.PREVIOUS)
+        media("media_next", "Next", dev.patrickgold.florisboard.ime.media.MediaCommand.NEXT)
+        media("media_rw", "Rew", dev.patrickgold.florisboard.ime.media.MediaCommand.REWIND)
+        media("media_ff", "FF", dev.patrickgold.florisboard.ime.media.MediaCommand.FAST_FORWARD)
+        media("media_vol_down", "Vol-", dev.patrickgold.florisboard.ime.media.MediaCommand.VOLUME_DOWN)
+        media("media_vol_up", "Vol+", dev.patrickgold.florisboard.ime.media.MediaCommand.VOLUME_UP)
     }
 
     /** Esc, Tab, Ctrl, Alt, then the arrows and the other navigation keys, in today's order. */

@@ -433,6 +433,11 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "fleet__external_control",
             default = false,
         )
+        /** Exact seek through Victorious File Manager. Off until the user turns it on. */
+        val fileManagerSeek = boolean(
+            key = "fleet__file_manager_seek",
+            default = false,
+        )
     }
 
     val devrow = Devrow()

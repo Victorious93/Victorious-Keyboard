@@ -41,8 +41,16 @@ object ToolbarRuntime {
     fun update(context: Context, transform: (ToolbarConfig) -> ToolbarConfig) {
         ensure(context)
         val next = transform(mutable.value)
+        if (next == mutable.value) return
         mutable.value = next
         write(store(context), ToolbarConfigCodec.encode(next))
+    }
+
+    /** Layout text for a clipboard export, or null when nothing was changed. Shell history is left out. */
+    fun exportDocument(): String? = ToolbarLayoutTransfer.exportDocument(mutable.value)
+
+    fun importDocument(context: Context, document: String, replace: Boolean) {
+        update(context) { ToolbarLayoutTransfer.apply(it, document, replace) }
     }
 
     fun remember(context: Context, command: String) {

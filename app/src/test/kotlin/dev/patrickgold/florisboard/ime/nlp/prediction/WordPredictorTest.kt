@@ -58,6 +58,46 @@ class WordPredictorTest : FunSpec({
         preds.first().text shouldBe "pkg"
     }
 
+    test("a period glued to a word does not auto-commit a dictionary word") {
+        // Don: typing word. and then more characters produced word.<some word> with no space.
+        // "word." is one edit from "word" and "words", so the period was arming an autocorrect.
+        val lexicon = mapOf(
+            "word" to 241,
+            "words" to 241,
+            "world" to 251,
+            "file" to 229,
+            "files" to 220,
+            "filet" to 146,
+            "come" to 250,
+            "com" to 210,
+            "the" to 255,
+        )
+        val afterPeriod = WordPredictor.predict("word.", lexicon, learned = null)
+        afterPeriod.none { it.autoCommit } shouldBe true
+        afterPeriod.none { it.kind == Prediction.Kind.CORRECTION } shouldBe true
+        val fileSuffix = WordPredictor.predict("file.t", lexicon, learned = null)
+        fileSuffix.none { it.autoCommit } shouldBe true
+        fileSuffix.none { it.text.equals("filet", ignoreCase = true) } shouldBe true
+        val domain = WordPredictor.predict("com.", lexicon, learned = null)
+        domain.none { it.autoCommit } shouldBe true
+        domain.none { it.text.equals("come", ignoreCase = true) } shouldBe true
+        val version = WordPredictor.predict("1.2.3", lexicon, learned = null)
+        version.none { it.autoCommit } shouldBe true
+        version.none { it.kind == Prediction.Kind.CORRECTION } shouldBe true
+        val email = WordPredictor.predict("user@mail.co", lexicon, learned = null)
+        email.none { it.autoCommit } shouldBe true
+        val url = WordPredictor.predict("https://example.com/a", lexicon, learned = null)
+        url.none { it.autoCommit } shouldBe true
+        url.none { it.kind == Prediction.Kind.CORRECTION } shouldBe true
+        val learned = LearnedLexicon().record("file.txt", null)
+        val continued = WordPredictor.predict("file.t", lexicon, learned)
+        continued.none { it.autoCommit } shouldBe true
+        continued.map { it.text } shouldContain "file.txt"
+        val sentence = WordPredictor.predict("word. ", lexicon, learned = null)
+        sentence.none { it.autoCommit } shouldBe true
+        sentence.first().kind shouldBe Prediction.Kind.NEXT
+    }
+
     test("after a space, next-word uses learned bigrams and ignores them when learning data is absent") {
         val learned = LearnedLexicon().record("install", "pkg").record("install", "pkg")
         val withLearning = WordPredictor.predict("pkg ", LEXICON, learned)

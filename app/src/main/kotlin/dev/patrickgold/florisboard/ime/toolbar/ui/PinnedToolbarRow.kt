@@ -20,12 +20,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,7 +38,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
@@ -50,22 +47,16 @@ import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.ime.toolbar.PinnedToolbar
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
+import dev.patrickgold.florisboard.ime.toolbar.ToolRef
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggIconButton
-import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
 
-/** Deep link of the screen where the row is customized (`Routes.Settings.Toolbar`). */
-private const val CUSTOMIZE_PATH = "settings/smartbar/toolbar"
-
 /**
- * The customizable toolbar row above the suggestion strip: the buttons the user pinned ([PinnedToolbar]), then a
- * button that opens the screen where they are chosen and ordered. A pinned button runs through the same path as its
- * tile in the tools panel. Drawn with the theme's smartbar elements, so every theme applies. Nothing here is logged.
- *
- * Draws nothing when the row is switched off or empty; [FlorisImeSizing.smartbarRowCountAsState] uses the same rule.
+ * Up to four pinned tools on the suggestion strip, immediately after the tools button. A pin does what its tile does.
+ * Nothing pinned draws nothing, so the strip stays suggestions and the tools button. Nothing here is logged.
  */
 @Composable
 fun PinnedToolbarRow(modifier: Modifier = Modifier) {
@@ -76,45 +67,35 @@ fun PinnedToolbarRow(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) { ToolbarRuntime.ensure(context) }
     val config by ToolbarRuntime.config.collectAsState()
     val showScreenshot by prefs.tools.screenshotTile.observeAsState()
-    val actions = remember(config.pinned, showScreenshot) { config.pinnedActions(showScreenshot) }
-    if (!PinnedToolbar.rowVisible(config.pinnedRow, actions)) return
+    val pins = remember(config.pinned, showScreenshot) { config.stripPins(showScreenshot) }
+    if (!PinnedToolbar.rowVisible(config.pinnedRow, pins)) return
 
-    val buttonHeight = FlorisImeSizing.smartbarHeight
-    SnyggRow(
-        elementName = FlorisImeUi.Smartbar.elementName,
-        modifier = modifier.fillMaxWidth().height(buttonHeight),
+    Row(
+        modifier = modifier.fillMaxHeight().horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.weight(1f).fillMaxHeight().horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            for (id in actions) {
-                PinnedButton(id = id) {
-                    inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
-                    keyboardManager.setToolsOpen(false)
-                    keyboardManager.performToolbarAction(id)
-                }
+        for (ref in pins) {
+            StripPinButton(ref) {
+                inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
+                keyboardManager.setToolsOpen(false)
+                keyboardManager.performStripPin(ref)
             }
-        }
-        val customize = stringResource(R.string.settings__toolbar__title)
-        SnyggIconButton(
-            elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
-            onClick = { FlorisImeService.launchSettingsAt(CUSTOMIZE_PATH) },
-            modifier = Modifier
-                .sizeIn(maxHeight = buttonHeight)
-                .aspectRatio(1f)
-                .semantics { contentDescription = customize },
-        ) {
-            SnyggIcon(imageVector = Icons.Outlined.Tune)
         }
     }
 }
 
 @Composable
-private fun PinnedButton(id: ToolbarActionId, onClick: () -> Unit) {
-    val item = ToolsPanelItems.item(id) ?: return
-    val label = stringResource(item.label)
+private fun StripPinButton(ref: String, onClick: () -> Unit) {
+    val config by ToolbarRuntime.config.collectAsState()
+    val action = ToolbarActionId.entries.firstOrNull { it.name == ref }
+    val item = action?.let { ToolsPanelItems.item(it) }
+    val label = when {
+        item != null -> stringResource(item.label)
+        else -> config.knownFleet.firstOrNull { it.ref == ref }?.label
+            ?: ToolRef.slashId(ref)
+            ?: ToolRef.fleetParts(ref)?.second
+            ?: ref
+    }
     val elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName
     SnyggIconButton(
         elementName = elementName,
@@ -124,7 +105,7 @@ private fun PinnedButton(id: ToolbarActionId, onClick: () -> Unit) {
             .aspectRatio(1f)
             .semantics { contentDescription = label },
     ) {
-        when (val glyph = item.glyph) {
+        when (val glyph = item?.glyph) {
             is ToolGlyph.Vector -> SnyggIcon(imageVector = glyph.imageVector)
             is ToolGlyph.Drawable -> SnyggIcon(painter = painterResource(glyph.id))
             is ToolGlyph.Text -> SnyggText(
@@ -135,6 +116,7 @@ private fun PinnedButton(id: ToolbarActionId, onClick: () -> Unit) {
                 overflow = TextOverflow.Clip,
                 softWrap = false,
             )
+            null -> SnyggIcon(imageVector = Icons.Outlined.Terminal)
         }
     }
 }

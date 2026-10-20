@@ -63,6 +63,8 @@ import dev.patrickgold.florisboard.ime.nlp.prediction.LearnedWords
 import dev.patrickgold.florisboard.ime.nlp.prediction.LearningGate
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertCountStore
 import dev.patrickgold.florisboard.ime.nlp.prediction.RevertPrivacy
+import dev.patrickgold.florisboard.ime.nlp.prediction.PeriodTyping
+import dev.patrickgold.florisboard.ime.nlp.prediction.SuggestionCommit
 import dev.patrickgold.florisboard.ime.nlp.prediction.WordPredictor
 import dev.patrickgold.florisboard.ime.popup.PopupMappingComponent
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotCapture
@@ -76,6 +78,7 @@ import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardCache
 import dev.patrickgold.florisboard.lib.devtools.LogTopic
 import dev.patrickgold.florisboard.lib.devtools.flogError
 import dev.patrickgold.florisboard.lib.ext.ExtensionComponentName
+import dev.patrickgold.florisboard.lib.ext.ExtensionIds
 import dev.patrickgold.florisboard.lib.titlecase
 import dev.patrickgold.florisboard.lib.uppercase
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
@@ -205,9 +208,64 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     /** Tools panel replaces the key area. It is not an [ImeUiMode], so clipboard and emoji stay as they are. */
     val toolsOpen = MutableStateFlow(false)
 
+    /** Media controls replace the key area. They send media keys, not editor input. */
+    val mediaOpen = MutableStateFlow(false)
+
     fun setToolsOpen(open: Boolean) {
         toolsOpen.value = open
-        if (open) fleet.refresh()
+        if (open) {
+            mediaOpen.value = false
+            fleet.refresh()
+        }
+    }
+
+    fun setMediaOpen(open: Boolean) {
+        mediaOpen.value = open
+        if (open) toolsOpen.value = false
+    }
+
+    fun mediaBridgePackage(): String? = dev.patrickgold.florisboard.ime.media.FileManagerInstall.bridgePackage(
+        appContext,
+        prefs.fleet.fileManagerSeek.get(),
+        prefs.fleet.grants.get(),
+    )
+
+    fun performMedia(command: dev.patrickgold.florisboard.ime.media.MediaCommand) {
+        val bridge = mediaBridgePackage()
+        scope.launch(Dispatchers.IO) {
+            val outcome = dev.patrickgold.florisboard.ime.media.MediaRuntime.perform(appContext, command, bridge)
+            showMediaHint(outcome)
+        }
+    }
+
+    /** Last player-volume level sent to File Manager. Not the system music volume. */
+    private var playerLevel: Int? = null
+
+    /** Quieter or louder inside the player. Volume keys stay on the system stream. */
+    fun adjustPlayerVolume(louder: Boolean) {
+        val bridge = mediaBridgePackage()
+        val remembered = playerLevel
+        scope.launch(Dispatchers.IO) {
+            val (outcome, level) = dev.patrickgold.florisboard.ime.media.MediaRuntime.performPlayerVolume(
+                appContext,
+                louder,
+                remembered,
+                bridge,
+            )
+            if (outcome is dev.patrickgold.florisboard.ime.media.MediaOutcome.Bridged) playerLevel = level
+            showMediaHint(outcome)
+        }
+    }
+
+    private suspend fun showMediaHint(outcome: dev.patrickgold.florisboard.ime.media.MediaOutcome) {
+        val message = when (outcome) {
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.NoSession -> R.string.media__no_session
+            is dev.patrickgold.florisboard.ime.media.MediaOutcome.ExternalControl -> R.string.media__external_control
+            else -> return
+        }
+        withContext(Dispatchers.Main) {
+            appContext.showShortToastSync(message)
+        }
     }
 
     /** The tools panel tab shown when it opens. Kept in memory only: switching tabs never writes to disk. */
@@ -317,6 +375,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             editorInstance.activeInfoFlow.collectIn(scope) { info ->
                 terminalModifiers.reset() // nothing may stay armed or locked into another field or app
                 toolsOpen.value = false
+                mediaOpen.value = false
                 fleet.refresh()
                 val token = info.packageName + ":" + info.inputAttributes.raw
                 if (learningFieldToken != null && learningFieldToken != token) {
@@ -384,6 +443,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             val shift = prefs.correction.autoCapitalization.get()
                 && subtypeManager.activeSubtype.primaryLocale.supportsCapitalization
                 && editorInstance.activeCursorCapsMode != InputAttributes.CapsMode.NONE
+                && !PeriodTyping.suppressAutoCapitalization(editorInstance.activeContent.textBeforeSelection)
             activeState.inputShiftState = when {
                 shift -> InputShiftState.SHIFTED_AUTOMATIC
                 else -> InputShiftState.UNSHIFTED
@@ -1072,8 +1132,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * but skips handling changing to characters keyboard and double space periods.
      */
     fun handleHardwareKeyboardSpace() {
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -1270,8 +1331,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             pendingAutocorrect = null
             return
         }
-        val typed = WordPredictor.contextTokens(editorInstance.activeContent.textBeforeSelection).second
-        val candidate = nlpManager.getAutoCommitCandidate()
+        val before = editorInstance.activeContent.textBeforeSelection
+        val typed = WordPredictor.contextTokens(before).second
+        val candidate = if (SuggestionCommit.allows(before, " ")) nlpManager.getAutoCommitCandidate() else null
         if (candidate == null) {
             nlpManager.noteTypedOrCommitted(null)
             pendingAutocorrect = null
@@ -1431,6 +1493,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 is DevStep.Text -> editorInstance.commitText(step.text)
                 is DevStep.CursorLeft ->
                     editorInstance.sendDownUpKeyEvent(KeyEvent.KEYCODE_DPAD_LEFT, editorInstance.meta(), step.count)
+                is DevStep.Media -> performMedia(step.command)
             }
         }
         if (resolution.consumesModifiers) terminalModifiers.consume()
@@ -1546,6 +1609,57 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     fun insertSavedCommand(text: String) {
         insertAtTarget(text, cursorBackFor(text))
+    }
+
+    /**
+     * A pin on the suggestion strip. A built-in name does what its tile does. A slash pin inserts the rendered
+     * template and never runs it. A fleet pin asks that app. Password fields stop before slash text or a fleet ask.
+     * Nothing here is logged.
+     */
+    fun performStripPin(ref: String) {
+        val action = ToolbarActionId.entries.firstOrNull { it.name == ref }
+        if (action != null) {
+            performToolbarAction(action)
+            return
+        }
+        if (editorInstance.activeInfo.inputAttributes.isPasswordLike()) return
+        val slashId = dev.patrickgold.florisboard.ime.toolbar.ToolRef.slashId(ref)
+        if (slashId != null) {
+            insertSlashPin(slashId)
+            return
+        }
+        val fleet = dev.patrickgold.florisboard.ime.toolbar.ToolRef.fleetParts(ref) ?: return
+        askFleet(fleet.first, fleet.second)
+    }
+
+    private fun insertSlashPin(id: String) {
+        val command = slashCommands.snapshot().firstOrNull { it.id == id && it.enabled } ?: return
+        val template = command.template
+        val content = editorInstance.activeContent
+        val vars = dev.patrickgold.florisboard.ime.slash.SlashVars(
+            date = dev.patrickgold.florisboard.ime.slash.SlashClock.date(java.time.Instant.now(), java.time.ZoneId.systemDefault()),
+            time = dev.patrickgold.florisboard.ime.slash.SlashClock.time(java.time.Instant.now(), java.time.ZoneId.systemDefault()),
+            clipboard = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "clipboard")) {
+                currentClipboardText().orEmpty()
+            } else {
+                ""
+            },
+            selection = if (dev.patrickgold.florisboard.ime.slash.SlashTemplate.uses(template, "selection")) {
+                content.selectedText
+            } else {
+                ""
+            },
+        )
+        val rendered = dev.patrickgold.florisboard.ime.slash.SlashTemplate.render(template, vars)
+        val back = rendered.cursorBackCodePoints
+        if (clipEditor.value != null) {
+            val presses = if (back == null) 0 else CaretPlacement.leftPresses(rendered.text, back)
+            insertAtTarget(rendered.text, presses)
+            return
+        }
+        if (rendered.text.isEmpty()) return
+        editorInstance.commitText(rendered.text)
+        if (back != null) moveCaretLeft(InsertionPlan.Insert(rendered.text, back))
     }
 
     fun performToolbarAction(id: ToolbarActionId) {
@@ -1675,6 +1789,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ToolbarActionId.AI_TRANSLATE -> startLocalAi(AiTask.TRANSLATE)
             ToolbarActionId.AI_SHELL -> startLocalAi(AiTask.SHELL)
             ToolbarActionId.AI_ASK -> startLocalAi(AiTask.ASK)
+            ToolbarActionId.MEDIA -> setMediaOpen(true)
             ToolbarActionId.SCREENSHOT -> scope.launch {
                 if (!prefs.tools.screenshotTile.get()) return@launch
                 withContext(Dispatchers.Main) { ScreenshotCapture.onTile(appContext) }
@@ -2103,8 +2218,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.VIEW_SYMBOLS2 -> activeState.keyboardMode = KeyboardMode.SYMBOLS2
             else -> {
                 if (activeState.imeUiMode == ImeUiMode.MEDIA) {
-                    nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
-                    editorInstance.commitText(data.asString(isForDisplay = false))
+                    val text = data.asString(isForDisplay = false)
+                    if (SuggestionCommit.allows(editorInstance.activeContent.textBeforeSelection, text)) {
+                        nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
+                    }
+                    editorInstance.commitText(text)
                     return@batchEdit
                 }
                 when (activeState.keyboardMode) {
@@ -2131,7 +2249,12 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                             // With Ctrl/Alt active the character is sent as a key event instead of text.
                             if (!(terminalModifiers.anyActive && sendTerminalChar(text))) {
                                 if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
-                                    val candidate = nlpManager.getAutoCommitCandidate()
+                                    val before = editorInstance.activeContent.textBeforeSelection
+                                    val candidate = if (SuggestionCommit.allows(before, text)) {
+                                        nlpManager.getAutoCommitCandidate()
+                                    } else {
+                                        null
+                                    }
                                     if (candidate == null) nlpManager.noteTypedOrCommitted(null)
                                     candidate?.let { commitCandidate(it) }
                                 }
@@ -2252,22 +2375,25 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 localLayouts[layoutType] = mutableMapOf()
             }
             for (keyboardExtension in keyboardExtensions) {
+                val metaId = keyboardExtension.meta.id
+                val aliases = keyboardExtension.meta.aliases
                 keyboardExtension.composers.forEach { composer ->
-                    localComposers[ExtensionComponentName(keyboardExtension.meta.id, composer.id)] = composer
+                    ExtensionIds.indexComponent(localComposers, metaId, aliases, composer.id, composer)
                 }
                 keyboardExtension.currencySets.forEach { currencySet ->
-                    localCurrencySets[ExtensionComponentName(keyboardExtension.meta.id, currencySet.id)] = currencySet
+                    ExtensionIds.indexComponent(localCurrencySets, metaId, aliases, currencySet.id, currencySet)
                 }
                 keyboardExtension.layouts.forEach { (type, layoutComponents) ->
+                    val bucket = localLayouts[LayoutType.entries.first { it.id == type }]!!
                     for (layoutComponent in layoutComponents) {
-                        localLayouts[LayoutType.entries.first { it.id == type }]!![ExtensionComponentName(keyboardExtension.meta.id, layoutComponent.id)] = layoutComponent
+                        ExtensionIds.indexComponent(bucket, metaId, aliases, layoutComponent.id, layoutComponent)
                     }
                 }
                 keyboardExtension.popupMappings.forEach { popupMapping ->
-                    localPopupMappings[ExtensionComponentName(keyboardExtension.meta.id, popupMapping.id)] = popupMapping
+                    ExtensionIds.indexComponent(localPopupMappings, metaId, aliases, popupMapping.id, popupMapping)
                 }
                 keyboardExtension.punctuationRules.forEach { punctuationRule ->
-                    localPunctuationRules[ExtensionComponentName(keyboardExtension.meta.id, punctuationRule.id)] = punctuationRule
+                    ExtensionIds.indexComponent(localPunctuationRules, metaId, aliases, punctuationRule.id, punctuationRule)
                 }
                 localSubtypePresets.addAll(keyboardExtension.subtypePresets)
             }

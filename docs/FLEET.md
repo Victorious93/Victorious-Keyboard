@@ -137,6 +137,8 @@ Import order is parse, duplicate package names, decrypt, secret-name scan, then 
  "domains":[{"name":"node_health","state":"ok","detail":"ime running"}]}
 ```
 
+`media.volume` with `direction` on this envelope adjusts the system music stream. It is not File Manager's `media.volume` level.
+
 `remote.command` may use:
 
 | actionRef | Effect |
@@ -147,7 +149,7 @@ Import order is parse, duplicate package names, decrypt, secret-name scan, then 
 | `media.play`, `media.pause`, `media.toggle` | media key play/pause, down then up |
 | `media.next`, `media.prev`, `media.rewind`, `media.fast_forward` | the matching media key, down then up |
 | `media.volume` with `direction` `up` or `down` | music-stream volume, system UI |
-| `media.seek`, `media.seekBy`, `media.state`, `media.volume` with `level` | `not_paired` in this build. Exact seek is the File Manager bridge, which is a separate change |
+| `media.seek`, `media.seekBy`, `media.state`, `media.volume` with `level` | `not_paired`. This envelope does not call the File Manager bridge. Exact seek and the player's own volume are that bridge, described below |
 
 `keyboard.input.text` and `keyboard.input.key` as an `actionRef` are `unsupported_op`. The new envelope never calls the input port. Those two names still work as the old operations, with their old replies.
 
@@ -163,4 +165,58 @@ Other errors: `invalid_parameters`, `not_found`, `internal`, `capability_off`.
 ```json
 {"op":"macro.run","requestId":"r2","macroId":"m1","dryRun":true,"nonce":"aabbccddeeff00112233445566778899",
  "timestampMs":1700000000000,"steps":[{"actionRef":"keyboard.mode","params":{"mode":"developer"},"onError":"abort"}]}
+
+## Media keys and File Manager seek
+
+Play, pause, previous, next, rewind, and fast-forward go out as media keys. Volume down and volume up adjust the music stream and show the system volume UI. That path needs no pairing and talks to whichever player is listening. `media.volume` is a different control: it sets the player's own volume, and only the Player quieter and Player louder buttons send it. The buttons do not type into the focused app, and they do not read the field, the clipboard, or the vault.
+
+| Call | Value |
+|---|---|
+| Transport | `AudioManager.dispatchMediaKeyEvent`, action down then action up |
+| Play/pause | `KEYCODE_MEDIA_PLAY_PAUSE` (85) |
+| Next | `KEYCODE_MEDIA_NEXT` (87) |
+| Previous | `KEYCODE_MEDIA_PREVIOUS` (88) |
+| Rewind | `KEYCODE_MEDIA_REWIND` (89) |
+| Fast-forward | `KEYCODE_MEDIA_FAST_FORWARD` (90) |
+| Volume keys | `AudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_LOWER or ADJUST_RAISE, FLAG_SHOW_UI)` |
+| Player volume | `media.volume` with `level` 0 through 100, only from Player quieter / Player louder |
+
+The Media tile is on the tools panel Quick tab. The same buttons can be added to the terminal key row. A blank key order leaves that row as it is.
+
+Exact seek is optional. It is off until the user turns on File Manager seek, and off until Victorious File Manager enables its own side. The keyboard then uses the same Messenger JSON style as the fleet clients.
+
+| Piece | Value |
+|---|---|
+| Packages | `ai.victorious.filemanager` (release), `ai.victorious.filemanager.debug` |
+| Release certificate | none yet. The trust prompt pins whatever is installed. Never auto-trusted |
+| Debug certificate | `8C:1F:E3:C9:E5:34:F2:71:05:C0:68:8F:45:28:D7:7E:47:11:AE:0A:79:DD:08:D1:E8:59:30:B9:E9:48:85:F2` |
+| Release action | `ai.victorious.filemanager.action.BRIDGE` |
+| Debug action | `ai.victorious.filemanager.debug.action.BRIDGE` |
+| Visibility | `<queries>` names those actions, not the packages. The app does not have to be installed |
+| Request | `what = 1`, Bundle key `request` |
+| Reply | `what = 2`, Bundle key `response` |
+| Body | `protocol_major` 1, `op`, `id` |
+
+Commands: `media.play`, `media.pause`, `media.toggle`, `media.next`, `media.prev`, `media.seek` (`positionMs` ≥ 0), `media.seekBy` (`deltaMs`), `media.volume` (`level` 0 through 100), `media.state`.
+
+`media.state` returns `playing`, `positionMs`, `durationMs`, `title`, and `source`. The Media tile shows `title` while this bridge is connected. The title is not logged. `error: "no_session"` means nothing is playing. `NO_SESSION` is accepted as the same idle error. `external_control_disabled` means File Manager's own external-control switch is off. The Media panel says so, and a press shows the same hint. The bridge does not run until that switch is on.
+
+The debug package is auto-trusted only when its certificate is that published fingerprint and File Manager seek is on. A different debug certificate needs the trust prompt. The release package has no published fingerprint, so it is never auto-trusted: Settings → Tools → Fleet link shows Approve, and that approval is pinned to the certificate on the phone. A later certificate needs a new approval. The keyboard discovers either package by querying its bridge action. If neither service is installed, the query is empty and every button stays a media key. The older `ai.victorious.victorfiles` name is not accepted.
+
+Volume keys stay on `adjustStreamVolume` even when the bridge is on. `media.volume` is the player's own absolute level and is not used for those keys. Rewind and fast-forward on the bridge are `media.seekBy` of −10 000 ms and +10 000 ms. `no_session` or `NO_SESSION`, or a reply the keyboard cannot read, falls back to the matching media key. A seek with no key to fall back to reports that nothing is playing. `external_control_disabled` falls back to the media key when there is one, and it never changes the music stream for a player-volume press.
+
+```json
+{"protocol_major":1,"op":"media.toggle","id":"m1"}
+```
+
+```json
+{"protocol_major":1,"op":"media.seekBy","id":"m2","deltaMs":-10000}
+```
+
+```json
+{"playing":true,"positionMs":12000,"durationMs":180000,"title":"Track","source":"file"}
+```
+
+```json
+{"ok":false,"error":"no_session"}
 ```

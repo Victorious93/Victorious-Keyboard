@@ -34,6 +34,8 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
+The user manual is [docs/MANUAL.md](docs/MANUAL.md). The same text is bundled in the app and opens from Settings → Help, with no network.
+
 It is not affiliated with or endorsed by the FlorisBoard project. The repository retains upstream's full Git history so per-file authorship is preserved. Design goal: **nothing leaves the device** — no analytics, no ads, and no `INTERNET` permission.
 
 ## Features
@@ -252,7 +254,7 @@ The system spell-checker service is the Android one FlorisBoard exposes. Turn it
 
 ## Theme editor
 
-Settings → Theme → the extension list opens the theme editor shipped with the keyboard. Styles are Snygg stylesheets (`app/src/main/assets/ime/theme`). The default themes are Victorious Neon and Victorious Neon Light; older themes stay in the list.
+Settings → Theme → the extension list opens the theme editor shipped with the keyboard. Styles are Snygg stylesheets (`app/src/main/assets/ime/theme`). The default themes are Victorious Neon and Victorious Neon Light; older themes stay in the list. Built-in extension packs are named for Victorious Keyboard (`com.victorious.keyboard.*`). A theme or layout saved as `org.florisboard.*` still opens. Settings → About keeps the FlorisBoard Apache-2.0 credit.
 
 ## Documentation
 

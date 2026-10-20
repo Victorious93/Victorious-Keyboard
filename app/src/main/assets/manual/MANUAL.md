@@ -107,7 +107,7 @@ Terminal tab: Ctrl, Alt, Esc, Tab, the arrow keys, Home, End, Page up, Page down
 
 Code tab, used on text you have selected: Camel, Snake, Kebab, Pascal, Indent, Outdent, Comment, JSON, Base64 encode, Base64 decode, UUID, and Time.
 
-Quick tab: Incognito, Learn words, Emoji, Voice input, One-handed, Bottom gap, Next colors, Settings, and Screenshot.
+Quick tab: Incognito, Learn words, Emoji, Voice input, One-handed, Bottom gap, Next colors, Settings, Screenshot, and Media.
 
 - Voice input switches to a voice keyboard Android already has, if one is installed. This app does not record the microphone itself.
 - Next colors steps through the keyboard color presets.
@@ -263,7 +263,7 @@ Choose and reorder the keys on that same screen:
 
 1. The list starts as Esc, Tab, Ctrl, Alt, arrows, Home, End, Page up, and Page down. A blank list keeps that usual row.
 2. Tap Up or Down to move a key. Tap Remove to take it off the row.
-3. Add puts back a key you removed, and can add `|`, `~`, `/`, `\`, `&`, `$`, `;`, `:`, `#`, `!`, `-`, `_`, and a backtick.
+3. Add puts back a key you removed, and can add `|`, `~`, `/`, `\`, `&`, `$`, `;`, `:`, `#`, `!`, `-`, `_`, a backtick, and the media keys (Play, Prev, Next, Rew, FF, Vol-, Vol+). Those media keys control the player. They do not type into the app.
 4. Reset row restores the usual keys.
 
 Macro keys send a saved sequence. They are added at the end of the row.
@@ -286,6 +286,29 @@ TODO: photograph the screenshot helper setup. `docs/manual/img/screenshot.txt` i
 4. The first time, if the helper is off, the tile opens a setup screen. It explains why and opens Accessibility settings. Turn on Victorious Keyboard screenshot, then come back.
 5. On Android 10 and older, the tile tells you that screenshots from the keyboard need Android 11.
 6. The picture stays on the phone. It is not sent anywhere, and it is not written to a log.
+
+### Media
+
+The Media tile is on the tools panel's Quick tab. It opens player buttons in place of the keys. Those buttons control the player. They do not type into the app you are focused on, and they do not read what you type.
+
+1. Play/Pause, Previous, Next, Rewind, and Fast-forward send the usual media keys. Any player that listens for those keys can use them. Nothing has to be paired.
+2. Volume down and Volume up change the phone's music volume and show the system volume bar.
+3. Close returns to the keys.
+
+The same buttons can be added to the terminal key row under Settings → Developer & terminal. They are not on that row until you add them. A blank list keeps the usual keys.
+
+Exact position, through Victorious File Manager, starts off.
+
+1. Install Victorious File Manager when you have it. The package rename may not be on this phone yet. If it is not installed, skip the rest of this list: the Media tile still sends media keys.
+2. Turn its media bridge on in that app. It starts off there too.
+3. Open Settings → Tools → Fleet link. The keyboard looks for the installed package. It does not require the app to be there.
+4. A debug install signed with the published fingerprint is already pinned. A release install has no published fingerprint yet, so tap Approve File Manager. That pins the certificate of the copy on this phone, and a different signature asks again. Release is never trusted on its own.
+5. Turn on File Manager seek.
+6. While that is on and a track is playing, the Media panel can show the track title. The title stays on the phone and is not written to a log.
+7. Rewind and fast-forward then jump about ten seconds. If nothing is playing, the keyboard falls back to the media keys, and a short message says nothing is playing. Volume buttons stay the phone's volume buttons either way.
+8. Player quieter and Player louder appear only while File Manager is connected. They change the volume inside that player. They do not move the phone's volume bar.
+9. If File Manager's external control is off, the panel says to turn that switch on. The media keys still work. The bridge does not, until external control is on.
+10. Turn File Manager seek off to use media keys only.
 
 ### Theme
 
@@ -366,10 +389,11 @@ The keyboard can use commands from other apps on this phone. This is the command
 
 Hub status, on the same screen, is the bridge to the Droidcommand hub. It starts off. Only the Droidcommand hub app (and its debug build) is allowed to call it, and only after you turn the switch on. With the switch on, the hub can ask whether the keyboard is running, type into the focused box, and press Enter, Tab, arrows, or Ctrl plus a letter. It cannot read the box. Typed text is never shared. Password boxes are refused. Turn Hub status off to stop all of that.
 
-Remote control uses that same Hub status switch and stays off until you turn it on. Only the Droidcommand hub app can call it. A remote command can ask whether the keyboard is running, switch Standard, Developer, or Termux, switch the keyboard theme, or send play, pause, next, previous, rewind, fast-forward, and volume. It can also ask for node status. That answer says only whether this keyboard is running. It does not include what you type, the clipboard, or the Vault. It cannot type into the box you are focused on, and it cannot read what you type, the clipboard, or the Vault. A command marked destructive is not run. The phone shows a notice instead. The node-status question is not destructive, so it does not show that notice. Exact track position is not available from this switch. Each request expires, and a repeated request is refused.
+Remote control uses that same Hub status switch and stays off until you turn it on. Only the Droidcommand hub app can call it. A remote command can ask whether the keyboard is running, switch Standard, Developer, or Termux, switch the keyboard theme, or send play, pause, next, previous, rewind, fast-forward, and volume. Volume from this switch is the phone's music volume. It can also ask for node status. That answer says only whether this keyboard is running. It does not include what you type, the clipboard, or the Vault. It cannot type into the box you are focused on, and it cannot read what you type, the clipboard, or the Vault. A command marked destructive is not run. The phone shows a notice instead. The node-status question is not destructive, so it does not show that notice. Exact track position and the player's own volume are not available from this switch. Each request expires, and a repeated request is refused.
 
 A settings backup is separate from that remote switch. Export keeps themes, layouts, and keyboard settings, including which tools are pinned on the toolbar. It does not include clipboard history, what you type, the Vault, or snippet text. Import can preview the change first. Applying it asks you to confirm on this phone. Skip leaves your current rows, overwrite replaces them, and merge keeps yours when the same id is in both. Import never turns remote control on. A remote app cannot request this backup.
 
+File Manager seek, on the same screen, is separate from Hub status. It starts off. The debug build of Victorious File Manager is pinned to its published certificate. The release build has no published certificate yet, so it waits until you tap Approve, and it is never trusted automatically. The keyboard looks for the app when you open this screen. If it is not installed, media keys still work. The link is only for playback. It does not read what you type, the clipboard, or the Vault.
 
 ## Troubleshooting
 
@@ -396,6 +420,8 @@ Local AI says there is no model. Import a `.gguf` file under Settings → Tools 
 A fleet app is missing from the list. Install that app, open Settings → Tools → Fleet link, and leave the master switch on. Approve its certificate once. Switch that row off if you want its commands hidden.
 
 Hub status does not respond. It starts off. Turn it on only for the Droidcommand hub app. Other apps are refused even with the switch on.
+
+Media buttons do nothing. The player has to accept media keys. File Manager seek stays off unless you turn it on. A release install also needs Approve. "Nothing is playing" means File Manager has no track. If the panel says to turn on external control, that switch is inside Victorious File Manager and the bridge stays off until it is on. If File Manager is not installed, the buttons stay media keys.
 
 The app crashed. The crash screen stays on the phone. Nothing is sent unless you copy it into a report yourself. Read it before you share it, in case it contains private text.
 

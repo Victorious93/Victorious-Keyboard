@@ -75,12 +75,15 @@ import dev.patrickgold.florisboard.ime.mode.TerminalKeyRow
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.ime.screenshot.ScreenshotPolicy
+import dev.patrickgold.florisboard.ime.toolbar.KnownTool
 import dev.patrickgold.florisboard.ime.toolbar.SavedCommand
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarActionId
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolRef
 import dev.patrickgold.florisboard.ime.toolbar.ToolTileFit
 import dev.patrickgold.florisboard.ime.toolbar.ToolbarRuntime
 import dev.patrickgold.florisboard.ime.toolbar.ToolsCatalog
+import dev.patrickgold.florisboard.ime.toolbar.ToolsLayout
 import dev.patrickgold.florisboard.ime.toolbar.ToolsTab
 import dev.patrickgold.florisboard.fleetHub
 import dev.patrickgold.florisboard.keyboardManager
@@ -125,9 +128,26 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
     val bottomGap by prefs.keyboard.bottomGapDp.observeAsState()
     val showScreenshot by prefs.tools.screenshotTile.observeAsState()
 
+    LaunchedEffect(fleetPanel) {
+        val tools = fleetPanel.sections.flatMap { section ->
+            section.actions.map { action ->
+                KnownTool(ToolRef.fleet(section.packageName, action.name), action.label)
+            }
+        }
+        ToolbarRuntime.update(context) { it.notingFleet(tools) }
+    }
     val actions = remember(tab, config, showScreenshot) {
         val hidden = ScreenshotPolicy.panelHidden(config.hiddenSet(), showScreenshot)
         ToolsCatalog.visible(tab, hidden, config.tabOrder(tab))
+    }
+    val extras = remember(tab, config) {
+        if (tab != ToolsTab.QUICK) {
+            emptyList()
+        } else {
+            ToolsLayout.visibleExtras(config.extraTiles, config.hiddenSet()).map { ref ->
+                ExtraTile(ref, extraLabel(ref, config.knownFleet))
+            }
+        }
     }
     val commands = remember(tab, config) {
         if (tab != ToolsTab.TERMINAL) {
@@ -162,9 +182,16 @@ fun ToolsPanel(modifier: Modifier = Modifier) {
             fleetTab = false
             keyboardManager.setToolsTab(it)
         },
+        columns = config.columns,
+        tileSize = config.tileSize,
+        extras = extras,
         onAction = { id ->
             keyboardManager.setToolsOpen(false)
             keyboardManager.performToolbarAction(id)
+        },
+        onExtra = { ref ->
+            keyboardManager.setToolsOpen(false)
+            keyboardManager.performStripPin(ref)
         },
         onCommand = { command ->
             keyboardManager.setToolsOpen(false)
@@ -210,6 +237,10 @@ fun ToolsPanelContent(
     onAsk: (String) -> Unit = {},
     onFleetAction: (String, String) -> Unit = { _, _ -> },
     onSnippet: (String, FleetSnippet) -> Unit = { _, _ -> },
+    columns: Int = ToolsLayout.COLUMNS_ADAPTIVE,
+    tileSize: String = ToolsLayout.FIT,
+    extras: List<ExtraTile> = emptyList(),
+    onExtra: (String) -> Unit = {},
 ) {
     SnyggBox(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
@@ -217,11 +248,22 @@ fun ToolsPanelContent(
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val headerHeight = FlorisImeSizing.smartbarHeight
-            val tileHeight: Dp = ((maxHeight - headerHeight) / VisibleRows).coerceIn(52.dp, 88.dp)
+            val fixedHeight = ToolsLayout.heightDp(tileSize)
+            val tileHeight: Dp = if (fixedHeight == null) {
+                ((maxHeight - headerHeight) / VisibleRows).coerceIn(52.dp, 88.dp)
+            } else {
+                fixedHeight.dp
+            }
+            val columnCount = ToolsLayout.columns(columns)
+            val cells = if (columnCount == ToolsLayout.COLUMNS_ADAPTIVE) {
+                GridCells.Adaptive(minSize = ToolsLayout.minWidthDp(tileSize).dp)
+            } else {
+                GridCells.Fixed(columnCount)
+            }
             Column(modifier = Modifier.fillMaxSize()) {
                 ToolsHeader(tab, fleetSelected, fleet.statuses.isNotEmpty(), headerHeight, onTab, onFleetTab, onCustomize, onClose)
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 72.dp),
+                    columns = cells,
                     modifier = Modifier.fillMaxWidth().weight(1f),
                 ) {
                     if (fleetSelected) {
@@ -283,7 +325,18 @@ fun ToolsPanelContent(
                             onClick = { onAction(id) },
                         )
                     }
-                    if (!fleetSelected && actions.isEmpty() && commands.isEmpty()) {
+                    if (!fleetSelected && extras.isNotEmpty()) {
+                        items(extras, key = { "extra:" + it.ref }) { extra ->
+                            ToolTile(
+                                glyph = ToolGlyph.Vector(Icons.Outlined.Terminal),
+                                label = extra.label,
+                                state = null,
+                                height = tileHeight,
+                                onClick = { onExtra(extra.ref) },
+                            )
+                        }
+                    }
+                    if (!fleetSelected && actions.isEmpty() && commands.isEmpty() && extras.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             SnyggText(
                                 elementName = FlorisImeUi.SmartbarActionsEditorSubheader.elementName,
@@ -455,6 +508,15 @@ private fun FleetStatusHeader(status: FleetAppStatus) {
         )
     }
 }
+
+/** A slash command or fleet action shown as a tile. The ref is `slash:` or `fleet:`; the label is display only. */
+data class ExtraTile(val ref: String, val label: String)
+
+private fun extraLabel(ref: String, known: List<KnownTool>): String =
+    known.firstOrNull { it.ref == ref }?.label
+        ?: ToolRef.slashId(ref)
+        ?: ToolRef.fleetParts(ref)?.second
+        ?: ref
 
 private fun decodeFleetIcon(png: ByteArray?): ImageBitmap? {
     if (png == null || png.isEmpty()) return null

@@ -73,4 +73,19 @@ class ProjectUrlsTest : FunSpec({
             }
         }
     }
+
+    test("the only web address in ProjectUrls that is not this repository is the Unicode table") {
+        val source = File("src/main/kotlin/com/victorious/keyboard/app/ProjectUrls.kt").readText()
+        val literals = Regex("\"(https?://[^\"]+)\"").findAll(source).map { it.groupValues[1] }.toList()
+        literals.filterNot { it.startsWith("https://github.com/Victorious93/Victorious-Keyboard") } shouldBe
+            listOf(ProjectUrls.UNICODE_TABLE)
+    }
+
+    test("every web address in the packaged URL strings is this repository or the Unicode table") {
+        val strings = File("src/main/res/values/strings_dont_translate.xml").readText()
+        val urls = Regex("https?://[^<\\s\"]+").findAll(strings).map { it.value }.toList()
+        urls.filterNot {
+            it.startsWith("https://github.com/Victorious93/Victorious-Keyboard") || it == ProjectUrls.UNICODE_TABLE
+        } shouldBe emptyList()
+    }
 })

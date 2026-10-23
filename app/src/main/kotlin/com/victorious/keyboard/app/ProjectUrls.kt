@@ -39,5 +39,15 @@ object ProjectUrls {
     const val SPELL_CHECKER_DOCS = MANUAL
     const val THEME_EDITOR_DOCS = MANUAL
 
+    /**
+     * Where each "Get more" button goes. Until the pack catalog exists (ROADMAP items 9 to 13) these point at
+     * pages that already exist in this repository; a test keeps every one on [REPO].
+     */
+    const val GET_EXTENSIONS = RELEASES
+    const val GET_THEMES = RELEASES
+    const val GET_LAYOUTS = RELEASES
+    const val GET_LANGUAGE_PACKS = "$REPO/blob/main/LANGUAGEPACKS.md"
+    const val GET_DICTIONARY_PACKS = "$REPO/blob/main/DICTIONARY_PACKS.md"
+
     const val UNICODE_TABLE = "https://unicode-table.com/en"
 }

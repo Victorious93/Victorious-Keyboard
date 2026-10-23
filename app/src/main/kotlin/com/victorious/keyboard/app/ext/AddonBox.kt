@@ -72,6 +72,27 @@ fun ImportExtensionBox(navController: NavController) {
 }
 
 @Composable
+fun GetMoreBox(url: String) {
+    val context = LocalContext.current
+    FlorisOutlinedBox(
+        modifier = Modifier.defaultFlorisOutlinedBox(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp),
+        ) {
+            FlorisTextButton(
+                onClick = { context.launchUrl(url) },
+                icon = Icons.Default.Shop,
+                text = stringRes(id = R.string.ext__get_more),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
 @Suppress("UNUSED_PARAMETER")
 fun UpdateBox(extensionIndex: List<Extension>) {
     val context = LocalContext.current

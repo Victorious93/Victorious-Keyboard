@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.victorious.keyboard.R
 import com.victorious.keyboard.app.LocalNavController
+import com.victorious.keyboard.app.PackLinks
 import com.victorious.keyboard.app.Routes
 import com.victorious.keyboard.extensionManager
 import com.victorious.keyboard.ime.nlp.LanguagePackExtension
@@ -119,19 +120,19 @@ private fun ViewScreen(ext: Extension) = FlorisScreen {
                     }
                 }
             }
-            if (!ext.meta.homepage.isNullOrBlank()) {
+            PackLinks.homepage(ext.meta.id, ext.meta.homepage)?.let { homepage ->
                 ExtensionMetaRowSimpleText(label = stringRes(R.string.ext__meta__homepage)) {
                     FlorisHyperlinkText(
-                        text = FlorisRef.fromUrl(ext.meta.homepage!!).authority,
-                        url = ext.meta.homepage!!,
+                        text = FlorisRef.fromUrl(homepage).authority,
+                        url = homepage,
                     )
                 }
             }
-            if (!ext.meta.issueTracker.isNullOrBlank()) {
+            PackLinks.issueTracker(ext.meta.id, ext.meta.issueTracker)?.let { issueTracker ->
                 ExtensionMetaRowSimpleText(label = stringRes(R.string.ext__meta__issue_tracker)) {
                     FlorisHyperlinkText(
-                        text = FlorisRef.fromUrl(ext.meta.issueTracker!!).authority,
-                        url = ext.meta.issueTracker!!,
+                        text = FlorisRef.fromUrl(issueTracker).authority,
+                        url = issueTracker,
                     )
                 }
             }

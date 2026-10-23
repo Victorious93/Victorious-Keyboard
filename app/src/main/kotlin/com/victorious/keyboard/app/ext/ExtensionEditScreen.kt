@@ -48,6 +48,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.victorious.keyboard.R
 import com.victorious.keyboard.app.LocalNavController
+import com.victorious.keyboard.app.ProjectUrls
 import com.victorious.keyboard.app.settings.advanced.RadioListItem
 import com.victorious.keyboard.app.settings.theme.DialogProperty
 import com.victorious.keyboard.app.settings.theme.PrettyPrintConfig
@@ -147,6 +148,8 @@ fun ExtensionEditScreen(id: String, createSerialType: String?) {
             id = ExtensionDefaults.createLocalId("themes", System.currentTimeMillis().toString()),
             version = "0.0.0",
             title = "My themes",
+            homepage = ProjectUrls.THEMES,
+            issueTracker = ProjectUrls.ISSUES,
             maintainers = listOf(ExtensionMaintainer(name = "Local")),
             license = "(none specified)",
         )

@@ -31,11 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.platform.LocalContext
 import com.victorious.keyboard.R
+import com.victorious.keyboard.app.ProjectUrls
 import com.victorious.keyboard.ime.dictionary.packs.DictionaryPack
 import com.victorious.keyboard.ime.dictionary.packs.DictionaryPackInstaller
 import com.victorious.keyboard.ime.dictionary.packs.InstallResult
 import com.victorious.keyboard.ime.dictionary.packs.PackLoad
 import com.victorious.keyboard.lib.compose.FlorisScreen
+import com.victorious.keyboard.lib.util.launchUrl
 import dev.patrickgold.jetpref.datastore.ui.Preference
 import kotlinx.coroutines.launch
 import org.florisboard.lib.android.showLongToast
@@ -105,6 +107,11 @@ fun DictionaryPacksScreen() = FlorisScreen {
             title = stringRes(R.string.settings__dictionary_packs__import),
             summary = stringRes(R.string.settings__dictionary_packs__import_summary),
             onClick = { pickFile.launch("application/zip") },
+        )
+        Preference(
+            title = stringRes(R.string.packs__get_more),
+            summary = stringRes(R.string.packs__get_more_summary),
+            onClick = { context.launchUrl(ProjectUrls.DICTIONARY_PACKS) },
         )
     }
 

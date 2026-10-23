@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.victorious.keyboard.R
 import com.victorious.keyboard.app.LocalNavController
+import com.victorious.keyboard.app.ProjectUrls
 import com.victorious.keyboard.app.Routes
 import com.victorious.keyboard.extensionManager
 import com.victorious.keyboard.ime.theme.ThemeExtension
@@ -66,24 +67,28 @@ enum class ExtensionListScreenType(
     @StringRes val titleResId: Int,
     val getExtensionIndex: (ExtensionManager) -> ExtensionManager.ExtensionIndex<*>,
     val launchExtensionCreate: ((NavController) -> Unit)?,
+    val getMoreUrl: String,
 ) {
     EXT_THEME(
         id = "ext-theme",
         titleResId = R.string.ext__list__ext_theme,
         getExtensionIndex = { it.themes },
         launchExtensionCreate = { it.navigate(Routes.Ext.Edit("null", ThemeExtension.SERIAL_TYPE)) },
+        getMoreUrl = ProjectUrls.THEMES,
     ),
     EXT_KEYBOARD(
         id = "ext-keyboard",
         titleResId = R.string.ext__list__ext_keyboard,
         getExtensionIndex = { it.keyboardExtensions },
         launchExtensionCreate = null,//{ it.navigate(Routes.Ext.Edit("null", KeyboardExtension.SERIAL_TYPE)) },
+        getMoreUrl = ProjectUrls.LAYOUTS,
     ),
     EXT_LANGUAGEPACK(
         id = "ext-languagepack",
         titleResId = R.string.ext__list__ext_languagepack,
         getExtensionIndex = { it.languagePacks },
         launchExtensionCreate = null,//{ it.navigate(Routes.Ext.Edit("null", LanguagePackExtension.SERIAL_TYPE)) },
+        getMoreUrl = ProjectUrls.LANGUAGE_PACKS,
     );
 }
 
@@ -112,6 +117,9 @@ fun ExtensionListScreen(type: ExtensionListScreenType, showUpdate: Boolean) = Fl
             state = listState,
             contentPadding = PaddingValues(bottom = fabHeightDp),
         ) {
+            item {
+                GetMoreBox(type.getMoreUrl)
+            }
             if (showUpdate) {
                 item {
                     ImportExtensionBox(navController)

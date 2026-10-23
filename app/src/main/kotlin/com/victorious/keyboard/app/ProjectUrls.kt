@@ -34,6 +34,18 @@ object ProjectUrls {
     const val COMMIT = "$REPO/commit/{hash}"
     const val KEY_CODES = "$REPO/blob/main/app/src/main/kotlin/com/victorious/keyboard/ime/text/key/KeyCode.kt"
 
+    /**
+     * Where "Get more" opens. One page per pack type under `packs/` in this repository, so every pack link stays on
+     * the owner's own host. The pages are plain Markdown; the catalog behind them is queued work (ROADMAP item 9).
+     */
+    const val PACKS = "$REPO/blob/main/packs/README.md"
+    const val EXTENSIONS = "$REPO/blob/main/packs/extensions.md"
+    const val THEMES = "$REPO/blob/main/packs/themes.md"
+    const val LAYOUTS = "$REPO/blob/main/packs/layouts.md"
+    const val LANGUAGE_PACKS = "$REPO/blob/main/packs/language-packs.md"
+    const val DICTIONARY_PACKS = "$REPO/blob/main/packs/dictionary-packs.md"
+    const val COMMAND_PROVIDERS = "$REPO/blob/main/packs/command-providers.md"
+
     /** In-app Help screen. The old spell-checker and theme-editor links open this, not a website. */
     const val MANUAL = "ui://florisboard/settings/manual"
     const val SPELL_CHECKER_DOCS = MANUAL

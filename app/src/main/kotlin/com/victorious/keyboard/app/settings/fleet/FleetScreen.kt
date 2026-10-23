@@ -32,14 +32,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.victorious.keyboard.R
 import com.victorious.keyboard.app.FlorisPreferenceStore
+import com.victorious.keyboard.app.ProjectUrls
 import com.victorious.keyboard.fleetHub
 import com.victorious.keyboard.ime.media.FileManagerInstall
 import com.victorious.keyboard.ime.media.FileManagerProtocol
 import com.victorious.keyboard.lib.compose.FlorisScreen
 import com.victorious.keyboard.lib.fleet.FleetAccess
 import com.victorious.keyboard.lib.fleet.FleetGrants
+import com.victorious.keyboard.lib.util.launchUrl
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import dev.patrickgold.jetpref.datastore.ui.ExperimentalJetPrefDatastoreUi
+import dev.patrickgold.jetpref.datastore.ui.Preference
 import dev.patrickgold.jetpref.datastore.ui.SwitchPreference
 import org.florisboard.lib.compose.FlorisInfoCard
 import org.florisboard.lib.compose.stringRes
@@ -73,6 +76,11 @@ fun FleetScreen() = FlorisScreen {
         )
         FileManagerApproval()
         FlorisInfoCard(text = stringRes(R.string.settings__fleet__info))
+        Preference(
+            title = stringRes(R.string.packs__get_more),
+            summary = stringRes(R.string.packs__get_more_summary),
+            onClick = { context.launchUrl(ProjectUrls.COMMAND_PROVIDERS) },
+        )
         if (offers.isEmpty()) {
             Text(
                 text = stringRes(R.string.settings__fleet__none),

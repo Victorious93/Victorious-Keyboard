@@ -73,4 +73,68 @@ class ProjectUrlsTest : FunSpec({
             }
         }
     }
+
+    // The one external link kept on purpose: a character reference for the key-code dialog.
+    val externalOnPurpose = setOf("UNICODE_TABLE")
+
+    fun webLinks(): Map<String, String> = ProjectUrls::class.java.declaredFields
+        .filter { it.type == String::class.java && java.lang.reflect.Modifier.isStatic(it.modifiers) }
+        .associate { it.name to it.get(null) as String }
+        .filterValues { it.startsWith("http://") || it.startsWith("https://") }
+
+    test("every project link is on the owner's repository, except the one named external link") {
+        val links = webLinks()
+        (links.size >= 14) shouldBe true
+        for ((name, url) in links) {
+            if (name in externalOnPurpose) continue
+            withClue("$name = $url") {
+                url.startsWith("https://github.com/Victorious93/Victorious-Keyboard") shouldBe true
+            }
+        }
+        externalOnPurpose.all { it in links } shouldBe true
+    }
+
+    test("a pack link never leaves the owner's pages and points at a file that exists in the repository") {
+        val packLinks = mapOf(
+            "PACKS" to ProjectUrls.PACKS,
+            "EXTENSIONS" to ProjectUrls.EXTENSIONS,
+            "THEMES" to ProjectUrls.THEMES,
+            "LAYOUTS" to ProjectUrls.LAYOUTS,
+            "LANGUAGE_PACKS" to ProjectUrls.LANGUAGE_PACKS,
+            "DICTIONARY_PACKS" to ProjectUrls.DICTIONARY_PACKS,
+            "COMMAND_PROVIDERS" to ProjectUrls.COMMAND_PROVIDERS,
+        )
+        val prefix = ProjectUrls.REPO + "/blob/main/"
+        for ((name, url) in packLinks) {
+            withClue("$name = $url") {
+                url.startsWith(prefix + "packs/") shouldBe true
+                // Tests run from the `app` module directory; the repository root is its parent.
+                File("../" + url.removePrefix(prefix)).isFile shouldBe true
+            }
+        }
+    }
+
+    test("each add-on list screen has a Get more button, and new extensions default to the project's pages") {
+        val list = File("src/main/kotlin/com/victorious/keyboard/app/ext/ExtensionListScreen.kt").readText()
+        list shouldContain "getMoreUrl = ProjectUrls.THEMES"
+        list shouldContain "getMoreUrl = ProjectUrls.LAYOUTS"
+        list shouldContain "getMoreUrl = ProjectUrls.LANGUAGE_PACKS"
+        list shouldContain "GetMoreBox(type.getMoreUrl)"
+        File("src/main/kotlin/com/victorious/keyboard/app/settings/dictionary/DictionaryPacksScreen.kt").readText() shouldContain
+            "ProjectUrls.DICTIONARY_PACKS"
+        File("src/main/kotlin/com/victorious/keyboard/app/settings/fleet/FleetScreen.kt").readText() shouldContain
+            "ProjectUrls.COMMAND_PROVIDERS"
+        val edit = File("src/main/kotlin/com/victorious/keyboard/app/ext/ExtensionEditScreen.kt").readText()
+        edit shouldContain "homepage = ProjectUrls.THEMES"
+        edit shouldContain "issueTracker = ProjectUrls.ISSUES"
+    }
+
+    test("the Get more button sends no data and only opens the browser") {
+        val box = File("src/main/kotlin/com/victorious/keyboard/app/ext/AddonBox.kt").readText()
+        val getMore = box.substringAfter("fun GetMoreBox").substringBefore("fun UpdateBox")
+        getMore shouldContain "launchUrl(url)"
+        getMore shouldNotContain "HttpURLConnection"
+        getMore shouldNotContain "openConnection"
+        File("src/main/AndroidManifest.xml").readText() shouldNotContain "android.permission.INTERNET"
+    }
 })

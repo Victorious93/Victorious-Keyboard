@@ -71,6 +71,33 @@ fun ImportExtensionBox(navController: NavController) {
     }
 }
 
+/** A "Get more" box that opens [url] in the browser. [url] is always a [ProjectUrls] constant. */
+@Composable
+fun GetMoreBox(url: String) {
+    val context = LocalContext.current
+    FlorisOutlinedBox(
+        modifier = Modifier.defaultFlorisOutlinedBox(),
+    ) {
+        Text(
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 4.dp),
+            text = stringRes(id = R.string.packs__get_more_summary),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp),
+        ) {
+            FlorisTextButton(
+                onClick = { context.launchUrl(url) },
+                icon = Icons.Outlined.FileDownload,
+                text = stringRes(id = R.string.packs__get_more),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
 @Composable
 @Suppress("UNUSED_PARAMETER")
 fun UpdateBox(extensionIndex: List<Extension>) {

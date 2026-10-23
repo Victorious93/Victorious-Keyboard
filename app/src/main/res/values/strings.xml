@@ -1291,6 +1291,8 @@
     <string name="ext__validation__hint_value_above_50_percent">Any value above 50%% will behave as if you set 50%%, consider lowering your percent size</string>
     <string name="ext__update_box__internet_permission_hint">Since this app does not have Internet permission, updates for installed extensions must be checked manually.</string>
     <string name="ext__update_box__search_for_updates">Search for Updates</string>
+    <string name="packs__get_more">Get more</string>
+    <string name="packs__get_more_summary">Opens this project\'s page for these add-ons in your browser. Nothing is downloaded or installed for you.</string>
     <string name="ext__addon_management_box__managing_placeholder">Managing {extensions}</string>
     <string name="ext__addon_management_box__addon_manager_info">All tasks related to importing, exporting, creating, customizing, and removing extensions can be handled through the centralized addon manager.</string>
     <string name="ext__addon_management_box__go_to_page">Go to {ext_home_title}</string>

@@ -9,4 +9,4 @@ Pages the keyboard's "Get more" buttons open. Every link the keyboard shows for 
 * [Dictionary packs](dictionary-packs.md)
 * [Command providers](command-providers.md)
 
-Nothing is published here yet. The catalog, file formats and an optional update check are queued work (`ROADMAP.md`, items 9 to 14).
+Nothing is published here yet. The catalog is [`index.json`](index.json) (empty today); its format, the file formats and the publishing steps are in [`docs/PACKS.md`](../docs/PACKS.md). An optional update check is queued work (`ROADMAP.md`, items 10 to 14).

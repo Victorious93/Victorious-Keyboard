@@ -28,7 +28,7 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties   # git-ignored
 ./gradlew testDebugUnitTest     # JVM unit tests (≈1 min after a build)
 ```
 
-Debug builds install as `<applicationId>.debug`, so they never replace a release install.
+Debug builds install as `<applicationId>.debug`, so they never replace a release install. How debug builds and real releases are published, and how to clean up old debug releases: `docs/RELEASES.md`.
 
 Result of these commands on the unmodified baseline is in `AUDIT.md` §6; results for our changes are in
 `TESTING.md` and each phase report.

@@ -87,6 +87,7 @@ import com.victorious.keyboard.app.settings.theme.ThemeManagerScreenAction
 import com.victorious.keyboard.app.settings.theme.ThemeScreen
 import com.victorious.keyboard.app.settings.localai.LocalAiScreen
 import com.victorious.keyboard.app.settings.fleet.FleetScreen
+import com.victorious.keyboard.app.settings.packs.PackUpdatesScreen
 import com.victorious.keyboard.app.settings.screenshot.ScreenshotScreen
 import com.victorious.keyboard.app.settings.slash.SlashCommandsScreen
 import com.victorious.keyboard.app.settings.suggestions.MySuggestionsScreen
@@ -277,6 +278,10 @@ object Routes {
         object Fleet
 
         @Serializable
+        @Deeplink("settings/pack-updates")
+        object PackUpdates
+
+        @Serializable
         @Deeplink("settings/screenshot")
         object Screenshot
     }
@@ -386,6 +391,7 @@ object Routes {
             composableWithDeepLink(Settings.MySuggestions::class) { MySuggestionsScreen() }
             composableWithDeepLink(Settings.SlashCommands::class) { SlashCommandsScreen() }
             composableWithDeepLink(Settings.Fleet::class) { FleetScreen() }
+            composableWithDeepLink(Settings.PackUpdates::class) { PackUpdatesScreen() }
             composableWithDeepLink(Settings.LocalAi::class) { LocalAiScreen() }
             composableWithDeepLink(Settings.Screenshot::class) { ScreenshotScreen() }
 

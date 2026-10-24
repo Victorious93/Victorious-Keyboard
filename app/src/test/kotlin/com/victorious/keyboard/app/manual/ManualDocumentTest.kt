@@ -39,7 +39,7 @@ class ManualDocumentTest : FunSpec({
         ManualDocument.requiredHeadings.forEach { headings shouldContain it }
         val blocks = ManualDocument.parse(text)
         blocks.filterIsInstance<ManualDocument.Block.Heading>().size shouldBe headings.size
-        text shouldContain "does not ask for Internet"
+        text shouldContain "only for the pack update check"
         text shouldNotContain "android.permission.INTERNET"
     }
 

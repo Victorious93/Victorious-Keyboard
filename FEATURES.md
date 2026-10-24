@@ -81,8 +81,8 @@ keyboard behaves like upstream. The UI has not been seen on a screen.
 
 ## AI workspace (Phase 7)
 
-Prompt library, templates, local transformations, optional provider adapters: ⬜ **not started.** The app has **no
-`INTERNET` permission**.
+Prompt library, templates, local transformations, optional provider adapters: ⬜ **not started.** The app declares
+`INTERNET` for the opt-in pack update check only; AI providers use no network.
 
 ## Quality and release
 

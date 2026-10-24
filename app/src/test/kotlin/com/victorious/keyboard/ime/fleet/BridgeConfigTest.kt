@@ -18,6 +18,7 @@ package com.victorious.keyboard.ime.fleet
 
 import com.victorious.keyboard.lib.fleet.BridgeProtocol
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import java.io.File
@@ -59,7 +60,7 @@ class BridgeConfigTest : FunSpec({
         service shouldNotContain "println"
     }
 
-    test("the manifest still has no INTERNET permission") {
-        File("src/main/AndroidManifest.xml").readText() shouldNotContain "android.permission.INTERNET"
+    test("the bridge adds no network use: INTERNET is declared once, for the pack update check only") {
+        Regex("android.permission.INTERNET").findAll(File("src/main/AndroidManifest.xml").readText()).count() shouldBe 1
     }
 })

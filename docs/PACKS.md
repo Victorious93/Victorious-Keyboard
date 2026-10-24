@@ -5,9 +5,18 @@ How add-ons for Victorious Keyboard are described, published and checked. This p
 ## Status (read first)
 
 * **Nothing is published yet.** `packs/index.json` is a valid, empty catalog. The pages under `packs/` say the same.
-* **The keyboard does not read the catalog.** The Get more buttons only open this project's pages in your browser. An optional update check is queued work (`ROADMAP.md`, item 10) and needs the `INTERNET` permission, which the app does not have.
+* **The only thing the keyboard reads from the catalog is the list, and only when you ask.** Settings → Tools → Pack updates has a switch (off by default) and a *Check now* button. A check makes one HTTPS request for `packs/index.json` (below), shows each pack as new, updated or current, and stops. It downloads no pack and installs nothing. The Get more buttons and *Open page* only open this project's pages in your browser.
 * **Importing is by file.** You download a pack yourself, then import it on the matching screen. Nothing here has been run on a device.
-* What is implemented and tested: the catalog reader (`PackCatalogReader`, pure Kotlin, JVM-tested) and the hash check (`PackHash`). They are not wired into any screen.
+* What is implemented and tested: the catalog reader (`PackCatalogReader`), the update check around it (`PackUpdateChecker`, with a fake connection in the tests), and the hash check (`PackHash`, not used yet because nothing is downloaded). All pure Kotlin and JVM-tested. The screen and the one connection class (`UrlConnectionTransport`) are compiled, never run on a device.
+
+### What the update check does and does not do
+
+* **Address:** exactly `https://raw.githubusercontent.com/Victorious93/Victorious-Keyboard/main/packs/index.json`. Any other address is refused in code.
+* **Request:** `GET`, a fixed generic user agent (`VictoriousKeyboard-pack-check`) and `Accept: application/json`. No cookies, credentials, device or app version, installed-pack list, or text of any kind. The server sees your IP address and the time.
+* **Limits:** 8 seconds to connect and to read, no cache, no redirects (a redirect is reported and not followed), at most 256 KiB read, cleartext traffic blocked for the whole app.
+* **Reply:** untrusted. It goes through `PackCatalogReader`; a catalog that fails is shown as "not in a form the keyboard accepts" with nothing from it displayed. The reply is kept only in memory.
+* **Never:** no background or scheduled check, no check at start-up or when the screen opens, no download of a pack file, no install. Tapping an offer opens its page in the browser.
+* **Not done:** the catalog is unsigned, so the hash in it protects against a corrupted file but not against a changed catalog (`ROADMAP.md`, item 14). Dictionary packs have no stored version, so one is always shown as *Not installed* even if you imported it.
 
 ## Pack types
 

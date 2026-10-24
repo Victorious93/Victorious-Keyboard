@@ -138,8 +138,8 @@ Full detail: [ROADMAP.md](ROADMAP.md), [FEATURES.md](FEATURES.md).
 | Application ID | `com.victorious.keyboard` (debug: `com.victorious.keyboard.debug`) |
 | Version | `0.1.0-alpha01` (version code `120`) |
 | Android | 8.0+ (`minSdk` 26); compile/target API 36 |
-| Permissions | `VIBRATE`, `POST_NOTIFICATIONS` (setup flow) |
-| Internet | **None** — no `INTERNET` permission |
+| Permissions | `VIBRATE`, `POST_NOTIFICATIONS` (setup flow), `INTERNET` (pack update check only) |
+| Internet | `INTERNET` is declared for one opt-in feature only: the pack update check (off by default, a manual *Check now*, one HTTPS request for the project's `packs/index.json`, nothing sent about you). No background network use, cleartext blocked |
 | Analytics / ads / telemetry | None |
 | Data | On-device only; clipboard and snippets excluded from Android auto-backup |
 | Distribution | No signed release yet — build from source |

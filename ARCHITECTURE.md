@@ -72,8 +72,9 @@ provably isolated from key handling.
 3. **Pure core, thin shell.** Logic that can be pure Kotlin is pure Kotlin and tested on the JVM; Android classes
    (`InputConnection`, `ClipboardManager`, SAF URIs) stay in small adapters.
 4. **AI/network code is isolated.** Nothing in `ime/ai` is reachable from key handling, text capture or clipboard
-   monitoring. There is no `INTERNET` permission in the manifest unless and until a provider adapter requires it
-   (P7), and then it is declared in a way that makes the privacy impact visible (see `AI_INTEGRATION.md`).
+   monitoring. The manifest declares `INTERNET` for one opt-in feature only, the pack update check (`ime/packs`,
+   one class, `UrlConnectionTransport`, opens the connection; `NetworkUseTest` pins that). A provider adapter (P7) would
+   need its own owner-approved change and a visible declaration (see `AI_INTEGRATION.md`).
 5. **Sensitive data stays explicit.** No logging of clipboard/typed content (not even in debug), no analytics, no
    background network.
 6. **Schema changes are migrations.** No `fallbackToDestructiveMigration()` on any user-data database.

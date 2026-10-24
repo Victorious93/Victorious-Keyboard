@@ -326,7 +326,8 @@ class StripSlashTest : FunSpec({
         manifest.contains("com.victorious.fleet.PERMISSION") shouldBe false
         manifest.contains("KEYBOARD_PROVIDER") shouldBe false
         manifest.contains("<package ") shouldBe false
-        manifest.contains("android.permission.INTERNET") shouldBe false
+        // INTERNET exists only for the opt-in pack update check; NetworkUseTest pins that.
+        Regex("android.permission.INTERNET").findAll(manifest).count() shouldBe 1
         client shouldContain "queryIntentServices"
         client shouldContain "Messenger"
         val banned = listOf("edl-commander", "pentest-swarm", "victorlink", "victorsuite", "rootforge")

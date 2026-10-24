@@ -1,6 +1,6 @@
 # Droidcommand-AI fleet link
 
-Victorious Keyboard stays a normal keyboard when no command provider is connected. This link is optional. The app does not request `INTERNET`. Nothing here has been run on a device.
+Victorious Keyboard stays a normal keyboard when no command provider is connected. This link is optional. The fleet link itself uses no network (the app's only network use is the separate opt-in pack update check). Nothing here has been run on a device.
 
 The keyboard owns this protocol. Any of Don's fleet apps can implement it. There is no shared signature permission and no AIDL. The keyboard does not contain a list of fleet apps.
 

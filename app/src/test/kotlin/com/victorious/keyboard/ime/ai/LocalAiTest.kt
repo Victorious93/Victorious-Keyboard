@@ -188,9 +188,16 @@ class LocalAiTest : FunSpec({
         AiLifecycle.shouldUnloadForMemory(80) shouldBe true
     }
 
-    test("the manifest does not add an internet permission") {
+    test("local AI adds no network use: INTERNET is declared once, for the pack update check, and no AI source opens a connection") {
         val manifest = File("src/main/AndroidManifest.xml").readText().lowercase()
-        manifest.contains("android.permission.internet") shouldBe false
+        Regex("android.permission.internet").findAll(manifest).count() shouldBe 1
+        val ai = File("src/main/kotlin/com/victorious/keyboard/ime/ai").walkTopDown().filter { it.isFile && it.extension == "kt" }
+        for (file in ai) {
+            val text = file.readText()
+            for (marker in listOf("HttpURLConnection", "openConnection", "openStream", "java.net.Socket", "okhttp", "UrlConnectionTransport")) {
+                text.contains(marker) shouldBe false
+            }
+        }
     }
 })
 

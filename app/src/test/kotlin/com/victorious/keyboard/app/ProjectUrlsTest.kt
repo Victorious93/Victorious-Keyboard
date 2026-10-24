@@ -135,6 +135,8 @@ class ProjectUrlsTest : FunSpec({
         getMore shouldContain "launchUrl(url)"
         getMore shouldNotContain "HttpURLConnection"
         getMore shouldNotContain "openConnection"
-        File("src/main/AndroidManifest.xml").readText() shouldNotContain "android.permission.INTERNET"
+        // The button only opens the browser; the one connection the app makes belongs to the pack update check.
+        getMore shouldNotContain "UrlConnectionTransport"
+        getMore shouldNotContain "PackUpdateChecker"
     }
 })

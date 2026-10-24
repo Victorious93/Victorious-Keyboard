@@ -49,7 +49,7 @@ Long builds: run in the background with `--no-parallel --max-workers=2`, log to 
 ## Security invariants (do not weaken)
 1. No logging of clipboard, typed, or snippet/prompt content — not even at debug level.
 2. Nothing is captured from password / sensitive fields. Honour `EXTRA_IS_SENSITIVE`.
-3. No network access unless the user explicitly enabled a provider; no `INTERNET` permission before P7.
+3. No network access, with one named exception: the opt-in pack update check (owner approved 2026-10-19, ROADMAP item 10). It is off by default, runs only when the user taps Check now, fetches only `packs/index.json` from this repository over HTTPS (redirects refused, cleartext blocked, size and time capped), and sends no identifiers, typed text, clipboard or snippet content. `INTERNET` is declared for it alone, and `NetworkUseTest` fails if anything else opens a connection or runs in the background. Any other network use (an AI provider, an alias service) still needs the owner's explicit approval and a change to this line.
 4. No `fallbackToDestructiveMigration()` on user-data databases. Pinned/saved data is never deleted to satisfy a cap
    without explicit user confirmation.
 5. Backups: only JCE primitives (AES-256-GCM, PBKDF2-HMAC-SHA256), random salt+nonce per file, versioned header, no

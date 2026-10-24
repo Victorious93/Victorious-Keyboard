@@ -75,9 +75,13 @@ Build **phase by phase**. Each phase ends with **one pull request**; never batch
 5. Re-run the full suite and `assembleDebug`. Commit with the attribution trailers, push to the assigned branch, and open
    the PR using `.github/PULL_REQUEST_TEMPLATE.md`. The PR must state what was **not** run (device, lint, CI).
 6. Stop after the PR is open. Do not begin the next phase.
-   Standing owner instruction: open a pull request whenever it makes sense (a finished phase, a docs handoff), then wait
-   for the owner. Do not open PRs for work that is not finished. After the owner merges it, update `ROADMAP.md` (queue + status),
-   `TESTING.md` counts and `CHANGELOG.md`, and this section's pointers, then wait for "continue".
+   Standing owner instruction (2026-10-24): **always open a pull request** for finished work (a phase, a docs handoff, a fix),
+   and **merge it yourself once CI is green** on the PR's current head (the `build` check passed, no merge conflict, no
+   unresolved red-circle review finding). Use a merge commit. Do not merge on a red, pending or conflicted head; merge `main`
+   in and wait for CI again instead. Do not open PRs for work that is not finished. The owner's approval of a design decision
+   is separate: a PR that changes a security invariant is only opened with the owner's explicit approval (as for item 10).
+   After the merge, update `ROADMAP.md` (queue + status), `TESTING.md` counts and `CHANGELOG.md`, and this section's
+   pointers, then stop and wait for "continue"; merging a phase does not start the next one.
 
 ## Conventions
 * Match surrounding code; Apache-2.0 header on new files (`Copyright (C) 2026 Victorious Keyboard Contributors`).
@@ -109,6 +113,6 @@ Gotcha: the `{name}` formatter used to loop forever on values containing their o
 
 ## Don's standing rules (apply to every change)
 - Work on a branch and open a PR. Never push to `main`.
-- Never merge a PR, and never ask to merge one, until every test/check on the PR passes.
+- Never merge a PR, and never ask to merge one, until every test/check on the PR passes. Once they pass on the current head, merging is authorized (owner, 2026-10-24); see the Working method.
 - Never commit secrets (API keys, tokens, keystore passwords, `.env` files, credentials).
 - Don't claim something works unless it was actually tested; say what was and wasn't run.

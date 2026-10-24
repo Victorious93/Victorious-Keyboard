@@ -5,9 +5,16 @@ Applies to the code in this repository. Statements are checked against the sourc
 
 ## What the app does with your data today
 
-* **Network:** the app declares **no `INTERNET` permission** (see `app/src/main/AndroidManifest.xml`), so it cannot
-  open network connections itself. It can ask Android to open a link in your browser (for example "Privacy policy",
-  "Project repository", or the upstream extension-store page); that is a browser action you trigger.
+* **Network:** the app declares the `INTERNET` permission for **one** purpose: the optional pack update check
+  (Settings → Tools → Pack updates). It is **off until you turn it on**, and even then it runs only when you tap
+  *Check now*. It makes one HTTPS request for one small file, the project's list of available packs
+  (`packs/index.json` on GitHub), and nothing else. The request carries **no** identifier, no device or app version, no
+  list of what you installed, and nothing you type, copy or save. GitHub sees your IP address and the time, as any web
+  server does. The reply is size-limited, checked as untrusted input and kept only in memory. The check downloads no pack
+  and installs nothing, never follows a redirect, and never runs in the background. Cleartext traffic is blocked for the
+  whole app. Nothing else in the app opens a connection (a test checks this in the source). The app can also ask Android
+  to open a link in your browser (for example "Privacy policy", "Project repository", or a pack page); that is a browser
+  action you trigger.
 * **Analytics / telemetry / ads:** none.
 * **Typed text:** processed in memory to insert text and (once implemented) to produce suggestions. It is not
   uploaded anywhere. The keyboard does not record keystrokes to a log.
@@ -33,7 +40,7 @@ Applies to the code in this repository. Statements are checked against the sourc
 
 ## Planned (not implemented yet)
 
-* Optional AI integrations: off by default, no `INTERNET` permission until you enable a provider, nothing sent without
+* Optional AI integrations: off by default, no network use until you enable a provider (that would be a separate decision and a change to this page), nothing sent without
   an explicit action each time, credentials in Android Keystore-backed storage.
 * Voice typing through Android's speech recogniser only when you tap the microphone. Which service processes audio
   depends on your device's recogniser, not on this app.

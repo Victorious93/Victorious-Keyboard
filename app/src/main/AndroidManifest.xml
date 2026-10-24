@@ -8,6 +8,11 @@
     <!-- Permission needed to create notifications on devices running Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Used only by the opt-in pack update check (Settings -> Tools -> Pack updates): one HTTPS request for the
+          project's packs/index.json when the user taps "Check now". Off by default, no background use, cleartext
+          blocked (see network_security_config). Nothing else in the app opens a connection. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <!-- Android 11+ only: Define that FlorisBoard requests to see all apps that
           ship with an IME or Spell Check service. This is used to guide the user
           in the Settings Ui why FlorisBoard may not be working.
@@ -35,6 +40,8 @@
     <application
         android:name="com.victorious.keyboard.FlorisApplication"
         android:allowBackup="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/backup_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/floris_app_icon"

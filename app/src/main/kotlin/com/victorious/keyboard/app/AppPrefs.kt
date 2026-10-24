@@ -440,6 +440,18 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
     }
 
+    val packs = Packs()
+    inner class Packs {
+        /**
+         * Allows the pack update check (Settings -> Tools -> Pack updates). Off until the user turns it on. It only
+         * enables the "Check now" button; nothing runs in the background and nothing is fetched without a tap.
+         */
+        val updateCheckEnabled = boolean(
+            key = "packs__update_check_enabled",
+            default = false,
+        )
+    }
+
     val devrow = Devrow()
     inner class Devrow {
         /**

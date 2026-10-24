@@ -32,7 +32,8 @@ class NamespaceStabilityTest : FunSpec({
         manifest shouldContain "dev.patrickgold.florisboard.SettingsLauncherAlias"
         manifest shouldContain "com.victorious.keyboard.FlorisApplication"
         manifest shouldContain "com.victorious.keyboard.app.FlorisAppActivity"
-        manifest shouldNotContain "android.permission.INTERNET"
+        // INTERNET exists only for the opt-in pack update check; NetworkUseTest pins that.
+        Regex("android.permission.INTERNET").findAll(manifest).count() shouldBe 1
 
         val gradle = File("build.gradle.kts").readText()
         gradle shouldContain "namespace = \"com.victorious.keyboard\""

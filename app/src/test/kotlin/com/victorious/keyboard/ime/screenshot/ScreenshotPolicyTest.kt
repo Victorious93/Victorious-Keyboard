@@ -95,7 +95,8 @@ class ScreenshotConfigTest : FunSpec({
         val manifest = File("src/main/AndroidManifest.xml").readText()
         manifest shouldContain "dev.patrickgold.florisboard.ime.screenshot.ScreenshotAccessibilityService"
         manifest shouldContain "android.permission.BIND_ACCESSIBILITY_SERVICE"
-        manifest shouldNotContain "android.permission.INTERNET"
+        // INTERNET exists only for the opt-in pack update check; NetworkUseTest pins that.
+        Regex("android.permission.INTERNET").findAll(manifest).count() shouldBe 1
         manifest shouldNotContain "READ_FRAME_BUFFER"
 
         val strings = File("src/main/res/values/strings.xml").readText()

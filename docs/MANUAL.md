@@ -353,6 +353,17 @@ This is optional. The app does not include a model, and it does not download one
 
 The lists of theme extensions, keyboard extensions, language pack extensions, dictionary packs and fleet command apps each have a Get more button. It opens this project's page for that kind of add-on in your browser, so it uses your browser, not the keyboard. The keyboard does not download, install or check anything for you. Nothing is published on those pages yet; to use something you already have, import it from a file on the same screen. A theme you create yourself starts with its homepage and issue tracker pointing at the project's pages, and you can change them.
 
+### Pack updates
+
+Settings → Tools → Pack updates is the only place the keyboard uses the internet, and only if you ask it to.
+
+1. The switch *Allow the update check* starts off. Turning it on only lets the *Check now* button work. Nothing is checked in the background, at start-up, or on a timer.
+2. Tap *Check now*. The keyboard asks GitHub for one small file: this project's list of available packs. It sends nothing about you, your phone, what you installed, or anything you type or copy. GitHub sees your IP address and the time, as any web server does.
+3. The list is treated as untrusted. It must be small, well formed, and point only at this project's own downloads. If it is not, nothing is shown and the screen says so. The keyboard never follows a redirect.
+4. Each pack in the list is marked *Update available*, *Not installed*, *Installed, version not comparable*, or *Up to date*. Tapping a pack opens its page in your browser.
+5. The check downloads no pack and installs nothing. To use a pack you download it yourself in the browser and import it from a file on the matching screen, where the keyboard checks it again.
+6. The result is kept only while the screen is open. Turn the switch off at any time. *Open the packs page* opens the same page in your browser without making any check.
+
 ### Privacy mode
 
 ![Incognito](manual/img/privacy.txt)
@@ -380,7 +391,7 @@ Three system permissions appear on the services, and you are not asked to grant 
 - Bind accessibility service. Android uses this so only the system can attach the screenshot helper.
 - Bind text service. Android uses this so only the system can attach the spell checker.
 
-The app does not ask for Internet access. It does not ask for your contacts, location, microphone, camera, or storage. The screenshot helper is not a permission in that list. You turn that helper on yourself in Accessibility settings, and it cannot read the screen.
+The app asks for Internet access only for the pack update check, which is off until you turn it on and runs only when you tap Check now. It does not ask for your contacts, location, microphone, camera, or storage. The screenshot helper is not a permission in that list. You turn that helper on yourself in Accessibility settings, and it cannot read the screen.
 
 Android also lets the app see three kinds of installed services, without a list of package names: other keyboards, spell checkers, and apps that offer fleet commands. That is how Fleet link can find a command app after you install it.
 
@@ -441,7 +452,7 @@ I want the old colors back. Settings → Look → Keyboard colors → Reset to d
 
 ## Privacy and your data
 
-The app does not ask for Internet access. Typing, suggestions, the clipboard, snippets, fleet messages, and Local AI stay on this phone. Local AI does not download a model. A fleet command talks only to an app you installed and approved.
+The app uses the internet only for the pack update check, and only when you have turned it on and tap Check now. Typing, suggestions, the clipboard, snippets, fleet messages, and Local AI stay on this phone. Local AI does not download a model. A fleet command talks only to an app you installed and approved.
 
 Opening About → Repository, Changelog, or Privacy policy, or the project links on the setup screen, hands that address to your browser. That happens because you tapped it. The Help screen does not do this. It reads the manual from inside the app.
 

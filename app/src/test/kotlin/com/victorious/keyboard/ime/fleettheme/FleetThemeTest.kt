@@ -90,7 +90,9 @@ class FleetThemeTest : FunSpec({
         FleetThemeCodec.parseHex("#0B0") shouldBe null
         FleetThemeCodec.parseHex("FF0B0C12") shouldBe null
         FleetThemeCodec.parseHex("#GG0000") shouldBe null
-        FleetThemeCodec.parseHex("#FF00E5") shouldBe null
+        FleetThemeCodec.parseHex("#FF00E") shouldBe null
+        FleetThemeCodec.parseHex("#FF00E5FFAA") shouldBe null
+        FleetThemeCodec.parseHex("#FF00E5") shouldBe 0xFFFF00E5.toInt()
     }
 
     test("schema other than 1 is rejected, including a json body that disagrees with the column") {

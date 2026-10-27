@@ -35,9 +35,9 @@
         <intent>
             <action android:name="ai.victorious.filemanager.debug.action.BRIDGE"/>
         </intent>
-        <!-- VictorLaunch's theme provider. The keyboard only reads it. The app does not have to be installed. -->
+        <!-- VictorLaunch's theme provider. The keyboard only reads it. The app does not have to be installed.
+             The authority query makes that package visible. There is no package list. -->
         <provider android:authorities="com.victorious.launch.theme"/>
-        <package android:name="com.victorious.launch"/>
     </queries>
 
     <application

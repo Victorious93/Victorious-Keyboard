@@ -27,6 +27,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import com.victorious.keyboard.app.FlorisPreferenceStore
+import com.victorious.keyboard.ime.fleettheme.FleetThemeRuntime
+import com.victorious.keyboard.ime.fleettheme.forcesBlackSquared
+import com.victorious.keyboard.ime.fleettheme.keyboardPalette
 import com.victorious.keyboard.ime.theme.colors.KeyboardColorOverlay
 import com.victorious.keyboard.ime.theme.colors.KeyboardPaletteCodec
 import com.victorious.keyboard.ime.window.LocalWindowController
@@ -49,11 +52,17 @@ fun FlorisImeTheme(content: @Composable () -> Unit) {
 
     val activeThemeInfo by themeManager.activeThemeInfo.collectAsState()
     val keyboardColorsRaw by prefs.theme.keyboardColors.observeAsState()
-    val stylesheet = remember(activeThemeInfo, keyboardColorsRaw) {
+    val fleetState by FleetThemeRuntime.state.collectAsState()
+    val stylesheet = remember(activeThemeInfo, keyboardColorsRaw, fleetState) {
+        val themeId = if (fleetState.forcesBlackSquared()) {
+            "victorious_black"
+        } else {
+            activeThemeInfo.name.componentId
+        }
         KeyboardColorOverlay.apply(
             stylesheet = activeThemeInfo.stylesheet,
-            themeId = activeThemeInfo.name.componentId,
-            palette = KeyboardPaletteCodec.decode(keyboardColorsRaw),
+            themeId = themeId,
+            palette = fleetState.keyboardPalette() ?: KeyboardPaletteCodec.decode(keyboardColorsRaw),
         )
     }
 

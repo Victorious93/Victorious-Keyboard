@@ -22,6 +22,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
@@ -29,6 +30,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.victorious.keyboard.app.AppTheme
 import com.victorious.keyboard.app.FlorisPreferenceStore
+import com.victorious.keyboard.ime.fleettheme.FleetThemeRuntime
+import com.victorious.keyboard.ime.fleettheme.settingsPaint
 import dev.patrickgold.jetpref.datastore.model.observeAsState
 import org.florisboard.lib.color.neutralDynamicColorScheme
 
@@ -37,12 +40,15 @@ import org.florisboard.lib.color.neutralDynamicColorScheme
 fun getColorScheme(
     theme: AppTheme,
 ): ColorScheme {
+    val fleetPaint = FleetThemeRuntime.state.collectAsState().value.settingsPaint()
     val prefs by FlorisPreferenceStore
     val accentColor by prefs.other.accentColor.observeAsState()
+    val systemDark = isSystemInDarkTheme()
+    if (fleetPaint != null) return fleetColorScheme(fleetPaint)
     val dark = when (theme) {
         AppTheme.DARK, AppTheme.AMOLED_DARK -> true
         AppTheme.LIGHT -> false
-        AppTheme.AUTO, AppTheme.AUTO_AMOLED -> isSystemInDarkTheme()
+        AppTheme.AUTO, AppTheme.AUTO_AMOLED -> systemDark
     }
     val amoled = theme == AppTheme.AMOLED_DARK || (theme == AppTheme.AUTO_AMOLED && dark)
     // A chosen accent still recolors the app. With no accent, the brand schemes are used

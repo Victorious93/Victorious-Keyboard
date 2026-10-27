@@ -73,6 +73,7 @@ class FlorisApplication : Application() {
     val customSuggestions = lazy { com.victorious.keyboard.ime.nlp.custom.CustomSuggestionManager(this) }
     val slashCommands = lazy { com.victorious.keyboard.ime.slash.SlashCommandManager(this) }
     val fleetHub = lazy { com.victorious.keyboard.ime.fleet.FleetHubClient(this) }
+    val fleetTheme = lazy { com.victorious.keyboard.ime.fleettheme.FleetThemeClient(this) }
     val keyboardManager = lazy { KeyboardManager(this) }
     val localAi = lazy { com.victorious.keyboard.ime.ai.LocalAiManager(this) }
     val nlpManager = lazy { NlpManager(this) }
@@ -123,6 +124,11 @@ class FlorisApplication : Application() {
         customSuggestions.value
         slashCommands.value
         fleetHub.value.start()
+        try {
+            fleetTheme.value.start()
+        } catch (_: Exception) {
+            // A theme read must not stop the keyboard. The built-in theme stays.
+        }
         localAi.value
         DictionaryManager.init(this)
     }

@@ -35,6 +35,9 @@
         <intent>
             <action android:name="ai.victorious.filemanager.debug.action.BRIDGE"/>
         </intent>
+        <!-- VictorLaunch's theme provider. The keyboard only reads it. The app does not have to be installed. -->
+        <provider android:authorities="com.victorious.launch.theme"/>
+        <package android:name="com.victorious.launch"/>
     </queries>
 
     <application
@@ -200,6 +203,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"/>
         </provider>
+
+        <!-- Fleet theme changed. Extras are a wake-up; the keyboard queries the provider again.
+             Exported because the sender addresses this package explicitly and does not share a signing key. -->
+        <receiver
+            android:name="com.victorious.keyboard.ime.fleettheme.FleetThemeChangedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.victorious.launch.action.FLEET_THEME_CHANGED"/>
+            </intent-filter>
+        </receiver>
 
         <!-- Disable default EmojiCompat initializer -->
         <provider

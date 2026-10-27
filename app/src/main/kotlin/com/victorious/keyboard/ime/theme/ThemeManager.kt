@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 import com.victorious.keyboard.R
 import com.victorious.keyboard.app.FlorisPreferenceStore
+import com.victorious.keyboard.ime.fleettheme.FleetThemeRuntime
+import com.victorious.keyboard.ime.fleettheme.forcesBlackSquared
 import com.victorious.keyboard.appContext
 import com.victorious.keyboard.extensionManager
 import com.victorious.keyboard.ime.smartbar.CachedInlineSuggestionsChipStyleSet
@@ -115,6 +117,9 @@ class ThemeManager(context: Context) {
         ) {}.collectIn(scope) {
             updateActiveTheme()
         }
+        FleetThemeRuntime.state.collectIn(scope) {
+            updateActiveTheme()
+        }
     }
 
     /**
@@ -169,6 +174,9 @@ class ThemeManager(context: Context) {
 
     private fun evaluateActiveThemeName(): ExtensionComponentName {
         previewThemeId.value?.let { return it }
+        if (FleetThemeRuntime.state.value.forcesBlackSquared()) {
+            return extCoreTheme("victorious_black")
+        }
         return when (prefs.theme.mode.get()) {
             ThemeMode.ALWAYS_DAY -> {
                 prefs.theme.dayThemeId.get()

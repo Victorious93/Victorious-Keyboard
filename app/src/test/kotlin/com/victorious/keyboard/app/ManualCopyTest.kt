@@ -40,5 +40,6 @@ class ManualCopyTest : FunSpec({
         manual shouldContain "Generate command"
         manual shouldContain "NetHunter Terminal"
         manual shouldContain "toolbar.json"
+        manual shouldContain "VictorLaunch can set the keyboard colors"
     }
 })

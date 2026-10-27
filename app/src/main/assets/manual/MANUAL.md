@@ -418,6 +418,8 @@ A settings backup is separate from that remote switch. Export keeps themes, layo
 
 File Manager seek, on the same screen, is separate from Hub status. It starts off. The debug build of Victorious File Manager is pinned to its published certificate. The release build has no published certificate yet, so it waits until you tap Approve, and it is never trusted automatically. The keyboard looks for the app when you open this screen. If it is not installed, media keys still work. The link is only for playback. It does not read what you type, the clipboard, or the Vault.
 
+VictorLaunch can set the keyboard colors. The keyboard only reads them. It asks when it starts, and again when VictorLaunch says the theme changed. The same colors show on the keyboard and in Settings. If VictorLaunch is not installed, the theme you already chose stays. If this keyboard is not allowed to read the theme, or the theme is not version 1, the keyboard uses its built-in black theme. The keyboard never sends a theme back. This does not use the internet.
+
 ## Troubleshooting
 
 The keyboard is missing from other apps. Open this app. Tap the message at the top of Settings. First enable Victorious Keyboard in Android's keyboard list, then pick it as the input method.

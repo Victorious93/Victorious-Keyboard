@@ -220,3 +220,23 @@ Volume keys stay on `adjustStreamVolume` even when the bridge is on. `media.volu
 ```json
 {"ok":false,"error":"no_session"}
 ```
+
+## Fleet theme
+
+VictorLaunch is the only writer. This keyboard reads the current theme and never inserts, updates, or deletes. The read does not use the network. The app's `INTERNET` permission stays the opt-in pack update check and is not used here. A signature permission is not treated as authorization. Nothing here has been run on a device.
+
+| Piece | Value |
+|---|---|
+| URI | `content://com.victorious.launch.theme/current` |
+| Authority | `com.victorious.launch.theme` |
+| Provider package | `com.victorious.launch` |
+| Certificate | SHA-256 `B9:9A:AF:E2:C1:41:8B:5D:64:AA:0D:4B:AC:61:FC:F7:A7:BA:81:44:35:E0:EF:89:E8:AA:55:BE:56:4E:4A:69` (VictorLaunch debug). No release certificate is published. |
+| Schema | `1`. Any other `schemaVersion` is rejected. |
+| When | Query on start. A `ContentObserver` on that URI. An exported receiver for `com.victorious.launch.action.FLEET_THEME_CHANGED`. The manifest queries the authority and does not name the package. |
+| Broadcast | Explicit to this package. Extras (`schemaVersion`, `mode`, `iconStyle`, `updatedAtMs`) are a wake-up. The receiver queries again and does not paint from the extras. |
+| Apply | `palette.background`, `surface`, `primary`, `secondary`, `onBackground`, `muted`, `danger`, `stale`, and `tile` on the keyboard and in Settings. `iconStyle` is ignored. |
+| Not pinned | `SecurityException`, a package other than `com.victorious.launch`, or a certificate that is not the pin above: the built-in black squared theme. The stored theme preference is not overwritten. |
+| Not installed | The provider is missing: the person's own theme stays. |
+| Colors | `#RRGGBB` or `#AARRGGBB`. A bad hex, or a missing palette color, rejects the row. No color is invented. |
+
+The keyboard checks the provider package and the signing certificate before it trusts a row. The check uses the published pin above. A blank certificate or the placeholder `TBD` does not match. Unknown columns and unknown JSON keys are ignored. The theme is kept in memory only.

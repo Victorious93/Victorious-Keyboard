@@ -205,7 +205,7 @@ class FleetThemeTest : FunSpec({
         material.keyboard.primary shouldBe light.keyboard.primary
     }
 
-    test("the client only queries, the receiver is exported, and versionCode moved to 150") {
+    test("the client only queries, the receiver is exported, and versionCode moved to 151") {
         val sources = File("src/main/kotlin/com/victorious/keyboard/ime/fleettheme")
             .walkTopDown()
             .filter { it.extension == "kt" }
@@ -226,6 +226,6 @@ class FleetThemeTest : FunSpec({
         receiver.value shouldContain FleetThemeContract.ACTION_CHANGED
         manifest shouldContain "android:authorities=\"com.victorious.launch.theme\""
         manifest shouldNotContain "READ_FLEET_THEME"
-        File("../gradle.properties").readText() shouldContain "projectVersionCode=150"
+        File("../gradle.properties").readText() shouldContain "projectVersionCode=151"
     }
 })

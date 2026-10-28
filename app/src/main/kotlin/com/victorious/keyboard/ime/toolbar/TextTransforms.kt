@@ -16,6 +16,8 @@
 
 package com.victorious.keyboard.ime.toolbar
 
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.security.MessageDigest
@@ -170,7 +172,16 @@ object TextTransforms {
         val bytes = ByteArray(cleaned.length / 2) { index ->
             cleaned.substring(index * 2, index * 2 + 2).toInt(16).toByte()
         }
-        return TransformResult.Ok(String(bytes, Charsets.UTF_8))
+        return try {
+            val text = Charsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(java.nio.ByteBuffer.wrap(bytes))
+                .toString()
+            TransformResult.Ok(text)
+        } catch (_: CharacterCodingException) {
+            TransformResult.Failed("bad hex")
+        }
     }
 
     private fun pretty(input: String): TransformResult {

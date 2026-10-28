@@ -85,7 +85,9 @@ object TerminalRowLayout {
      * [base] is today's row. A blank [orderRaw] keeps it. Macros are always added at the end.
      */
     fun arrange(base: List<DevKey>, orderRaw: String, macrosRaw: String): List<DevKey> {
-        val head = if (orderRaw.isBlank()) base else keysFor(orderRaw)
+        val chosen = if (orderRaw.isBlank()) emptyList() else parseIds(orderRaw)
+        // A blank list, or a list that names no real keys, keeps the row the app already builds.
+        val head = if (orderRaw.isBlank() || chosen.isEmpty()) base else keysFor(orderRaw)
         return head + macroKeys(macrosRaw)
     }
 

@@ -104,6 +104,17 @@ class KeyboardPaletteTest : FunSpec({
         KeyboardColorOverlay.appliesTo("victorious_neon_light") shouldBe true
         KeyboardColorOverlay.appliesTo("floris_day") shouldBe false
     }
+
+    test("fleet black is painted onto a theme that has no glow token") {
+        val assets = File("src/main/assets/ime/theme/org.florisboard.themes/stylesheets")
+        val night = SnyggStylesheet.fromJson(assets.resolve("floris_night.json").readText()).getOrThrow()
+        KeyboardColorOverlay.apply(night, "victorious_black", KeyboardPalettes.Black) shouldBe night
+        val forced = KeyboardColorOverlay.apply(night, "victorious_black", KeyboardPalettes.Black, force = true)
+        val defines = forced.rules.getValue(SnyggAnnotationRule.Defines) as SnyggSinglePropertySet
+        hexOf(defines, "--background") shouldBe "#050505"
+        hexOf(defines, "--surface") shouldBe "#161616"
+        hexOf(defines, "--on-surface") shouldBe "#e8e8e8"
+    }
 })
 
 private fun hexOf(set: SnyggSinglePropertySet, name: String): String = hexOf(set.properties.getValue(name))

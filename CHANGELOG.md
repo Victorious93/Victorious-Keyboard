@@ -23,6 +23,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versions are pr
 - Snippet variables. Inserting a snippet expands exact `{date}`, `{time}`, `{clipboard}` and `{cursor}` tokens, in addition to the existing `{{date}}` form. `{cursor}` places the caret. `{date:pattern}`, `{datetime}`, `{selection}` and other braces such as `{ return; }` stay as written. A value taken from the clipboard is not scanned again. No network access.
 
 ### Fixed
+- A fleet theme that falls back to black, or that is still loading the black stylesheet, now paints the black palette on the theme that is already on screen. A stylesheet without a glow token used to keep its old colors.
+- Holding the space bar and dragging now grows a selection that was already there. It no longer starts a new selection from the left edge only. While the clip editor is open, that drag changes the clip, not the app behind it.
+- A terminal-row order that names no real keys keeps the usual row. It no longer hides the row.
+- A terminal macro now spends a one-shot Ctrl or Alt. The next letter is no longer modified by a modifier the macro left armed.
+- Restoring a per-app profile writes a day or night theme that still parses when the other id does not. A theme id that does not parse no longer skips the layout change's later work by leaving the function early.
+- Hex decode of bytes that are not valid UTF-8 now fails. It no longer returns a replacement character as a successful result.
+- If the hub bridge throws before it can answer a remote-envelope request, the reply still names that request and its operation. An older bridge request still gets the older reply shape.
 - Typing `word.word`, a file name, a domain, an email, a URL, or a version such as `1.2.3` no longer inserts a dictionary word after the period. A dotted token was one edit from a real word (`word.` → `words`, `file.t` → `filet`, `com.` → `come`) and the next non-letter committed it. The period is not its own word, so that commit was inserted with no space. Those tokens are not corrected. A period glued to a letter or digit does not auto-space or auto-capitalize; `word. ` still does. A period after an ordinary typo can still correct that word. Not run on a device.
 - Hub bridge: an allowed Droidcommand app was always refused. The service read the caller's process id after Messenger had already posted the message, so it saw itself. It now uses the id Messenger stamped on the message. A missing stamp is refused.
 - Fleet commands: a late reply from a provider could be applied to the next command. Replies are matched to the request id, and a reply with a missing or older id is ignored.

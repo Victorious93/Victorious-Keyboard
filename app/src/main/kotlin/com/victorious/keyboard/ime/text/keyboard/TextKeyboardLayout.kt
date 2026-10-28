@@ -694,8 +694,17 @@ private class TextKeyboardLayoutController(
                 pointer.initialKey = key
             }
             pointer.activeKey = key
-            initSelectionStart = editorInstance.activeContent.selection.start
-            initSelectionEnd = editorInstance.activeContent.selection.end
+            val clip = keyboardManager.clipEditor.value
+            val host = editorInstance.activeContent.selection
+            val anchors = PrecisionCursor.anchors(
+                clipOpen = clip != null,
+                clipStart = clip?.body?.start ?: 0,
+                clipEnd = clip?.body?.end ?: 0,
+                hostStart = host.start,
+                hostEnd = host.end,
+            )
+            initSelectionStart = anchors.first
+            initSelectionEnd = anchors.second
         } else {
             pointer.activeKey = null
         }
@@ -1034,11 +1043,22 @@ private class TextKeyboardLayoutController(
 
     private fun dragPrecisionSelection(pointer: TouchPointer, absUnits: Int) {
         val units = PrecisionCursor.units(absUnits)
+        val session = keyboardManager.clipEditor.value
         val content = editorInstance.activeContent
-        val origin = content.offset.coerceAtLeast(0)
-        val place = PrecisionCursor.select(origin, content.text.length, initSelectionStart, units)
+        val place = if (session != null) {
+            PrecisionCursor.selectFrom(0, session.body.text.length, initSelectionStart, initSelectionEnd, units)
+        } else {
+            PrecisionCursor.selectFrom(
+                content.offset.coerceAtLeast(0),
+                content.text.length,
+                initSelectionStart,
+                initSelectionEnd,
+                units,
+            )
+        }
         val edge = if (units < 0) place.start else place.end
-        val tickCount = PrecisionCursor.ticks(pointer.precisionEdge ?: initSelectionStart, edge)
+        val from = pointer.precisionEdge ?: if (units < 0) initSelectionStart else initSelectionEnd
+        val tickCount = PrecisionCursor.ticks(from, edge)
         pointer.precisionEdge = edge
         if (tickCount > 0) {
             pointer.spaceSelectDragged = true
@@ -1046,7 +1066,7 @@ private class TextKeyboardLayoutController(
                 inputFeedbackController?.gestureMovingSwipe(TextKeyData.SPACE)
             }
         }
-        keyboardManager.applyPrecisionSelection(initSelectionStart, units)
+        keyboardManager.applyPrecisionSelection(initSelectionStart, initSelectionEnd, units)
     }
 
     override fun onGlideAddPoint(point: GlideTypingGesture.Detector.Position) {

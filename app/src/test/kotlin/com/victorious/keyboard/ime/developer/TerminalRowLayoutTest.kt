@@ -53,6 +53,9 @@ class TerminalRowLayoutTest : FunSpec({
             macros = TerminalRowLayout.renderMacros(listOf(TerminalRowLayout.ctrlMacro('c')!!)),
         )
         plan.keys.map { it.label } shouldBe listOf("/", "~", "Ctrl+C")
+        val base = TerminalRowLayout.keysFor("esc,tab")
+        TerminalRowLayout.arrange(base, "no-such, garbage", "") shouldBe base
+        TerminalRowLayout.arrange(base, "slash", "").map { it.label } shouldBe listOf("/")
     }
 
     test("a command macro is text plus Enter, and Ctrl+C is a key event") {
@@ -61,7 +64,7 @@ class TerminalRowLayoutTest : FunSpec({
         val stored = TerminalRowLayout.addMacro("", command)
         TerminalRowLayout.parseMacros(stored).single().label shouldBe "ls -l"
         val resolved = DeveloperKeyResolver.resolve(DevKeyAction.Play(command.steps), Modifiers())
-        resolved.consumesModifiers shouldBe false
+        resolved.consumesModifiers shouldBe true
         resolved.steps shouldBe listOf(
             DevStep.Text("ls -l"),
             DevStep.Key(KeyEvent.KEYCODE_ENTER, 0),

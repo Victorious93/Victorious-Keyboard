@@ -153,6 +153,18 @@ object ProfileHoldMachine {
     }
 }
 
+/**
+ * Which stored theme ids can be written back. A bad id is skipped on its own, so one broken
+ * night theme does not keep the day theme from being restored.
+ */
+object ProfileThemePlan {
+    fun kept(raw: String?, acceptable: (String) -> Boolean): String? {
+        val text = raw?.trim().orEmpty()
+        if (text.isEmpty() || !acceptable(text)) return null
+        return text
+    }
+}
+
 /** The overlay the suggestion and terminal-row code read. Set from the editor-focus listener. */
 object AppProfileRuntime {
     private val mutable = MutableStateFlow(ProfileEffect.None)

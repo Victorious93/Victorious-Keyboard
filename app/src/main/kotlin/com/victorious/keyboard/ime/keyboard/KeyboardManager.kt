@@ -129,6 +129,7 @@ import com.victorious.keyboard.ime.profile.AppProfiles
 import com.victorious.keyboard.ime.profile.ProfileHold
 import com.victorious.keyboard.ime.profile.ProfileHoldMachine
 import com.victorious.keyboard.ime.profile.ProfileShift
+import com.victorious.keyboard.ime.profile.ProfileThemePlan
 import com.victorious.keyboard.ime.theme.extCoreTheme
 import com.victorious.keyboard.ime.developer.DevStep
 import com.victorious.keyboard.ime.developer.DeveloperKeyResolver
@@ -1990,12 +1991,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     private fun hostSelection(): String = editorInstance.activeContent.selectedText
 
-    /** Selection from a space-bar long-press drag. [anchor] is an absolute caret. [units] is signed. */
-    fun applyPrecisionSelection(anchor: Int, units: Int) {
-        if (editorInstance.activeInfo.isRawInputEditor) return
+    /**
+     * Selection from a space-bar long-press drag. [anchorStart] and [anchorEnd] are the touch-down
+     * selection. [units] is signed and absolute from that touch. An open clip editor is the only target.
+     */
+    fun applyPrecisionSelection(anchorStart: Int, anchorEnd: Int, units: Int) {
         val session = clipEditor.value
-        if (session != null && anchor in 0..session.body.text.length) {
-            val place = PrecisionCursor.select(0, session.body.text.length, anchor, units)
+        if (session != null) {
+            val place = PrecisionCursor.selectFrom(0, session.body.text.length, anchorStart, anchorEnd, units)
             clipEditor.value = session.copy(
                 body = session.body.copy(start = place.start, end = place.end),
                 focus = EditorField.BODY,
@@ -2004,9 +2007,15 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             selectionBar.value = !place.collapsed
             return
         }
+        if (editorInstance.activeInfo.isRawInputEditor) return
         val content = editorInstance.activeContent
-        val origin = content.offset.coerceAtLeast(0)
-        val place = PrecisionCursor.select(origin, content.text.length, anchor, units)
+        val place = PrecisionCursor.selectFrom(
+            content.offset.coerceAtLeast(0),
+            content.text.length,
+            anchorStart,
+            anchorEnd,
+            units,
+        )
         editorInstance.setSelection(place.start, place.end)
         selectionBar.value = !place.collapsed
     }
@@ -2276,27 +2285,27 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             ProfileShift.Stay -> Unit
             is ProfileShift.Apply -> {
                 shift.layout?.let { subtypeManager.switchToSubtypeById(it) }
-                val theme = shift.theme
-                if (!theme.isNullOrBlank()) {
-                    val name = themeName(theme) ?: return
-                    scope.launch {
-                        prefs.theme.dayThemeId.set(name)
-                        prefs.theme.nightThemeId.set(name)
+                val theme = ProfileThemePlan.kept(shift.theme) { themeName(it) != null }
+                if (theme != null) {
+                    val name = themeName(theme)
+                    if (name != null) {
+                        scope.launch {
+                            prefs.theme.dayThemeId.set(name)
+                            prefs.theme.nightThemeId.set(name)
+                        }
                     }
                 }
             }
             is ProfileShift.Restore -> {
                 shift.layout?.let { subtypeManager.switchToSubtypeById(it) }
-                val day = shift.day
-                val night = shift.night
-                if (day != null && night != null) {
-                    val dayName = themeName(day)
-                    val nightName = themeName(night)
-                    if (dayName != null && nightName != null) {
-                        scope.launch {
-                            prefs.theme.dayThemeId.set(dayName)
-                            prefs.theme.nightThemeId.set(nightName)
-                        }
+                val day = ProfileThemePlan.kept(shift.day) { themeName(it) != null }
+                val night = ProfileThemePlan.kept(shift.night) { themeName(it) != null }
+                val dayName = day?.let { themeName(it) }
+                val nightName = night?.let { themeName(it) }
+                if (dayName != null || nightName != null) {
+                    scope.launch {
+                        if (dayName != null) prefs.theme.dayThemeId.set(dayName)
+                        if (nightName != null) prefs.theme.nightThemeId.set(nightName)
                     }
                 }
             }

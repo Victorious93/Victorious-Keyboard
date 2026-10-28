@@ -63,6 +63,7 @@ fun FlorisImeTheme(content: @Composable () -> Unit) {
             stylesheet = activeThemeInfo.stylesheet,
             themeId = themeId,
             palette = fleetState.keyboardPalette() ?: KeyboardPaletteCodec.decode(keyboardColorsRaw),
+            force = fleetState.forcesBlackSquared(),
         )
     }
 

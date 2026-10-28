@@ -50,4 +50,16 @@ class PrecisionCursorTest : FunSpec({
         PrecisionCursor.jump(text, 0, forward = true) shouldBe 5
         PrecisionCursor.jump(text, 5, forward = true) shouldBe 10
     }
+
+    test("a drag grows the selection that was already there") {
+        PrecisionCursor.selectFrom(0, 20, 6, 11, 1) shouldBe CursorPlace(6, 12)
+        PrecisionCursor.selectFrom(0, 20, 6, 11, -2) shouldBe CursorPlace(4, 11)
+        PrecisionCursor.selectFrom(0, 20, 6, 11, 0) shouldBe CursorPlace(6, 11)
+        PrecisionCursor.selectFrom(0, 20, 10, 10, -4) shouldBe CursorPlace(6, 10)
+    }
+
+    test("an open clip editor supplies the touch-down caret") {
+        PrecisionCursor.anchors(clipOpen = true, clipStart = 5, clipEnd = 5, hostStart = 500, hostEnd = 500) shouldBe (5 to 5)
+        PrecisionCursor.anchors(clipOpen = false, clipStart = 5, clipEnd = 5, hostStart = 10, hostEnd = 12) shouldBe (10 to 12)
+    }
 })

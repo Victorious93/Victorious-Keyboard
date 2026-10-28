@@ -82,7 +82,8 @@ object DeveloperKeyResolver {
                 }
             }
         }
-        return DevResolution(steps, consumesModifiers = false)
+        // A macro spends a one-shot Ctrl or Alt. Leaving it armed would modify the next letter.
+        return DevResolution(steps, consumesModifiers = steps.isNotEmpty())
     }
 
     private fun resolveInsert(action: DevKeyAction.Insert, mods: Modifiers): DevResolution {

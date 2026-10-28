@@ -173,6 +173,16 @@ object RemoteEnvelope {
         }
     }
 
+    /**
+     * Reply used when the bridge throws before it can answer. The op and request id are kept
+     * so the caller can match the failure. The body of [raw] is not included.
+     */
+    fun failed(raw: String?): String {
+        val obj = objectOrNull(raw)
+        val requestId = obj?.string("requestId")?.take(64).orEmpty()
+        return reply(peekOp(raw), requestId, false, ERR_INTERNAL)
+    }
+
     fun handle(
         raw: String?,
         authorized: Boolean,

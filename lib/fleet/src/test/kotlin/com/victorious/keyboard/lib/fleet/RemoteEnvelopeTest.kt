@@ -449,6 +449,16 @@ class RemoteEnvelopeTest : FunSpec({
         RemoteEnvelope.peekOp("""{"protocol_major":1,"op":"keyboard.status"}""") shouldBe ""
         RemoteEnvelope.peekOp("""{"op":"capabilities.get"}""") shouldBe "capabilities.get"
     }
+
+    test("a crash before the answer still returns the request id") {
+        val raw = """{"op":"capabilities.get","requestId":"req-9","nonce":"${"ab".repeat(16)}"}"""
+        val body = Json.parseToJsonElement(RemoteEnvelope.failed(raw)) as JsonObject
+        body.str("op") shouldBe "capabilities.get"
+        body.str("requestId") shouldBe "req-9"
+        body.bool("ok") shouldBe false
+        body.str("error") shouldBe "internal"
+        body.containsKey("nonce") shouldBe false
+    }
 })
 
 private const val NONCE = "00112233445566778899aabbccddeeff"

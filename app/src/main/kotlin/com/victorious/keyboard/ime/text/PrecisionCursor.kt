@@ -69,13 +69,31 @@ object PrecisionCursor {
      * Selection from a fixed [anchor] inside a window of [length] characters that starts at
      * [origin]. [units] is the signed distance from the anchor.
      */
-    fun select(origin: Int, length: Int, anchor: Int, units: Int): CursorPlace {
+    fun select(origin: Int, length: Int, anchor: Int, units: Int): CursorPlace =
+        selectFrom(origin, length, anchor, anchor, units)
+
+    /**
+     * Grow an existing selection. [units] is the signed distance from the touch-down caret.
+     * A positive drag moves the right edge. A negative drag moves the left edge. A collapsed
+     * caret is a selection of length zero, so this matches [select].
+     */
+    fun selectFrom(origin: Int, length: Int, selectionStart: Int, selectionEnd: Int, units: Int): CursorPlace {
         val windowStart = origin.coerceAtLeast(0)
         val windowEnd = windowStart + length.coerceAtLeast(0)
-        val from = anchor.coerceIn(windowStart, windowEnd)
-        val to = (from.toLong() + units).coerceIn(windowStart.toLong(), windowEnd.toLong()).toInt()
-        return CursorPlace(minOf(from, to), maxOf(from, to))
+        val left = minOf(selectionStart, selectionEnd).coerceIn(windowStart, windowEnd)
+        val right = maxOf(selectionStart, selectionEnd).coerceIn(windowStart, windowEnd)
+        val moved = if (units >= 0) {
+            (right.toLong() + units).coerceIn(windowStart.toLong(), windowEnd.toLong()).toInt()
+        } else {
+            (left.toLong() + units).coerceIn(windowStart.toLong(), windowEnd.toLong()).toInt()
+        }
+        val fixed = if (units >= 0) left else right
+        return CursorPlace(minOf(fixed, moved), maxOf(fixed, moved))
     }
+
+    /** The caret pair to remember at touch-down. An open clip editor wins over the host field. */
+    fun anchors(clipOpen: Boolean, clipStart: Int, clipEnd: Int, hostStart: Int, hostEnd: Int): Pair<Int, Int> =
+        if (clipOpen) clipStart to clipEnd else hostStart to hostEnd
 
     /** Haptic ticks for one drag step. One tick per character the active edge actually moves. */
     fun ticks(previous: Int, next: Int): Int = abs(next - previous)

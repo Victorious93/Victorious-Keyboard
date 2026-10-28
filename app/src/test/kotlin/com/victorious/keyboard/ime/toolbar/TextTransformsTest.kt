@@ -42,6 +42,8 @@ class TextTransformsTest : FunSpec({
         TextTransforms.apply(TextTransform.HEX_ENCODE, "A").text() shouldBe "41"
         TextTransforms.apply(TextTransform.HEX_DECODE, "41").text() shouldBe "A"
         TextTransforms.apply(TextTransform.HEX_DECODE, "4").shouldBeInstanceOf<TransformResult.Failed>()
+        TextTransforms.apply(TextTransform.HEX_DECODE, "4869").text() shouldBe "Hi"
+        TextTransforms.apply(TextTransform.HEX_DECODE, "fffe").shouldBeInstanceOf<TransformResult.Failed>()
         TextTransforms.apply(TextTransform.URL_ENCODE, "a b").text() shouldContain "a"
         TextTransforms.apply(TextTransform.URL_ENCODE, "a b&c=\u00fc").text() shouldBe "a+b%26c%3D%C3%BC"
         TextTransforms.apply(TextTransform.URL_DECODE, "a+b%26c%3D%C3%BC").text() shouldBe "a b&c=\u00fc"

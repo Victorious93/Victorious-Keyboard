@@ -72,8 +72,12 @@ class KeyboardBridgeService : Service() {
                 } else {
                     answer(request, callerUid)
                 }
-            } catch (e: Exception) {
-                BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+            } catch (_: Exception) {
+                if (RemoteEnvelope.peekOp(request) in RemoteEnvelope.OPS) {
+                    RemoteEnvelope.failed(request)
+                } else {
+                    BridgeProtocol.response("", authorized = false, controlEnabled = false, imeRunning = false)
+                }
             }
             val outgoing = Message.obtain(null, BridgeProtocol.WHAT_RESPONSE)
             outgoing.data = Bundle().apply { putString(BridgeProtocol.KEY_RESPONSE, response) }

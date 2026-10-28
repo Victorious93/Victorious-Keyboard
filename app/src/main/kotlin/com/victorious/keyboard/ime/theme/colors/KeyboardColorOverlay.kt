@@ -36,12 +36,19 @@ object KeyboardColorOverlay {
 
     fun appliesTo(themeId: String): Boolean = themeId in neonThemeIds
 
-    fun apply(stylesheet: SnyggStylesheet, themeId: String, palette: KeyboardPalette): SnyggStylesheet {
-        if (!appliesTo(themeId)) return stylesheet
+    fun apply(
+        stylesheet: SnyggStylesheet,
+        themeId: String,
+        palette: KeyboardPalette,
+        force: Boolean = false,
+    ): SnyggStylesheet {
+        if (!force && !appliesTo(themeId)) return stylesheet
         val editor = stylesheet.edit()
         val defines = editor.rules[SnyggAnnotationRule.Defines] as? SnyggSinglePropertySetEditor
             ?: return stylesheet
-        if (!defines.properties.containsKey("--glow")) return stylesheet
+        // Fleet colors are painted onto whatever stylesheet is loaded. A theme without --glow
+        // would otherwise keep its old colors while the black squared stylesheet is still loading.
+        if (!force && !defines.properties.containsKey("--glow")) return stylesheet
         val tokens = KeyboardColorTokens.from(palette)
         for ((name, color) in tokens.defines) {
             defines.properties[name] = snygg(color)

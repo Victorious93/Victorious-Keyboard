@@ -75,4 +75,12 @@ class AppProfilesTest : FunSpec({
         again.active shouldBe false
         stay shouldBe ProfileShift.Stay
     }
+
+    test("one theme id that will not parse does not drop the other") {
+        ProfileThemePlan.kept("com.victorious.keyboard.themes:victorious_black") { it.split(':').size == 2 } shouldBe
+            "com.victorious.keyboard.themes:victorious_black"
+        ProfileThemePlan.kept("not:a:valid:theme") { it.split(':').size == 2 } shouldBe null
+        ProfileThemePlan.kept("   ") { true } shouldBe null
+        ProfileThemePlan.kept(null) { true } shouldBe null
+    }
 })

@@ -22,7 +22,7 @@ How add-ons for Victorious Keyboard are described, published and checked. This p
 
 | Type (`type`) | What it is | File | Format | Import today |
 |---|---|---|---|---|
-| `dictionary-pack` | A word list for the internal user dictionary | `.zip` | [`DICTIONARY_PACKS.md`](../DICTIONARY_PACKS.md): `pack.json` + `words.txt`, flat zip, at most 1 MiB | Settings → Typing → Dictionary → Dictionary packs → open a pack file |
+| `dictionary-pack` | A word list for the internal user dictionary | `.zip` | [`DICTIONARY_PACKS.md`](../DICTIONARY_PACKS.md): `pack.json` + `words.txt`, flat zip, at most 1 MiB | Settings → Typing → Dictionary → Dictionary packs → open a pack file. The file is kept in the list (up to 20, never under a bundled id) until you delete it; see "Importing your own pack" there |
 | `theme`, `layout`, `language-pack`, `extension` | An extension archive | `.flex` | A zip with `extension.json` at its root. Its `meta` block is `ExtensionMeta` (`id`, `version`, `title`, `description`, `maintainers`, `license`, optional `homepage`, `issueTracker`, `keywords`, `aliases`) and its `items` are the themes, layouts or languages. The built-in ones under `app/src/main/assets/ime/` are the working examples | The Import button on the extension lists (Settings → Theme / Keyboard / Language pack extensions) |
 | `command-provider` | An installed app that offers fleet commands | none | A service that answers the messages in [`docs/FLEET.md`](FLEET.md) | Install the app, then approve its certificate on the Fleet link screen |
 

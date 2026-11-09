@@ -349,6 +349,10 @@ This is optional. The app does not include a model, and it does not download one
 8. AI suggestions in the strip start off. They also need Learn from my typing. They stay off for passwords, Incognito, boxes that disallow personalised learning, and a Vault paste.
 9. With no model, or on a phone where the on-device engine is missing, the keyboard still types. The AI action explains how to import a model.
 
+### Your own dictionary packs
+
+Settings → Typing → Dictionary → Dictionary packs lists the five ready-made word lists and any pack file you imported. *Open a pack file* adds a dictionary pack zip from your phone to the list. The keyboard checks the file strictly first and refuses anything that is not a valid pack. A valid pack stays in the list until you delete it, so you can add or remove its words later. It cannot use the same id as one of the ready-made packs; change the id in its `pack.json` if it does. After you pick a file, the keyboard shows the start of its SHA-256 so you can compare it with the one on the project's page when you downloaded it. *Add words* never changes a word you already have, and *Remove* takes out only words that are still exactly as the pack added them. *Delete pack file* removes the saved copy from the list but leaves the words that are already in your dictionary.
+
 ### Get more
 
 The lists of theme extensions, keyboard extensions, language pack extensions, dictionary packs and fleet command apps each have a Get more button. It opens this project's page for that kind of add-on in your browser, so it uses your browser, not the keyboard. The keyboard does not download, install or check anything for you. Nothing is published on those pages yet; to use something you already have, import it from a file on the same screen. A theme you create yourself starts with its homepage and issue tracker pointing at the project's pages, and you can change them.

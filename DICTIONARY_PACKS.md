@@ -58,6 +58,26 @@ rejected; invalid lines are counted and never repaired; nothing is extracted to 
   would need a migration), so a word you added yourself with exactly the pack's values would also go; the dialog says so.
 * "Open a pack file" lets you load your own pack zip from the device; it goes through the same strict reader.
 
+## Importing your own pack
+
+* Settings → Typing → Dictionary → Dictionary packs → *Open a pack file*, then choose the zip. A valid pack is **kept**
+  (the original zip, byte for byte) in `noBackupFilesDir/dictionary-packs/<id>.zip` and listed after the bundled ones, so
+  it is still there when you come back and can be removed later. Android auto-backup never carries that folder
+  (`CLAUDE.md` invariant 7). Nothing is extracted to disk and nothing is run.
+* The file is read by the same strict reader as the bundled packs (size, entry, name and content limits) **before**
+  anything is written. A bad file is refused with nothing stored.
+* **A pack cannot take the id of a bundled pack** (`ai-terms`, `kali-tools`, `nethunter`, `slash-commands`, `termux`).
+  Before this check an imported pack with a bundled id replaced that bundled entry in the list. Change the `id` in your
+  `pack.json` and import again.
+* Importing a pack with the same id again replaces your stored copy. At most **20** imported packs are kept; delete one to
+  make room.
+* After a pick the app shows the first 16 hex digits of the file's SHA-256. The project's pack pages and `packs/index.json`
+  (`docs/PACKS.md`) list the full hash; compare them if you downloaded the file from there. The app does not make the
+  comparison for you, because the catalog is only read when you ask for a check and a pack you built yourself has no entry.
+* *Delete pack file* (in the pack's dialog, imported packs only) deletes the stored copy. **The words it added stay**
+  in your dictionary unless you remove them first with *Remove*, because removal needs the pack's contents.
+* Adding words, removing them and the rules for both are exactly as for the bundled packs (above).
+
 ## Rebuilding the zips
 
 Sources are in `dictionary-packs/<id>/` (`words.list`, `pack.json`, `README.txt`). Edit the plain word list, then run

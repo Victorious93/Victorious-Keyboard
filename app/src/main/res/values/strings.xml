@@ -636,7 +636,7 @@
     <string name="settings__dictionary_packs__note_title" comment="Heading of the explanation at the top of the screen">What packs do</string>
     <string name="settings__dictionary_packs__note" comment="Honest explanation of what installing a pack does today">Packs add words to your internal user dictionary for all languages, which stops the system spell checker from flagging them in apps that use it. Word prediction reads the bundled pack lists directly and does not depend on installing a pack. Lists were written from memory and not checked against current releases.</string>
     <string name="settings__dictionary_packs__import" comment="Preference title">Open a pack file</string>
-    <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device</string>
+    <string name="settings__dictionary_packs__import_summary" comment="Preference summary">Choose a dictionary pack zip from your device. It stays in this list until you delete it</string>
     <string name="settings__dictionary_packs__install" comment="Dialog button">Add words</string>
     <string name="settings__dictionary_packs__remove" comment="Dialog button">Remove</string>
     <string name="settings__dictionary_packs__install_hint" comment="Dialog text">Words you already have are left exactly as they are. Nothing is overwritten.</string>
@@ -646,6 +646,12 @@
     <string name="settings__dictionary_packs__unavailable" comment="Toast">Turn on the internal user dictionary first</string>
     <string name="settings__dictionary_packs__failed" comment="Toast">Could not change the dictionary</string>
     <string name="settings__dictionary_packs__invalid_file" comment="Toast">This is not a valid dictionary pack</string>
+    <string name="settings__dictionary_packs__imported" comment="Toast after a pack file was added to the list, followed by the start of its SHA-256">Pack added to the list. SHA-256 starts with</string>
+    <string name="settings__dictionary_packs__reserved_id" comment="Toast">This pack uses the id of a built-in pack. Change the id in its pack.json and try again</string>
+    <string name="settings__dictionary_packs__limit_reached" comment="Toast">You already have the most imported packs. Delete one first</string>
+    <string name="settings__dictionary_packs__delete_file" comment="Dialog button">Delete pack file</string>
+    <string name="settings__dictionary_packs__delete_file_confirm" comment="Dialog text">Deletes the saved copy of this pack from the list. Words it already added stay in your dictionary unless you remove them first.</string>
+    <string name="settings__dictionary_packs__file_deleted" comment="Toast">Pack file deleted</string>
     <string name="settings__dictionary__title" comment="Title of the User dictionaries screen">User dictionaries</string>
     <string name="pref__dictionary__enable_system_user_dictionary__label" comment="Preference title">Enable system user dictionary</string>
     <string name="pref__dictionary__enable_system_user_dictionary__summary" comment="Preference summary">Suggest words stored in the system user dictionary</string>

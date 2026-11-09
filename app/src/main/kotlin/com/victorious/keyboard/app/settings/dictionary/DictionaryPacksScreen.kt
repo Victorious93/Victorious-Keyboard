@@ -34,8 +34,9 @@ import com.victorious.keyboard.R
 import com.victorious.keyboard.app.ProjectUrls
 import com.victorious.keyboard.ime.dictionary.packs.DictionaryPack
 import com.victorious.keyboard.ime.dictionary.packs.DictionaryPackInstaller
+import com.victorious.keyboard.ime.dictionary.packs.ImportRefusal
+import com.victorious.keyboard.ime.dictionary.packs.ImportResult
 import com.victorious.keyboard.ime.dictionary.packs.InstallResult
-import com.victorious.keyboard.ime.dictionary.packs.PackLoad
 import com.victorious.keyboard.lib.compose.FlorisScreen
 import com.victorious.keyboard.lib.util.launchUrl
 import dev.patrickgold.jetpref.datastore.ui.Preference
@@ -55,6 +56,9 @@ fun DictionaryPacksScreen() = FlorisScreen {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var packs by remember { mutableStateOf<List<DictionaryPack>>(emptyList()) }
+    var bundledIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var importedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var confirmDeleteFile by remember { mutableStateOf<DictionaryPack?>(null) }
     val present = remember { mutableStateMapOf<String, Int>() }
     var selected by remember { mutableStateOf<DictionaryPack?>(null) }
     var confirmRemove by remember { mutableStateOf<DictionaryPack?>(null) }
@@ -64,19 +68,36 @@ fun DictionaryPacksScreen() = FlorisScreen {
     val invalidText = stringRes(R.string.settings__dictionary_packs__invalid_file)
     val addedText = stringRes(R.string.settings__dictionary_packs__added)
     val removedText = stringRes(R.string.settings__dictionary_packs__removed)
+    val importedText = stringRes(R.string.settings__dictionary_packs__imported)
+    val reservedText = stringRes(R.string.settings__dictionary_packs__reserved_id)
+    val limitText = stringRes(R.string.settings__dictionary_packs__limit_reached)
+    val fileDeletedText = stringRes(R.string.settings__dictionary_packs__file_deleted)
 
-    suspend fun refresh(list: List<DictionaryPack>) {
-        packs = list
-        for (p in list) DictionaryPackInstaller.presentCount(p)?.let { present[p.manifest.id] = it }
+    // Bundled packs first, then the ones the user imported from a file. An imported pack can never take a bundled id.
+    suspend fun reload() {
+        val bundled = DictionaryPackInstaller.bundled(context)
+        val imported = DictionaryPackInstaller.imported(context)
+        bundledIds = bundled.map { it.manifest.id }.toSet()
+        importedIds = imported.map { it.manifest.id }.toSet()
+        packs = bundled + imported
+        for (p in packs) DictionaryPackInstaller.presentCount(p)?.let { present[p.manifest.id] = it }
     }
-    LaunchedEffect(Unit) { refresh(DictionaryPackInstaller.bundled(context)) }
+    LaunchedEffect(Unit) { reload() }
 
     val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            when (val r = DictionaryPackInstaller.fromUri(context, uri)) {
-                is PackLoad.Loaded -> refresh(packs.filterNot { it.manifest.id == r.pack.manifest.id } + r.pack)
-                is PackLoad.Rejected -> context.showLongToast(invalidText)
+            when (val r = DictionaryPackInstaller.importFromUri(context, uri, bundledIds)) {
+                is ImportResult.Saved -> {
+                    reload()
+                    // The first 16 hex digits of the file's SHA-256, to compare with the one on the project's pack page.
+                    context.showLongToast(importedText + " " + r.sha256.take(16))
+                }
+                is ImportResult.Invalid -> context.showLongToast(invalidText)
+                is ImportResult.Refused -> context.showLongToast(
+                    if (r.reason == ImportRefusal.RESERVED_BUNDLED_ID) reservedText else limitText,
+                )
+                ImportResult.Failed -> context.showLongToast(failedText)
             }
         }
     }
@@ -132,6 +153,11 @@ fun DictionaryPacksScreen() = FlorisScreen {
             dismissButton = {
                 Row2(
                     onRemove = { selected = null; confirmRemove = p },
+                    onDeleteFile = if (p.manifest.id in importedIds) {
+                        { selected = null; confirmDeleteFile = p }
+                    } else {
+                        null
+                    },
                     onCancel = { selected = null },
                 )
             },
@@ -155,12 +181,35 @@ fun DictionaryPacksScreen() = FlorisScreen {
             dismissButton = { TextButton(onClick = { confirmRemove = null }) { Text(stringRes(R.string.action__cancel)) } },
         )
     }
+
+    confirmDeleteFile?.let { p ->
+        AlertDialog(
+            onDismissRequest = { confirmDeleteFile = null },
+            title = { Text(p.manifest.title) },
+            text = { Text(stringRes(R.string.settings__dictionary_packs__delete_file_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDeleteFile = null
+                    scope.launch {
+                        if (DictionaryPackInstaller.deleteImported(context, p.manifest.id)) {
+                            context.showLongToast(fileDeletedText)
+                        }
+                        reload()
+                    }
+                }) { Text(stringRes(R.string.settings__dictionary_packs__delete_file)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDeleteFile = null }) { Text(stringRes(R.string.action__cancel)) } },
+        )
+    }
 }
 
 @Composable
-private fun Row2(onRemove: () -> Unit, onCancel: () -> Unit) {
+private fun Row2(onRemove: () -> Unit, onDeleteFile: (() -> Unit)?, onCancel: () -> Unit) {
     androidx.compose.foundation.layout.Row {
         TextButton(onClick = onRemove) { Text(stringRes(R.string.settings__dictionary_packs__remove)) }
+        if (onDeleteFile != null) {
+            TextButton(onClick = onDeleteFile) { Text(stringRes(R.string.settings__dictionary_packs__delete_file)) }
+        }
         TextButton(onClick = onCancel) { Text(stringRes(R.string.action__cancel)) }
     }
 }

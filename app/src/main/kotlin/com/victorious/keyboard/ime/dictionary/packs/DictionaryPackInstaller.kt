@@ -26,11 +26,6 @@ import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-sealed interface PackLoad {
-    data class Loaded(val pack: DictionaryPack) : PackLoad
-    data class Rejected(val error: PackError) : PackLoad
-}
-
 sealed interface InstallResult {
     data class Done(val changed: Int, val unchanged: Int) : InstallResult
     /** The internal user dictionary is switched off or could not be opened. */
@@ -58,17 +53,30 @@ object DictionaryPackInstaller {
         }
     }
 
-    suspend fun fromUri(context: Context, uri: Uri): PackLoad = withContext(Dispatchers.IO) {
-        try {
-            val bytes = context.contentResolver.openInputStream(uri)?.use { readBounded(it) }
-                ?: return@withContext PackLoad.Rejected(PackError.TOO_LARGE)
-            when (val r = DictionaryPackReader.read(bytes)) {
-                is PackReadResult.Ok -> PackLoad.Loaded(r.pack)
-                is PackReadResult.Failed -> PackLoad.Rejected(r.error)
+    /** Packs the user imported from a file, kept under `noBackupFilesDir` (never in Android auto-backup). */
+    fun importedStore(context: Context): ImportedPackStore =
+        ImportedPackStore(java.io.File(context.applicationContext.noBackupFilesDir, "dictionary-packs"))
+
+    /** The imported packs, sorted by id. Off the main thread. */
+    suspend fun imported(context: Context): List<DictionaryPack> = withContext(Dispatchers.IO) {
+        try { importedStore(context).list() } catch (_: Exception) { emptyList() }
+    }
+
+    /** Reads the picked file (at most [PackLimits.MAX_ZIP_BYTES]) and stores it as an imported pack if it is valid. */
+    suspend fun importFromUri(context: Context, uri: Uri, bundledIds: Set<String>): ImportResult =
+        withContext(Dispatchers.IO) {
+            try {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { readBounded(it) }
+                    ?: return@withContext ImportResult.Invalid(PackError.TOO_LARGE)
+                importedStore(context).save(bytes, bundledIds)
+            } catch (_: Exception) {
+                ImportResult.Failed
             }
-        } catch (_: Exception) {
-            PackLoad.Rejected(PackError.NOT_A_ZIP)
         }
+
+    /** Deletes an imported pack's file. The words it added stay unless the user removes them first. */
+    suspend fun deleteImported(context: Context, id: String): Boolean = withContext(Dispatchers.IO) {
+        try { importedStore(context).delete(id) } catch (_: Exception) { false }
     }
 
     /** Reads at most [PackLimits.MAX_ZIP_BYTES] bytes; returns null if the stream is longer. */

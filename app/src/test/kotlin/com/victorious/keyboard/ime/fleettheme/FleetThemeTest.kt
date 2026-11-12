@@ -226,6 +226,8 @@ class FleetThemeTest : FunSpec({
         receiver.value shouldContain FleetThemeContract.ACTION_CHANGED
         manifest shouldContain "android:authorities=\"com.victorious.launch.theme\""
         manifest shouldNotContain "READ_FLEET_THEME"
-        File("../gradle.properties").readText() shouldContain "projectVersionCode=151"
+        // Version codes only increase (CLAUDE.md invariant 8); 151 is when the fleet theme client shipped.
+        val code = Regex("projectVersionCode=(\\d+)").find(File("../gradle.properties").readText())!!.groupValues[1].toInt()
+        (code >= 151) shouldBe true
     }
 })

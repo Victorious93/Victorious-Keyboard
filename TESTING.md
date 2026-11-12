@@ -1,13 +1,22 @@
 # Testing
 
-## USB keyboard and mouse — 2026-11-11
+## USB keyboard and mouse and keyboard-rendering fixes — 2026-11-12
 
-`python3 -m unittest discover -s tools/tests -v`: **10 tests passed** against a temporary ConfigFS/UDC model using the production helper. Tests include HID descriptor/report lengths and restoration on EOF, TERM, malformed input, host disconnect and write timeout. This does not validate a real kernel or Android USB HAL.
+Run on this branch (JDK 21, Gradle 9.2.0, SDK 36; Maven Central 429 worked around with the documented mirror init script):
 
-A standalone smoke run against the production core completed **20 checks**, including real subprocess handshakes, canceled startup and restoration errors.
+- `python3 -m unittest discover -s tools/tests -v`: **11 passed** (production shell helper against a temporary ConfigFS/UDC model; includes a test that captures the exact bytes written to the HID node, and rollback on EOF, TERM, bad input, host disconnect and write timeout).
+- `./gradlew --no-daemon --no-parallel --max-workers=2 testDebugUnitTest :lib:kotlin:test lintDebug`: **BUILD SUCCESSFUL**. `:app` 881 tests, `:lib:kotlin` 111, `:lib:fleet` 65, `:lib:snygg` 109, 0 failures. Lint passed (an earlier run had 36 `MissingTranslation` errors from the new strings file; fixed).
+- New tests: `SingleInstanceHostTest` (one keyboard root however often the system asks), `ThemeSettlementTest` (no fallback theme while the theme list is unread), `UsbHidKeyboardTest` additions (shortcuts, modifier taps, whole-draft rejection, usage range), `UsbKeyboardControllerTest` addition (nothing accepted before a session is active).
+- `FleetThemeTest` pinned `projectVersionCode=151` exactly; it now requires at least 151.
 
-The four USB core Kotlin files compile with the Gradle 9.2.0 distribution's Kotlin 2.2.20 compiler and bundled coroutines. The Android project uses Kotlin 2.3.0. The baseline and feature Gradle suite attempts stopped during wrapper download (`java.net.SocketException: Network is unreachable`); no Gradle test result was produced locally. Gradle itself was then downloaded with curl and its SHA-256 matched the wrapper pin. New project tests: `UsbHidKeyboardTest`, `UsbHidMouseTest`, `RootUsbTransportTest`, `UsbKeyboardControllerTest`. Launching the downloaded Gradle distribution also did not complete configuration and was canceled; no Android APK or full suite result was produced. GitHub rejected branch creation with HTTP 403 (Resource not accessible by integration), and the local Git CLI has no push credential, so remote CI could not be started. Android build, full JVM suite and lint remain unverified. Device, USB link and UI runtime validation: **not run**.
+**Not run:** `assembleDebug` (the llama.cpp source download from github.com is blocked in this sandbox, so no APK was built here), any emulator or device (no KVM), and any physical USB test. The keyboard stacking and gray-theme causes were found by reading the code and are not reproduced or confirmed on a device. USB gadget operation is unverified on hardware.
 
+Physical-device checklist: `docs/USB_KEYBOARD_MOUSE.md` (USB) and the list below (keyboard).
+
+- Open and dismiss the keyboard 30 times in one app; switch fields and apps; lock and unlock; rotate; toggle dark mode; confirm exactly one keyboard, never gray.
+- Cold start: force-stop the app, tap a field, confirm the first frame is the Victorious theme.
+- Standard, Developer and Termux modes; clipboard, emoji and tools panels; return from the USB screen.
+- Debug build (`...debug`) and release build installed together: confirm which one is selected in the system keyboard picker.
 
 ## CI (GitHub Actions)
 

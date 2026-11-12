@@ -78,6 +78,7 @@ import com.victorious.keyboard.app.settings.localization.LocalizationScreen
 import com.victorious.keyboard.app.settings.localization.SelectLocaleScreen
 import com.victorious.keyboard.app.settings.localization.SubtypeEditorScreen
 import com.victorious.keyboard.app.settings.manual.ManualScreen
+import com.victorious.keyboard.app.settings.usb.UsbKeyboardScreen
 import com.victorious.keyboard.app.settings.media.MediaScreen
 import com.victorious.keyboard.app.settings.smartbar.SmartbarScreen
 import com.victorious.keyboard.app.settings.smartbar.ToolbarSettingsScreen
@@ -180,6 +181,10 @@ object Routes {
         @Serializable
         @Deeplink("settings/local-ai")
         object LocalAi
+
+        @Serializable
+        @Deeplink("settings/usb-keyboard")
+        object UsbKeyboard
 
         @Serializable
         @Deeplink("settings/dictionary")
@@ -413,6 +418,7 @@ object Routes {
             composableWithDeepLink(Settings.Developer::class) { DeveloperScreen() }
             composableWithDeepLink(Settings.AdvancedDeveloper::class) { AdvancedDeveloperScreen() }
 
+            composableWithDeepLink(Settings.UsbKeyboard::class) { UsbKeyboardScreen() }
             composableWithDeepLink(Settings.Media::class) { MediaScreen() }
 
             composableWithDeepLink(Settings.Other::class) { OtherScreen() }

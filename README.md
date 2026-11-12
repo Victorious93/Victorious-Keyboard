@@ -58,7 +58,11 @@ Victorious Keyboard is a modified distribution of [FlorisBoard](https://github.c
 * **Snippets** — reusable text with templates (`{{selection}}`, `{{clipboard}}`, date/time), an in-keyboard picker, and optional expansion on Space (Enter and Tab can be turned on separately).
 * **Dictionary packs** — five bundled word lists for technical vocabulary (install/remove on your choice).
 
-It is not affiliated with or endorsed by the FlorisBoard project. The repository retains upstream's full Git history so per-file authorship is preserved. Design goal: **nothing leaves the device** — no analytics, no ads, and no `INTERNET` permission.
+It is not affiliated with or endorsed by the FlorisBoard project. The repository retains upstream's full Git history so per-file authorship is preserved. Privacy default: **normal typing stays on the device**; USB mode sends only explicit input to the attached PC — no analytics or ads. Network access is limited to the opt-in pack update check.
+
+## USB keyboard and mouse
+
+Open **Settings → Tools → USB keyboard and mouse** to type on your PC and use the phone as a touchpad over a USB data cable. Requires root and compatible USB HID gadget kernel support. Includes explicit text sending, special keys/modifiers, left/right/middle click and scrolling. Temporarily replaces other USB functions and attempts to restore them when the session ends. **Experimental; physical hardware not tested.** See [setup and limits](docs/USB_KEYBOARD_MOUSE.md).
 
 ## Features
 
@@ -203,7 +207,7 @@ Issues and pull requests are welcome. Correctness and honesty about what was tes
 
 * One logical change per PR; keep `./gradlew assembleDebug testDebugUnitTest` green.
 * Put logic in pure Kotlin and unit-test it, including failure paths.
-* Never log or transmit typed text, clipboard contents, or snippets.
+* Never log typed text, clipboard contents, or snippets. Only explicit input on the USB keyboard screen may be sent to the attached PC.
 * State in the PR what you tested and what you could not (e.g. no device).
 
 Follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities via [SECURITY.md](SECURITY.md).

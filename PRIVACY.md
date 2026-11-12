@@ -54,3 +54,7 @@ other apps, no sale or sharing of data.
 
 This project is derived from FlorisBoard. Its privacy policy (<https://florisboard.org/legal/privacy/>) describes the
 upstream project, not this one.
+
+## Optional USB keyboard and mouse
+
+When you explicitly start the USB keyboard and mouse screen, its draft, key-button and touchpad input is sent to the PC attached by USB. No normal IME typing or clipboard content is captured for USB, and there is no network transmission, logging, background start or saved draft. The memory-only draft is cleared on submission and backgrounding. Stop or leave the screen to end the session and restore USB. This feature requires owner-granted root access and a compatible kernel. See `docs/USB_KEYBOARD_MOUSE.md`.

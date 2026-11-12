@@ -134,6 +134,12 @@ fun HomeScreen() = FlorisScreen {
         }
         PreferenceGroup(title = stringRes(R.string.settings__home__section_tools)) {
             Preference(
+                icon = Icons.Outlined.Keyboard,
+                title = stringRes(R.string.usb_keyboard_title),
+                summary = stringRes(R.string.usb_keyboard_summary),
+                onClick = { navController.navigate(Routes.Settings.UsbKeyboard) },
+            )
+            Preference(
                 icon = Icons.AutoMirrored.Outlined.Assignment,
                 title = stringRes(R.string.settings__clipboard__title),
                 summary = stringRes(R.string.settings__home__clipboard_summary),

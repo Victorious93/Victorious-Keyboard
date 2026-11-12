@@ -1,5 +1,14 @@
 # Testing
 
+## USB keyboard and mouse — 2026-11-11
+
+`python3 -m unittest discover -s tools/tests -v`: **10 tests passed** against a temporary ConfigFS/UDC model using the production helper. Tests include HID descriptor/report lengths and restoration on EOF, TERM, malformed input, host disconnect and write timeout. This does not validate a real kernel or Android USB HAL.
+
+A standalone smoke run against the production core completed **20 checks**, including real subprocess handshakes, canceled startup and restoration errors.
+
+The four USB core Kotlin files compile with the Gradle 9.2.0 distribution's Kotlin 2.2.20 compiler and bundled coroutines. The Android project uses Kotlin 2.3.0. The baseline and feature Gradle suite attempts stopped during wrapper download (`java.net.SocketException: Network is unreachable`); no Gradle test result was produced locally. Gradle itself was then downloaded with curl and its SHA-256 matched the wrapper pin. New project tests: `UsbHidKeyboardTest`, `UsbHidMouseTest`, `RootUsbTransportTest`, `UsbKeyboardControllerTest`. Launching the downloaded Gradle distribution also did not complete configuration and was canceled; no Android APK or full suite result was produced. GitHub rejected branch creation with HTTP 403 (Resource not accessible by integration), and the local Git CLI has no push credential, so remote CI could not be started. Android build, full JVM suite and lint remain unverified. Device, USB link and UI runtime validation: **not run**.
+
+
 ## CI (GitHub Actions)
 
 | Run | Result |

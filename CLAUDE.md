@@ -4,6 +4,10 @@
 Victorious Keyboard: Android IME (Kotlin, Compose) = modified FlorisBoard `v0.6.0-alpha02` + clipboard manager,
 developer/terminal modes, snippets, offline suggestions, opt-in AI tools. Read `AUDIT.md` and `ARCHITECTURE.md` first.
 
+## USB keyboard and mouse (owner request, 2026-11-11)
+
+Feature branch adds a visible-screen-only USB HID keyboard/touchpad with root, ConfigFS and kernel checks, no IME hook or network. Read `docs/USB_KEYBOARD_MOUSE.md` and the new TESTING.md entry. The helper temporarily swaps gadgets; preserve bounded writes, report validation, EOF/TERM cleanup and canceled-start handshake. Physical hardware unverified. This work does not advance the numbered phase queue.
+
 ## Current phase
 **Phases 0–1 done; Phase 3 implemented but not device-validated; Phase 4 core JVM-tested, wiring + developer-row UI compiled but never rendered/run; Phase 5 core (snippets) JVM-tested, Android shell (store, expansion on space and opt-in Enter/Tab, settings screen, in-keyboard picker) compiled but never run; operating modes (Standard/Developer/Termux) core tested, wiring compiled but never run. UI pass (tabbed tools panel,
 one terminal-row decision, theme-following panels, regrouped Settings Home) merged (PR #29), JVM-tested where pure,

@@ -87,6 +87,15 @@ class ThemeManager(context: Context) {
     private val _activeThemeInfo = MutableStateFlow(ThemeInfo.DEFAULT)
     val activeThemeInfo get() = _activeThemeInfo.asStateFlow()
 
+    private val _isSettled = MutableStateFlow(false)
+
+    /**
+     * False until the theme the user selected has been loaded, or it is certain it cannot be (see
+     * [ThemeSettlement]). Until then [activeThemeInfo] is only the built-in fallback ([ThemeInfo.DEFAULT],
+     * the gray upstream style) and the keyboard must not draw with it.
+     */
+    val isSettled get() = _isSettled.asStateFlow()
+
     init {
         extensionManager.themes.collectIn(scope) { themeExtensions ->
             val version = indexedThemeConfigVersion.incrementAndGet()
@@ -106,6 +115,11 @@ class ThemeManager(context: Context) {
         }
         indexedThemeConfigs.collectIn(scope) {
             updateActiveTheme { cachedThemeInfos.clear() }
+        }
+        // The index flips to "initialized" after its list is published; re-evaluate so a theme that is
+        // really missing settles on the fallback instead of waiting forever.
+        extensionManager.themes.initialized.collectIn(scope) {
+            updateActiveTheme()
         }
         combine(
             prefs.theme.mode.asFlow(),
@@ -130,21 +144,31 @@ class ThemeManager(context: Context) {
         action()
         previewThemeInfo.value?.let { previewThemeInfo ->
             _activeThemeInfo.value = previewThemeInfo
+            _isSettled.value = true
             return@withLock
         }
         val activeName = evaluateActiveThemeName()
         val cachedInfo = cachedThemeInfos.find { it.name == activeName }
         if (cachedInfo != null) {
             _activeThemeInfo.value = cachedInfo
+            _isSettled.value = true
             return@withLock
         }
-        val themeExt = extensionManager.getExtensionById(activeName.extensionId) as? ThemeExtension
+        // Read the theme index itself, not the derived `extensions` flow: that one is combined asynchronously and
+        // can still be empty for a moment after the index (and its `initialized` flag) are published.
+        val themeExt = extensionManager.themes.value.let { all ->
+            all.find { it.meta.id == activeName.extensionId }
+                ?: all.find { ExtensionIds.matches(it.meta.id, it.meta.aliases, activeName.extensionId) }
+        }
         val themeExtRef = themeExt?.sourceRef
-        if (themeExtRef == null) {
-            return@withLock
-        }
-        val themeConfig = themeExt.themes.find { it.id == activeName.componentId }
-        if (themeConfig == null) {
+        val themeConfig = themeExt?.themes?.find { it.id == activeName.componentId }
+        if (themeExt == null || themeExtRef == null || themeConfig == null) {
+            // Not found. While the extension index is still being read that only means "not yet": stay
+            // unsettled so the gray fallback is never drawn. Once it has been read the theme really is
+            // missing, and the fallback is the honest result.
+            if (ThemeSettlement.isSettledWhenNotFound(extensionManager.themes.initialized.value)) {
+                _isSettled.value = true
+            }
             return@withLock
         }
         // TODO: loaded dir is implemented already...
@@ -163,11 +187,13 @@ class ThemeManager(context: Context) {
                 val newInfo = ThemeInfo(activeName, themeConfig, newStylesheet, loadedDir, null)
                 cachedThemeInfos.add(newInfo)
                 _activeThemeInfo.value = newInfo
+                _isSettled.value = true
             },
             onFailure = { cause ->
                 _activeThemeInfo.value = ThemeInfo.DEFAULT.copy(
                     loadFailure = LoadFailure(themeExt.meta, themeConfig, cause)
                 )
+                _isSettled.value = true
             },
         )
     }

@@ -54,6 +54,7 @@ import com.victorious.keyboard.ime.lifecycle.LifecycleInputMethodService
 import com.victorious.keyboard.ime.nlp.NlpInlineAutofill
 import com.victorious.keyboard.ime.theme.WallpaperChangeReceiver
 import com.victorious.keyboard.ime.window.ImeRootView
+import com.victorious.keyboard.ime.window.SingleInstanceHost
 import com.victorious.keyboard.ime.window.ImeWindowController
 import com.victorious.keyboard.lib.devtools.LogTopic
 import com.victorious.keyboard.lib.devtools.flogError
@@ -342,10 +343,23 @@ open class FlorisImeService : LifecycleInputMethodService() {
         registerReceiver(wallpaperChangeReceiver, IntentFilter(Intent.ACTION_WALLPAPER_CHANGED))
     }
 
+    /**
+     * The framework calls this every time the input view becomes shown and after configuration changes,
+     * because we return `null` (the default input view placement is disabled). The root must therefore be
+     * installed exactly once; see [SingleInstanceHost].
+     */
+    private val rootHost = SingleInstanceHost(
+        create = { ImeRootView(this) },
+        isAttached = { it.parent != null },
+        attach = { root ->
+            window.window!!.findViewById<ViewGroup>(android.R.id.content).addView(root)
+        },
+        detach = { root -> (root.parent as? ViewGroup)?.removeView(root) },
+    )
+
     override fun onCreateInputView(): View? {
         super.installViewTreeOwners()
-        val content = window.window!!.findViewById<ViewGroup>(android.R.id.content)
-        content.addView(ImeRootView(this))
+        rootHost.ensureInstalled()
         // Disable the default input view placement
         return null
     }
@@ -381,6 +395,7 @@ open class FlorisImeService : LifecycleInputMethodService() {
     }
 
     override fun onDestroy() {
+        rootHost.release()
         super.onDestroy()
         unregisterReceiver(wallpaperChangeReceiver)
         FlorisImeServiceReference = WeakReference(null)

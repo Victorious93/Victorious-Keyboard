@@ -31,6 +31,9 @@ jobs:
           java-version: 21
           distribution: temurin
 
+      - name: Test USB helper protocol and rollback without hardware
+        run: python3 -m unittest discover -s tools/tests -v
+
       - name: Build debug APK and run unit tests
         # Dependency checksums are enforced via gradle/verification-metadata.xml.
         # lintDebug is a gate now that the inherited errors are fixed. :lib:kotlin:test is not

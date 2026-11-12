@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="usb_keyboard_title">USB keyboard and mouse</string>
+    <string name="usb_keyboard_summary">Type and control your PC pointer over USB (root required)</string>
+    <string name="usb_keyboard_intro">Use a USB data cable to connect your phone to your PC. Requires root, ConfigFS and a kernel with USB HID gadget support. Use the US English keyboard layout on your PC. No PC app or internet connection is needed.</string>
+    <string name="usb_keyboard_idle">USB keyboard is off. Compatibility is checked when you start.</string>
+    <string name="usb_keyboard_starting">Checking root and USB HID support…</string>
+    <string name="usb_keyboard_active">USB keyboard and mouse mode is active. Connect your PC and select a text field there before sending.</string>
+    <string name="usb_keyboard_sending">Sending keys…</string>
+    <string name="usb_keyboard_stopping">Stopping and restoring normal USB…</string>
+    <string name="usb_keyboard_unsupported">This phone could not provide a USB HID keyboard. Root alone is not enough; the kernel must support HID gadgets and ConfigFS.</string>
+    <string name="usb_keyboard_no_host">The PC has not configured the USB keyboard. Check the data cable and USB port, then start again.</string>
+    <string name="usb_keyboard_restore_failed">Normal USB restoration could not be confirmed. Disconnect the cable and restart the phone before trying again.</string>
+    <string name="usb_keyboard_root_error">Root access was denied, unavailable or timed out. Check your root manager, then try again.</string>
+    <string name="usb_keyboard_usb_busy">The current USB configuration cannot be switched safely. Stop other USB gadget apps, connect your data cable and select a normal USB mode before trying again.</string>
+    <string name="usb_keyboard_error">USB keyboard stopped. Some of the last keys or clicks may already have reached the PC; check there before sending again. Nothing is resent automatically. Normal USB restoration was attempted; if file transfer or USB debugging does not return, unplug the cable and restart the phone.</string>
+    <string name="usb_keyboard_start">Start USB keyboard</string>
+    <string name="usb_keyboard_stop">Stop</string>
+    <string name="usb_keyboard_confirm">Starting temporarily replaces file transfer, USB debugging and other USB functions with a keyboard and mouse. Your phone may disconnect and reconnect on the PC. Grant root access when prompted. Stop, leave this screen, rotate the phone or lock it to end the session and restore normal USB. Unplugging the cable is noticed on the next key or click you send. This is experimental and has not been tested on physical hardware.</string>
+    <string name="usb_keyboard_text_help">Type with your phone keyboard below, then tap Send text. Only this draft is sent. Newlines press Enter on the PC.</string>
+    <string name="usb_keyboard_draft">Text to send to PC</string>
+    <string name="usb_keyboard_ascii_only">Use US English letters, numbers, punctuation, tabs and newlines. Nothing from this draft was sent.</string>
+    <string name="usb_keyboard_text_limit">Up to 256 characters. Emoji and accented letters are not supported.</string>
+    <string name="usb_keyboard_send">Send text</string>
+    <string name="usb_keyboard_keys_help">Key buttons send immediately. Select modifiers for the next key button; text drafts use their own letter case.</string>
+    <string name="usb_keyboard_release">Release all keys</string>
+    <string name="usb_keyboard_shortcut_help">Shortcut: select modifiers above, enter one letter, digit or unshifted punctuation key, then send. Modifiers alone (for example Super) can also be tapped. Shifted symbols such as ! or ? are not valid shortcut keys; use the Shift modifier with the base key.</string>
+    <string name="usb_keyboard_shortcut_key">Key</string>
+    <string name="usb_keyboard_shortcut_send">Send shortcut</string>
+    <string name="usb_keyboard_modifier_tap">Tap modifiers</string>
+    <string name="usb_keyboard_touchpad">Touchpad</string>
+    <string name="usb_keyboard_touchpad_help">Slide one finger to move the PC pointer. Tap to left-click; long-press to right-click. Drag along the scroll strip to scroll (drag up scrolls up). Drag-and-drop and multi-finger gestures are not supported. The buttons below also work.</string>
+    <string name="usb_keyboard_left_click">Left click</string>
+    <string name="usb_keyboard_right_click">Right click</string>
+    <string name="usb_keyboard_middle_click">Middle click</string>
+    <string name="usb_keyboard_scroll_up">Scroll up</string>
+    <string name="usb_keyboard_scroll_down">Scroll down</string>
+    <string name="usb_keyboard_scroll">Scroll</string>
+</resources>

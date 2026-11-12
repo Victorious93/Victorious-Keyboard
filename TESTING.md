@@ -1,5 +1,23 @@
 # Testing
 
+## USB keyboard and mouse and keyboard-rendering fixes — 2026-11-12
+
+Run on this branch (JDK 21, Gradle 9.2.0, SDK 36; Maven Central 429 worked around with the documented mirror init script):
+
+- `python3 -m unittest discover -s tools/tests -v`: **11 passed** (production shell helper against a temporary ConfigFS/UDC model; includes a test that captures the exact bytes written to the HID node, and rollback on EOF, TERM, bad input, host disconnect and write timeout).
+- `./gradlew --no-daemon --no-parallel --max-workers=2 testDebugUnitTest :lib:kotlin:test lintDebug`: **BUILD SUCCESSFUL**. `:app` 881 tests, `:lib:kotlin` 111, `:lib:fleet` 65, `:lib:snygg` 109, 0 failures. Lint passed (an earlier run had 36 `MissingTranslation` errors from the new strings file; fixed).
+- New tests: `SingleInstanceHostTest` (one keyboard root however often the system asks), `ThemeSettlementTest` (no fallback theme while the theme list is unread), `UsbHidKeyboardTest` additions (shortcuts, modifier taps, whole-draft rejection, usage range), `UsbKeyboardControllerTest` addition (nothing accepted before a session is active).
+- `FleetThemeTest` pinned `projectVersionCode=151` exactly; it now requires at least 151.
+
+**Not run:** `assembleDebug` (the llama.cpp source download from github.com is blocked in this sandbox, so no APK was built here), any emulator or device (no KVM), and any physical USB test. The keyboard stacking and gray-theme causes were found by reading the code and are not reproduced or confirmed on a device. USB gadget operation is unverified on hardware.
+
+Physical-device checklist: `docs/USB_KEYBOARD_MOUSE.md` (USB) and the list below (keyboard).
+
+- Open and dismiss the keyboard 30 times in one app; switch fields and apps; lock and unlock; rotate; toggle dark mode; confirm exactly one keyboard, never gray.
+- Cold start: force-stop the app, tap a field, confirm the first frame is the Victorious theme.
+- Standard, Developer and Termux modes; clipboard, emoji and tools panels; return from the USB screen.
+- Debug build (`...debug`) and release build installed together: confirm which one is selected in the system keyboard picker.
+
 ## CI (GitHub Actions)
 
 | Run | Result |

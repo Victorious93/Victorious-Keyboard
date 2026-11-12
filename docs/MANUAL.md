@@ -382,6 +382,14 @@ The privacy mode in this keyboard is Incognito.
 4. Settings → Keyboard → Incognito indicator chooses how the keyboard shows that it is on.
 5. Password boxes are a separate protection. Suggestions, snippet expansion, slash commands, fleet actions, and learning stay off there whether or not Incognito is on.
 
+### USB keyboard and mouse
+
+Open **Settings → Tools → USB keyboard and mouse**. Connect your phone to the PC with a USB data cable, use a US English layout on the PC, tap Start and grant root. The phone needs ConfigFS and kernel USB HID gadget support; root alone is insufficient. No desktop app or network is used. **Experimental: physical hardware has not been tested.**
+
+Type into the draft with your phone keyboard and tap Send text. Up to 256 ASCII characters are supported; emoji and accented letters are rejected before sending. Newlines press Enter on the PC. Buttons provide special keys, F1–F12 and common shortcut letters; modifiers apply to the next key button. Slide the touchpad to move, tap for left click, long-press for right click, or use the click buttons. Slide the scroll strip or use the scroll buttons. Drag-and-drop and two-finger gestures are not implemented. For shortcuts, select Ctrl, Shift, Alt or Super, enter one letter, digit or unshifted punctuation key and tap Send shortcut; Tap modifiers presses the selected modifiers alone (for example Super). Rotating the phone ends the session; start again afterwards.
+
+The session temporarily replaces file transfer, ADB and other USB functions. Tap Stop, leave the screen, background or lock the phone to release inputs and restore normal USB. If restoration cannot be confirmed, disconnect the cable and reboot the phone. If a send fails midway, inspect the PC before retrying; some keys may already have arrived. Only explicit input on this screen is sent, with no logging, persistent draft or capture of ordinary phone typing. See `docs/USB_KEYBOARD_MOUSE.md` in the repository for requirements and limitations.
+
 ## Permissions
 
 The app asks you for two permissions. Both are named in the install manifest.

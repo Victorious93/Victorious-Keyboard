@@ -175,7 +175,23 @@ class ExtensionManager(context: Context) {
         private val initGuard = Mutex()
         private val refreshGuard = Mutex()
 
+        private val _initialized = MutableStateFlow(false)
+
+        /**
+         * True once the first index pass has finished (successfully or not). Before that the list is
+         * empty because it has not been read yet, not because nothing is installed.
+         */
+        val initialized: StateFlow<Boolean> get() = _initialized
+
         suspend fun init() {
+            try {
+                initIndex()
+            } finally {
+                _initialized.value = true
+            }
+        }
+
+        private suspend fun initIndex() {
             initGuard.withLock {
                 // Update internal module dir to actual path and make directory if not exists
                 internalModuleDir = internalModuleRef.absoluteFile(appContext)

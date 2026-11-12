@@ -6,6 +6,10 @@ yet** (no device/emulator available; see `AUDIT.md` §5), so no phase is marked 
 
 Upstream's own roadmap is preserved at `docs/upstream/ROADMAP.md`.
 
+## USB keyboard and mouse (owner request, 2026-11-11)
+
+Implemented on a feature branch: Settings → Tools → USB keyboard and mouse, temporary root-managed HID, text/special keys, touchpad/clicks/scroll and restoration. Eleven shell-helper tests, the full JVM suite and lint pass (see TESTING.md). No APK was built here (llama.cpp download blocked) and nothing was run on a device or a physical USB link. See `docs/USB_KEYBOARD_MOUSE.md`. This owner-requested feature does not advance the numbered phase queue.
+
 ## Phase queue
 
 Started by the owner's words "continue with phase implementation" (procedure in `CLAUDE.md`, "Working method"). One

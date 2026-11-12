@@ -19,11 +19,14 @@ package com.victorious.keyboard.ime.window
 import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.AbstractComposeView
 import androidx.compose.ui.unit.LayoutDirection
 import com.victorious.keyboard.FlorisImeService
 import com.victorious.keyboard.R
+import com.victorious.keyboard.themeManager
 import com.victorious.keyboard.ime.input.LocalInputFeedbackController
 import com.victorious.keyboard.ime.theme.FlorisImeTheme
 import org.florisboard.lib.compose.ProvideLocalizedResources
@@ -66,8 +69,14 @@ class ImeRootView(val ims: FlorisImeService) : AbstractComposeView(ims) {
                 appName = R.string.app_name,
                 forceLayoutDirection = LayoutDirection.Ltr,
             ) {
-                FlorisImeTheme {
-                    ImeRootWindow()
+                // Draw nothing until the selected theme is loaded. The built-in fallback theme is the gray
+                // upstream style; showing it first made it flash under, then get replaced by, the real one.
+                val themeManager by ims.themeManager()
+                val themeSettled by themeManager.isSettled.collectAsState()
+                if (themeSettled) {
+                    FlorisImeTheme {
+                        ImeRootWindow()
+                    }
                 }
             }
         }

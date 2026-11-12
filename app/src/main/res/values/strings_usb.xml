@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="usb_keyboard_title">USB keyboard and mouse</string>
     <string name="usb_keyboard_summary">Type and control your PC pointer over USB (root required)</string>
     <string name="usb_keyboard_intro">Use a USB data cable to connect your phone to your PC. Requires root, ConfigFS and a kernel with USB HID gadget support. Use the US English keyboard layout on your PC. No PC app or internet connection is needed.</string>

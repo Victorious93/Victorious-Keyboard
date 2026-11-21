@@ -1852,6 +1852,9 @@
     <string name="tools__action__learning">Learn words</string>
     <string name="tools__action__emoji">Emoji</string>
     <string name="tools__action__voice">Voice input</string>
+    <string name="tools__action__pc_mic">PC microphone</string>
+    <string name="pc_mic_title">PC microphone</string>
+    <string name="pc_mic_summary">Use this phone as the microphone for your PC. Opt-in, one PC at a time.</string>
     <string name="tools__action__one_hand">One-handed</string>
     <string name="tools__action__bottom_gap">Bottom gap</string>
     <string name="tools__action__theme">Next colors</string>

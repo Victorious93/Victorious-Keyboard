@@ -151,6 +151,7 @@ object ToolsPanelItems {
         ToolbarActionId.LEARNING to v(Icons.Outlined.Psychology, R.string.tools__action__learning),
         ToolbarActionId.EMOJI to v(Icons.Outlined.EmojiEmotions, R.string.tools__action__emoji),
         ToolbarActionId.VOICE to v(Icons.Outlined.Mic, R.string.tools__action__voice),
+        ToolbarActionId.PC_MIC to t("PC🎙", R.string.tools__action__pc_mic),
         ToolbarActionId.ONE_HAND to d(R.drawable.ic_accessibility_one_handed, R.string.tools__action__one_hand),
         ToolbarActionId.BOTTOM_GAP to v(Icons.Outlined.VerticalAlignBottom, R.string.tools__action__bottom_gap),
         ToolbarActionId.THEME to v(Icons.Outlined.Palette, R.string.tools__action__theme),

@@ -49,6 +49,7 @@ enum class ToolbarActionId {
     TEXT_TOOLS,
     HISTORY, HIST_UP, HIST_DN,
     AI_SHORTER, AI_EXPLAIN, AI_GENERATE,
+    PC_MIC,
 }
 
 data class ToolbarAction(val id: ToolbarActionId, val page: ToolbarPage, val label: String)
@@ -162,6 +163,7 @@ object ToolbarCatalog {
         act(ToolbarActionId.ONE_HAND, ToolbarPage.PRIVACY, "1-hand"),
         act(ToolbarActionId.THEME, ToolbarPage.PRIVACY, "Theme"),
         act(ToolbarActionId.VOICE, ToolbarPage.PRIVACY, "Voice"),
+        act(ToolbarActionId.PC_MIC, ToolbarPage.PRIVACY, "PC mic"),
         act(ToolbarActionId.EMOJI, ToolbarPage.PRIVACY, "Emoji"),
         act(ToolbarActionId.SETTINGS, ToolbarPage.PRIVACY, "Settings"),
         act(ToolbarActionId.DEVROW, ToolbarPage.PRIVACY, "Dev row"),

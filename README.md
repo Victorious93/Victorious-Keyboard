@@ -1,29 +1,3 @@
-<!-- victorious-fleet-readme-refresh:start -->
-<p align="center">
-  <img src="assets/logo.png" alt="Victorious-Keyboard logo" width="200">
-</p>
-
-# Victorious-Keyboard
-
-Custom Android keyboard with integrated media controls for the fleet.
-
-**Package id:** `com.victorious.keyboard`
-
-**Status:** CI green / merging *(from [fleet-manifest ROADMAP](https://github.com/Victorious93/fleet-manifest/blob/main/ROADMAP.md))*
-
-## Install / build
-
-Gradle Android app (`app/build.gradle.kts`). Typical: `./gradlew :app:assembleDebug`.
-
-_Steps above are taken from this repo’s build files / existing docs; anything not exercised in this refresh is unlabeled as verified on a device._
-
-## Victorious fleet
-
-- Monorepo: [https://github.com/Victorious93/victorious-fleet](https://github.com/Victorious93/victorious-fleet)
-- Fleet site: [https://victorious-framework.pages.dev](https://victorious-framework.pages.dev)
-
-<!-- victorious-fleet-readme-refresh:end -->
-
 <div align="center">
 
 <img src="docs/branding/logo.png" alt="Victorious Keyboard logo" width="128">
@@ -211,6 +185,11 @@ Issues and pull requests are welcome. Correctness and honesty about what was tes
 * State in the PR what you tested and what you could not (e.g. no device).
 
 Follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities via [SECURITY.md](SECURITY.md).
+
+## Victorious fleet
+
+Victorious Keyboard is part of the [Victorious Framework](https://victorious-framework.pages.dev), a family of Android and PC tools by Don Victor. **It works standalone; fleet integrations are optional.** Related: [droidcommand-AI](https://github.com/Victorious93/droidcommand-AI) (fleet controller), [File-Manager](https://github.com/Victorious93/File-Manager), [VictorSuite](https://github.com/Victorious93/VictorSuite). The roster is in [victorious-fleet](https://github.com/Victorious93/victorious-fleet) and live status is in [fleet-manifest](https://github.com/Victorious93/fleet-manifest).
+
 
 ## Licence
 

@@ -31,6 +31,13 @@ jobs:
           java-version: 21
           distribution: temurin
 
+      # ubuntu-latest is now ubuntu-26.04 and no longer ships CMake 3.31.6, which
+      # app/build.gradle.kts pins via externalNativeBuild.cmake.version.
+      - name: Set up Android SDK and CMake 3.31.6
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'cmake;3.31.6'
+
       - name: Test USB helper protocol and rollback without hardware
         run: python3 -m unittest discover -s tools/tests -v
 

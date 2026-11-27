@@ -108,6 +108,7 @@ object ToolsCatalog {
             ToolbarActionId.LEARNING,
             ToolbarActionId.EMOJI,
             ToolbarActionId.VOICE,
+            ToolbarActionId.PC_MIC,
             ToolbarActionId.ONE_HAND,
             ToolbarActionId.BOTTOM_GAP,
             ToolbarActionId.THEME,

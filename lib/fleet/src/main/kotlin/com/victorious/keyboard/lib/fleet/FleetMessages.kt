@@ -36,6 +36,16 @@ object FleetMessages {
     const val OP_LIST = "commands.list"
     const val OP_RUN = "command.run"
 
+    /**
+     * Phone-microphone offer handed over by a provider (DroidCommand) that received it from the paired PC over the
+     * authenticated fleet channel. The reply holds a one-time secret: it is used once, never logged or stored.
+     */
+    const val OP_MIC_TAKE = "mic.offer.take"
+
+    /** Tells the provider what the owner did with a taken offer: accepted, declined or failed. No secret is sent. */
+    const val OP_MIC_OUTCOME = "mic.offer.outcome"
+    val MIC_OUTCOMES = setOf("accepted", "declined", "failed")
+
     private const val MAX_DOCUMENT = 65_536
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -53,6 +63,38 @@ object FleetMessages {
                 argument = argument.take(FleetPolicy.MAX_SEND),
             ),
         )
+    }
+
+    fun micTakeRequest(id: String): String {
+        return json.encodeToString(Request(protocol_major = PROTOCOL_MAJOR, op = OP_MIC_TAKE, id = id))
+    }
+
+    fun micOutcomeRequest(id: String, offerId: String, outcome: String): String {
+        require(outcome in MIC_OUTCOMES) { "unknown outcome" }
+        return json.encodeToString(
+            Request(
+                protocol_major = PROTOCOL_MAJOR,
+                op = OP_MIC_OUTCOME,
+                id = id,
+                name = FleetCodec.plain(offerId, 96, allowNewlines = false),
+                argument = outcome,
+            ),
+        )
+    }
+
+    /**
+     * The offer in a [OP_MIC_TAKE] reply, or null when there is none or the reply is refused. Only a well-formed
+     * `vmic1` line addressed to the keyboard is accepted; the caller still parses it with the phone-mic offer parser.
+     */
+    fun parseMicTake(raw: String?): MicTaken? {
+        val row = decode(raw) ?: return null
+        if (row.protocol_major != PROTOCOL_MAJOR || !row.ok || row.op != OP_MIC_TAKE) return null
+        val offer = row.offer
+        if (offer.length > 1_024) return null
+        val parts = offer.split(';')
+        if (parts.size != 10 || parts[0] != "vmic1" || parts[7] != "keyboard") return null
+        if (!Regex("[A-Za-z0-9_-]{1,96}").matches(row.offer_id)) return null
+        return MicTaken(row.offer_id, offer, FleetCodec.plain(row.pc_name, 80, allowNewlines = false))
     }
 
     /** Empty [ok] means the document was refused. Nothing from it is logged. */
@@ -183,6 +225,9 @@ object FleetMessages {
         val text: String = "",
         val commands: List<RawCommand> = emptyList(),
         val snippets: List<RawSnippet> = emptyList(),
+        val offer_id: String = "",
+        val offer: String = "",
+        val pc_name: String = "",
     )
 
     @Serializable
@@ -200,6 +245,11 @@ object FleetMessages {
         val text: String = "",
         val command: String = "",
     )
+}
+
+/** A phone-microphone offer taken from a provider. [toString] hides the offer so it cannot end up in a log. */
+class MicTaken(val offerId: String, val offer: String, val pcName: String) {
+    override fun toString() = "MicTaken(offerId=$offerId, pcName=$pcName)"
 }
 
 data class Listed(

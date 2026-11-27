@@ -135,6 +135,12 @@ fun HomeScreen() = FlorisScreen {
         PreferenceGroup(title = stringRes(R.string.settings__home__section_tools)) {
             Preference(
                 icon = Icons.Outlined.Keyboard,
+                title = stringRes(R.string.pc_mic_title),
+                summary = stringRes(R.string.pc_mic_summary),
+                onClick = { com.victorious.keyboard.phonemic.PhoneMicActivity.launch(context) },
+            )
+            Preference(
+                icon = Icons.Outlined.Keyboard,
                 title = stringRes(R.string.usb_keyboard_title),
                 summary = stringRes(R.string.usb_keyboard_summary),
                 onClick = { navController.navigate(Routes.Settings.UsbKeyboard) },

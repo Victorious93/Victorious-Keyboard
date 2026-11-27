@@ -1870,6 +1870,8 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 prefs.theme.keyboardColors.set(KeyboardPaletteCodec.encode(next.palette))
             }
             ToolbarActionId.VOICE -> FlorisImeService.switchToVoiceInputMethod()
+            // Opens a visible screen; the keyboard window itself never records or streams anything.
+            ToolbarActionId.PC_MIC -> com.victorious.keyboard.phonemic.PhoneMicActivity.launch(appContext)
             ToolbarActionId.EMOJI -> activeState.imeUiMode = ImeUiMode.MEDIA
             ToolbarActionId.SETTINGS -> FlorisImeService.launchSettings()
             ToolbarActionId.DEVROW -> scope.launch {

@@ -66,4 +66,23 @@ class FleetMessagesTest : FunSpec({
         val off = FleetGrants.setEnabled(grants, "com.example.app", cert, enabled = false)
         FleetTrust.access(cert, "", FleetGrants.find(off, "com.example.app")) shouldBe FleetAccess.Off
     }
+
+    test("mic offer take: only a keyboard vmic1 offer is accepted and the secret stays out of toString") {
+        val secret = "ab".repeat(32)
+        val offer = "vmic1;192.168.1.20;47111;sess;$secret;pc;dev;keyboard;${"e".repeat(64)};1790003600"
+        FleetMessages.micTakeRequest("r1") shouldContain "\"op\":\"mic.offer.take\""
+        val ok = """{"protocol_major":1,"op":"mic.offer.take","id":"r1","ok":true,"offer_id":"mic-1","offer":"$offer","pc_name":"Studio PC"}"""
+        val taken = FleetMessages.parseMicTake(ok)!!
+        taken.offer shouldBe offer
+        taken.pcName shouldBe "Studio PC"
+        taken.toString() shouldNotContain secret
+        FleetMessages.parseMicTake(ok.replace(";keyboard;", ";droidcommand;")) shouldBe null
+        FleetMessages.parseMicTake(ok.replace("vmic1;", "vmic2;")) shouldBe null
+        FleetMessages.parseMicTake(ok.replace("\"ok\":true", "\"ok\":false")) shouldBe null
+        FleetMessages.parseMicTake(ok.replace("mic.offer.take", "command.run")) shouldBe null
+        FleetMessages.parseMicTake("""{"protocol_major":1,"op":"mic.offer.take","id":"r1","ok":true}""") shouldBe null
+        val outcome = FleetMessages.micOutcomeRequest("r2", "mic-1", "accepted")
+        outcome shouldContain "mic.offer.outcome"
+        outcome shouldNotContain secret
+    }
 })

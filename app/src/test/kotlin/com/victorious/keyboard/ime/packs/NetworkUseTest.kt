@@ -32,6 +32,9 @@ class NetworkUseTest : FunSpec({
     val manifest = File("src/main/AndroidManifest.xml").readText()
     val mainSources = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
     val transport = "UrlConnectionTransport.kt"
+    // Second named network use (owner request 2026-11-21): the opt-in PC microphone stream. Its transport is the only other file
+    // allowed to open a socket, and the tests below pin what it may touch.
+    val micTransport = "PhoneMic.kt"
 
     test("the manifest declares INTERNET once, and blocks cleartext traffic") {
         Regex("android.permission.INTERNET").findAll(manifest).count() shouldBe 1
@@ -45,7 +48,7 @@ class NetworkUseTest : FunSpec({
     }
 
     test("no permission that would let the app watch or wake on the network is requested") {
-        for (p in listOf("ACCESS_NETWORK_STATE", "CHANGE_NETWORK_STATE", "RECEIVE_BOOT_COMPLETED", "FOREGROUND_SERVICE", "WAKE_LOCK", "SCHEDULE_EXACT_ALARM", "REQUEST_INSTALL_PACKAGES")) {
+        for (p in listOf("ACCESS_NETWORK_STATE", "CHANGE_NETWORK_STATE", "RECEIVE_BOOT_COMPLETED", "WAKE_LOCK", "SCHEDULE_EXACT_ALARM", "REQUEST_INSTALL_PACKAGES")) {
             withClue(p) { manifest shouldNotContain "android.permission.$p" }
         }
     }
@@ -58,13 +61,31 @@ class NetworkUseTest : FunSpec({
         for (file in mainSources) {
             val text = file.readText()
             for (m in markers) {
-                if (file.name == transport) continue
+                if (file.name == transport || file.name == micTransport) continue
                 withClue("${file.path} uses $m") { text.contains(m) shouldBe false }
             }
         }
         val gradle = File("build.gradle.kts").readText() + File("../gradle/libs.versions.toml").readText()
         for (lib in listOf("okhttp", "retrofit", "ktor", "volley", "cronet", "workmanager")) {
             withClue(lib) { gradle.lowercase().contains(lib) shouldBe false }
+        }
+    }
+
+    test("PC microphone: foreground service is microphone-typed, not exported, and the stream code never sees typed text or the IME") {
+        manifest shouldContain "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+        manifest shouldContain "android:foregroundServiceType=\"microphone\""
+        Regex("android.permission.RECORD_AUDIO").findAll(manifest).count() shouldBe 1
+        val micDir = File("src/main/kotlin/com/victorious/keyboard/phonemic")
+        val micText = micDir.walkTopDown().filter { it.isFile }.joinToString("\n") { it.readText() }
+        for (forbidden in listOf("FlorisImeService", "InputConnection", "ClipboardManager", "ClipData", "currentInputConnection", "getSurroundingText",
+            "android.util.Log", "Log.d(", "Log.i(", "Log.w(", "Log.e(", "FileOutputStream", "openFileOutput", "RECEIVE_BOOT_COMPLETED", "BOOT_COMPLETED")) {
+            withClue("phonemic uses $forbidden") { micText.contains(forbidden) shouldBe false }
+        }
+        // Nothing outside phonemic may import it except the toolbar action, the settings row and the keyboard manager that launch the screen.
+        val allowed = setOf("KeyboardManager.kt", "HomeScreen.kt")
+        for (file in mainSources.filter { !it.path.contains("/phonemic/") }) {
+            if (file.name in allowed) continue
+            withClue("${file.path} reaches into phonemic") { file.readText().contains("keyboard.phonemic") shouldBe false }
         }
     }
 
@@ -110,7 +131,9 @@ class NetworkUseTest : FunSpec({
         val markers = listOf("WorkManager", "AlarmManager", "JobScheduler", "PeriodicWorkRequest", "ForegroundService", "BOOT_COMPLETED")
         for (file in mainSources) {
             val text = file.readText()
-            for (m in markers) withClue("${file.path} uses $m") { text.contains(m) shouldBe false }
+            // The owner-started PC microphone service is the one sanctioned foreground service; boot start stays banned there too.
+            val ok = if (file.path.contains("/phonemic/")) setOf("ForegroundService") else emptySet()
+            for (m in markers) if (m !in ok) withClue("${file.path} uses $m") { text.contains(m) shouldBe false }
         }
         manifest shouldNotContain "BOOT_COMPLETED"
         manifest shouldNotContain "android.net.conn.CONNECTIVITY_CHANGE"

@@ -12,9 +12,20 @@ Applies to the code in this repository. Statements are checked against the sourc
   list of what you installed, and nothing you type, copy or save. GitHub sees your IP address and the time, as any web
   server does. The reply is size-limited, checked as untrusted input and kept only in memory. The check downloads no pack
   and installs nothing, never follows a redirect, and never runs in the background. Cleartext traffic is blocked for the
-  whole app. Nothing else in the app opens a connection (a test checks this in the source). The app can also ask Android
+  whole app. Apart from that and the opt-in PC microphone stream below, nothing else in the app opens a connection (a test checks this in the source). The app can also ask Android
   to open a link in your browser (for example "Privacy policy", "Project repository", or a pack page); that is a browser
   action you trigger.
+* **PC microphone (opt-in, owner request 2026-11-21):** off until you open *PC microphone* (toolbar tile or Settings → Tools),
+  paste the one-time offer line your own PC printed, and grant microphone access on that screen. While sharing, the
+  phone sends **live microphone audio only** to **that one PC**, over TLS that accepts only the PC's pinned certificate and
+  a session secret bound to that PC, this phone and this app. An ongoing notification names the PC and has Stop and Mute;
+  Android's microphone indicator and privacy switch apply, and a call or another app silencing the microphone is reported
+  to the PC as "silenced" (nothing is sent). Audio is held in a 400 ms in-memory buffer only; it is never written to disk,
+  logged, backed up or sent anywhere else. **Nothing you type, no surrounding text and no clipboard content is sent** by
+  this feature, it does not read the keyboard's input connection, and it is separate from voice typing and USB keyboard/mouse
+  mode. It does not start at boot, and sharing ends when you tap Stop, the PC revokes it, the offer expires, or the app is
+  closed by Android. This feature declares `RECORD_AUDIO` and `FOREGROUND_SERVICE_MICROPHONE`. *(Implemented; compiled and
+  JVM-tested against the real PC receiver; never run on a device.)*
 * **Analytics / telemetry / ads:** none.
 * **Typed text:** processed in memory to insert text and (once implemented) to produce suggestions. It is not
   uploaded anywhere. The keyboard does not record keystrokes to a log.

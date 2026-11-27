@@ -13,6 +13,14 @@
           blocked (see network_security_config). Nothing else in the app opens a connection. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- PC microphone (opt-in, off until the owner pastes a PC offer on the visible PC microphone screen): streams the
+          microphone to that one PC over pinned TLS. RECORD_AUDIO is requested at runtime from that screen only; the
+          foreground service (type microphone) shows an ongoing notification with Stop. See PRIVACY.md. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+
     <!-- Android 11+ only: Define that FlorisBoard requests to see all apps that
           ship with an IME or Spell Check service. This is used to guide the user
           in the Settings Ui why FlorisBoard may not be working.
@@ -105,6 +113,17 @@
                 <action android:name="com.victorious.keyboard.action.BRIDGE"/>
             </intent-filter>
         </service>
+
+        <!-- PC microphone: foreground service, started only by the visible PC microphone screen. Not exported. -->
+        <service
+            android:name="com.victorious.keyboard.phonemic.PhoneMicService"
+            android:exported="false"
+            android:foregroundServiceType="microphone"/>
+
+        <activity
+            android:name="com.victorious.keyboard.phonemic.PhoneMicActivity"
+            android:label="@string/pc_mic_title"
+            android:exported="false"/>
 
         <!-- Main App Activity -->
         <activity

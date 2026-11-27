@@ -122,3 +122,8 @@ Install the debug APK → enable in *Settings → System → Keyboard* → selec
   spell checker flags before and after (the only place the words have an effect today).
 - [ ] Clipboard: copy 3 items elsewhere → they appear; pin, search, delete; restart process → still there (Phase 3).
 - [ ] Low-memory device and Android 8 / 12 / 14 / 15+ samples.
+
+## PC microphone (2026-11-21)
+- `./gradlew testDebugUnitTest :lib:kotlin:test` (CMake configure tasks excluded, see below): 882 tests, 0 failures, including the extended `NetworkUseTest` that pins the PC-microphone code (no input connection, clipboard, logging or disk writes; not exported; microphone-typed service).
+- The stream client in `ime/phonemic/PhoneMic.kt` is a copy of DroidCommand-AI's `core-phone-mic`, whose JVM tests stream to the real VictorLinux receiver (`victor-mic serve`) over pinned TLS and compare the recorded WAV.
+- **Not run:** `assembleDebug` (the llama.cpp download `https://github.com/ggml-org/llama.cpp/archive/refs/tags/b11624.tar.gz` is refused by this sandbox's proxy with HTTP 403, so the native step cannot complete here), `lintDebug`, any device or emulator.
